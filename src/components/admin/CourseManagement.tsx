@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Video, BookOpen } from "lucide-react";
+import { Plus, Edit, Trash2, Video, BookOpen, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { VideoManagement } from "./VideoManagement";
 
 const courseSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(200),
@@ -51,6 +52,7 @@ export const CourseManagement = () => {
     is_published: false,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CourseFormData, string>>>({});
+  const [videoManagementCourseId, setVideoManagementCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCourses();
@@ -380,6 +382,14 @@ export const CourseManagement = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setVideoManagementCourseId(course.id)}
+                          title="Manage Videos"
+                        >
+                          <Upload className="h-4 w-4" />
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => handleEdit(course)}>
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -399,6 +409,15 @@ export const CourseManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {videoManagementCourseId && (
+        <VideoManagement
+          courseId={videoManagementCourseId}
+          isOpen={!!videoManagementCourseId}
+          onClose={() => setVideoManagementCourseId(null)}
+          onVideosAdded={fetchCourses}
+        />
+      )}
     </div>
   );
 };
