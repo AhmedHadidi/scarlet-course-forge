@@ -50,11 +50,73 @@ const Progress = () => {
         .eq("user_id", user.id)
         .order("enrolled_at", { ascending: false });
 
-      if (data) setEnrollments(data);
+      if (data) {
+        // Sync progress for each enrollment
+        await syncEnrollmentProgress(data);
+      }
     } catch (error) {
       console.error("Error fetching progress:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const syncEnrollmentProgress = async (enrollmentData: Enrollment[]) => {
+    try {
+      for (const enrollment of enrollmentData) {
+        // Get all videos for this course
+        const { data: videos } = await supabase
+          .from("course_videos")
+          .select("id")
+          .eq("course_id", enrollment.courses.id);
+
+        if (!videos || videos.length === 0) continue;
+
+        // Get completed videos for this user and course
+        const { data: completedVideos } = await supabase
+          .from("video_progress")
+          .select("video_id")
+          .eq("user_id", user!.id)
+          .eq("completed", true)
+          .in("video_id", videos.map(v => v.id));
+
+        const completedCount = completedVideos?.length || 0;
+        const totalVideos = videos.length;
+        const progressPercentage = Math.round((completedCount / totalVideos) * 100);
+
+        // Update enrollment if progress has changed
+        if (progressPercentage !== enrollment.progress_percentage) {
+          const { data: updatedEnrollment } = await supabase
+            .from("enrollments")
+            .update({
+              progress_percentage: progressPercentage,
+              completed_at: progressPercentage === 100 ? new Date().toISOString() : null,
+            })
+            .eq("id", enrollment.id)
+            .select(`
+              *,
+              courses (
+                id,
+                title,
+                description,
+                difficulty_level,
+                video_count
+              )
+            `)
+            .single();
+
+          if (updatedEnrollment) {
+            // Update local state with new progress
+            enrollment.progress_percentage = progressPercentage;
+            enrollment.completed_at = progressPercentage === 100 ? new Date().toISOString() : null;
+          }
+        }
+      }
+
+      setEnrollments([...enrollmentData]);
+    } catch (error) {
+      console.error("Error syncing enrollment progress:", error);
+      setEnrollments(enrollmentData);
     }
   };
 
@@ -107,7 +169,11 @@ const Progress = () => {
             Enrolled {new Date(enrollment.enrolled_at).toLocaleDateString()}
           </span>
         </div>
-        <Button className="w-full" variant="outline">
+        <Button 
+          className="w-full" 
+          variant="outline"
+          onClick={() => window.location.href = `/courses/${enrollment.courses.id}`}
+        >
           Continue Learning
         </Button>
       </CardContent>
