@@ -59,36 +59,21 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
 
   const fetchUsers = async () => {
     try {
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select(`
-          id,
-          full_name,
-          created_at
-        `)
-        .order("created_at", { ascending: false });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Use edge function to get all users with their details
+      const { data, error } = await supabase.functions.invoke('admin-operations', {
+        body: {
+          operation: 'listUsers'
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
+      });
 
-      if (profilesError) throw profilesError;
+      if (error) throw error;
 
-      // Fetch auth users to get emails
-      const userIds = profiles?.map(p => p.id) || [];
-      const usersWithDetails = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          const { data: authData } = await supabase.auth.admin.getUserById(profile.id);
-          const { data: rolesData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", profile.id);
-
-          return {
-            ...profile,
-            email: authData?.user?.email || "N/A",
-            roles: rolesData || [],
-          };
-        })
-      );
-
-      setUsers(usersWithDetails);
+      setUsers(data.users || []);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({
@@ -315,7 +300,14 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className="gradient-crimson" data-action="create-user-dialog">
+            <Button 
+              className="gradient-crimson" 
+              data-action="create-user-dialog"
+              onClick={() => {
+                resetForm();
+                setIsDialogOpen(true);
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add User
             </Button>

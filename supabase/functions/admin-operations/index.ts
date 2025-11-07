@@ -162,6 +162,37 @@ Deno.serve(async (req) => {
         });
       }
 
+      case 'listUsers': {
+        // Get all profiles
+        const { data: profiles, error: profilesError } = await supabaseAdmin
+          .from('profiles')
+          .select('id, full_name, created_at')
+          .order('created_at', { ascending: false });
+
+        if (profilesError) throw profilesError;
+
+        // Get user details including emails and roles
+        const usersWithDetails = await Promise.all(
+          (profiles || []).map(async (profile) => {
+            const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+            const { data: rolesData } = await supabaseAdmin
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', profile.id);
+
+            return {
+              ...profile,
+              email: authUser?.email || 'N/A',
+              roles: rolesData || []
+            };
+          })
+        );
+
+        return new Response(JSON.stringify({ success: true, users: usersWithDetails }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       default:
         throw new Error('Invalid operation');
     }
