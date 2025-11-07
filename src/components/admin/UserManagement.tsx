@@ -306,9 +306,6 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
           <p className="text-sm text-muted-foreground">Manage users and their roles</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          if (open && !editingUser) {
-            resetForm();
-          }
           setIsDialogOpen(open);
           if (!open) resetForm();
         }}>
@@ -316,6 +313,12 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
             <Button 
               className="gradient-crimson" 
               data-action="create-user-dialog"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                resetForm();
+                setTimeout(() => setIsDialogOpen(true), 10);
+              }}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add User
