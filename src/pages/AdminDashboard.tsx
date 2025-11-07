@@ -10,6 +10,7 @@ import { UserManagement } from "@/components/admin/UserManagement";
 
 const AdminDashboard = () => {
   const { signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCourses: 0,
@@ -128,7 +129,7 @@ const AdminDashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
@@ -149,15 +150,27 @@ const AdminDashboard = () => {
                         <CardTitle className="text-base">Quick Actions</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                        <Button variant="outline" className="w-full justify-start">
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start"
+                          onClick={() => setActiveTab("users")}
+                        >
                           <Users className="mr-2 h-4 w-4" />
                           Add New User
                         </Button>
-                        <Button variant="outline" className="w-full justify-start">
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start"
+                          onClick={() => setActiveTab("courses")}
+                        >
                           <BookOpen className="mr-2 h-4 w-4" />
                           Create Course
                         </Button>
-                        <Button variant="outline" className="w-full justify-start">
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start"
+                          onClick={() => setActiveTab("certificates")}
+                        >
                           <Award className="mr-2 h-4 w-4" />
                           Issue Certificate
                         </Button>

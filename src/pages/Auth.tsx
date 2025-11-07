@@ -83,6 +83,13 @@ const Auth = () => {
 
       if (error) throw error;
 
+      // Fetch user profile to get full name
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
       // Check if user has admin role
       const { data: roleData } = await supabase
         .from("user_roles")
@@ -91,7 +98,8 @@ const Auth = () => {
         .eq("role", "admin")
         .maybeSingle();
 
-      toast.success("Signed in successfully!");
+      const userName = profileData?.full_name || "User";
+      toast.success(`Welcome ${userName}!`);
       
       if (roleData) {
         navigate("/admin");
@@ -135,6 +143,13 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
+        // Fetch user profile to get full name
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
         // Check if user has admin role
         const { data: roleData } = await supabase
           .from("user_roles")
@@ -143,7 +158,8 @@ const Auth = () => {
           .eq("role", "admin")
           .maybeSingle();
 
-        toast.success("Account created! Redirecting...");
+        const userName = profileData?.full_name || validated.fullName || "User";
+        toast.success(`Welcome ${userName}!`);
         
         if (roleData) {
           navigate("/admin");
