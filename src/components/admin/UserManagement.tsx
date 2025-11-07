@@ -191,9 +191,17 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
         if (error) throw error;
 
         sonnerToast.success("User created successfully");
-        resetForm(); // Clear fields after successful creation
       }
 
+      // Reset form and close dialog
+      setEditingUser(null);
+      setFormData({
+        email: "",
+        password: "",
+        full_name: "",
+        role: "user",
+      });
+      setErrors({});
       setIsDialogOpen(false);
       fetchUsers();
     } catch (error: any) {
@@ -326,7 +334,16 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
 
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
-          if (!open) resetForm();
+          if (!open) {
+            setEditingUser(null);
+            setFormData({
+              email: "",
+              password: "",
+              full_name: "",
+              role: "user",
+            });
+            setErrors({});
+          }
         }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -342,9 +359,9 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
                 <Input
                   id="email"
                   type="email"
-                  value={formData.email}
+                  value={formData.email || ""}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="user@example.com"
+                  placeholder="email@example.com"
                   disabled={!!editingUser}
                 />
                 {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
@@ -354,9 +371,9 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
                 <Label htmlFor="full_name">Full Name *</Label>
                 <Input
                   id="full_name"
-                  value={formData.full_name}
+                  value={formData.full_name || ""}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  placeholder="Enter full name"
+                  placeholder="John Doe"
                 />
                 {errors.full_name && <p className="text-sm text-destructive">{errors.full_name}</p>}
               </div>
@@ -368,9 +385,9 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
                 <Input
                   id="password"
                   type="password"
-                  value={formData.password}
+                  value={formData.password || ""}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Enter password"
+                  placeholder="••••••••"
                 />
                 {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
               </div>
