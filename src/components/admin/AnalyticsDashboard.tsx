@@ -84,10 +84,13 @@ export const AnalyticsDashboard = () => {
         dateFilter += dateFilter ? `,created_at.lte.${dateTo.toISOString()}` : `created_at.lte.${dateTo.toISOString()}`;
       }
 
-      // Fetch total users
-      const { count: totalUsers } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true });
+      // Fetch total users using edge function for accurate count
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data: usersData } = await supabase.functions.invoke('admin-operations', {
+        body: { operation: 'listUsers' },
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      });
+      const totalUsers = usersData?.users?.length || 0;
 
       // Fetch active users (users with enrollments)
       const { data: activeUsersData } = await supabase

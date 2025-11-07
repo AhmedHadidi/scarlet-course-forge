@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart } from "lucide-react";
+import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, User } from "lucide-react";
 import { CourseManagement } from "@/components/admin/CourseManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
@@ -24,15 +24,22 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const [usersCount, coursesCount, enrollmentsCount, certificatesCount] = await Promise.all([
-        supabase.from("profiles").select("*", { count: "exact", head: true }),
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Fetch users via edge function for accurate count
+      const { data: usersData } = await supabase.functions.invoke('admin-operations', {
+        body: { operation: 'listUsers' },
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      });
+
+      const [coursesCount, enrollmentsCount, certificatesCount] = await Promise.all([
         supabase.from("courses").select("*", { count: "exact", head: true }),
         supabase.from("enrollments").select("*", { count: "exact", head: true }),
         supabase.from("certificates").select("*", { count: "exact", head: true }),
       ]);
 
       setStats({
-        totalUsers: usersCount.count || 0,
+        totalUsers: usersData?.users?.length || 0,
         totalCourses: coursesCount.count || 0,
         totalEnrollments: enrollmentsCount.count || 0,
         totalCertificates: certificatesCount.count || 0,
@@ -70,11 +77,11 @@ const AdminDashboard = () => {
   ];
 
   const menuItems = [
-    { id: "overview", label: "Overview", icon: Home },
+    { id: "overview", label: "Home", icon: Home },
+    { id: "analytics", label: "My Dashboard", icon: BarChart },
     { id: "users", label: "Users", icon: Users },
     { id: "courses", label: "Courses", icon: BookOpen },
     { id: "certificates", label: "Certificates", icon: Award },
-    { id: "analytics", label: "Analytics", icon: BarChart },
   ];
 
   const handleQuickAction = (action: string) => {
@@ -154,7 +161,7 @@ const AdminDashboard = () => {
               {menuItems.find(item => item.id === activeView)?.label || "Admin Dashboard"}
             </h2>
             <p className="text-muted-foreground mt-1">
-              {activeView === "overview" && "Manage your platform and monitor performance"}
+              {activeView === "overview" && "Welcome to your admin dashboard"}
               {activeView === "users" && "Manage user accounts and permissions"}
               {activeView === "courses" && "Create and manage courses"}
               {activeView === "certificates" && "Issue and manage certificates"}

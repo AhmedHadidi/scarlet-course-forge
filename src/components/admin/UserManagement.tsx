@@ -303,9 +303,10 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
             <Button 
               className="gradient-crimson" 
               data-action="create-user-dialog"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 resetForm();
-                setIsDialogOpen(true);
+                setTimeout(() => setIsDialogOpen(true), 0);
               }}
             >
               <Plus className="mr-2 h-4 w-4" />
