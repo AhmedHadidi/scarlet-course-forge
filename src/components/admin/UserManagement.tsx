@@ -309,7 +309,14 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
           className="gradient-crimson" 
           data-action="create-user-dialog"
           onClick={() => {
-            resetForm();
+            setEditingUser(null);
+            setFormData({
+              email: "",
+              password: "",
+              full_name: "",
+              role: "user",
+            });
+            setErrors({});
             setIsDialogOpen(true);
           }}
         >
