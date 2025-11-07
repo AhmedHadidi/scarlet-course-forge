@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart } from "lucide-react";
 import { CourseManagement } from "@/components/admin/CourseManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
+import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 
 const AdminDashboard = () => {
   const { signOut } = useAuth();
@@ -252,15 +253,7 @@ const AdminDashboard = () => {
           )}
 
           {/* Analytics View */}
-          {activeView === "analytics" && (
-            <div className="rounded-lg border border-border/50 p-12 text-center">
-              <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Analytics & Reports</h3>
-              <p className="text-muted-foreground">
-                Analytics dashboard coming soon
-              </p>
-            </div>
-          )}
+          {activeView === "analytics" && <AnalyticsDashboard />}
         </div>
       </div>
     </div>

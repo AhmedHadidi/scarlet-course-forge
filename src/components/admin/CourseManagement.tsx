@@ -13,6 +13,7 @@ import { Plus, Edit, Trash2, Video, BookOpen, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { VideoManagement } from "./VideoManagement";
+import { toast } from "sonner";
 
 const courseSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(200),
@@ -38,7 +39,6 @@ interface Category {
 }
 
 export const CourseManagement = () => {
-  const { toast } = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -53,6 +53,8 @@ export const CourseManagement = () => {
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CourseFormData, string>>>({});
   const [videoManagementCourseId, setVideoManagementCourseId] = useState<string | null>(null);
+  const [manualVideos, setManualVideos] = useState<Array<{ title: string; url: string }>>([]);
+  const [videoInput, setVideoInput] = useState({ title: "", url: "" });
 
   useEffect(() => {
     fetchCourses();
@@ -70,11 +72,7 @@ export const CourseManagement = () => {
       if (data) setCourses(data);
     } catch (error) {
       console.error("Error fetching courses:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load courses",
-        variant: "destructive",
-      });
+      toast.error("Failed to load courses");
     }
   };
 
@@ -132,14 +130,30 @@ export const CourseManagement = () => {
           .eq("id", editingCourse.id);
 
         if (error) throw error;
-        toast({ title: "Success", description: "Course updated successfully" });
+        toast.success("Course updated successfully");
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("courses")
-          .insert([courseData]);
+          .insert([courseData])
+          .select()
+          .single();
 
         if (error) throw error;
-        toast({ title: "Success", description: "Course created successfully" });
+
+        // Add manual videos if any
+        if (data && manualVideos.length > 0) {
+          const videosToInsert = manualVideos.map((video, index) => ({
+            course_id: data.id,
+            title: video.title,
+            video_url: video.url,
+            video_source: "uploaded" as const,
+            order_index: index,
+          }));
+
+          await supabase.from("course_videos").insert(videosToInsert);
+        }
+
+        toast.success("Course created successfully");
       }
 
       setIsDialogOpen(false);
@@ -147,11 +161,7 @@ export const CourseManagement = () => {
       fetchCourses();
     } catch (error) {
       console.error("Error saving course:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save course",
-        variant: "destructive",
-      });
+      toast.error("Failed to save course");
     }
   };
 
@@ -165,15 +175,11 @@ export const CourseManagement = () => {
         .eq("id", id);
 
       if (error) throw error;
-      toast({ title: "Success", description: "Course deleted successfully" });
+      toast.success("Course deleted successfully");
       fetchCourses();
     } catch (error) {
       console.error("Error deleting course:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete course",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete course");
     }
   };
 
@@ -202,6 +208,8 @@ export const CourseManagement = () => {
     });
     setEditingCourse(null);
     setErrors({});
+    setManualVideos([]);
+    setVideoInput({ title: "", url: "" });
   };
 
   return (
@@ -324,6 +332,55 @@ export const CourseManagement = () => {
                 />
                 <Label htmlFor="is_published">Publish course (make it visible to users)</Label>
               </div>
+
+              {!editingCourse && (
+                <div className="space-y-4 border-t pt-4">
+                  <h4 className="font-medium">Add Videos (Optional)</h4>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Video Title"
+                      value={videoInput.title}
+                      onChange={(e) => setVideoInput({ ...videoInput, title: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Video URL"
+                      value={videoInput.url}
+                      onChange={(e) => setVideoInput({ ...videoInput, url: e.target.value })}
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (videoInput.title && videoInput.url) {
+                          setManualVideos([...manualVideos, videoInput]);
+                          setVideoInput({ title: "", url: "" });
+                        }
+                      }}
+                      variant="outline"
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {manualVideos.length > 0 && (
+                    <div className="space-y-2">
+                      {manualVideos.map((video, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
+                          <span className="text-sm">
+                            {video.title} - {video.url}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setManualVideos(manualVideos.filter((_, i) => i !== index))}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <DialogFooter>

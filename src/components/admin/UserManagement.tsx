@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Users as UsersIcon, ShieldCheck, ShieldOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { toast as sonnerToast } from "sonner";
 
 const userSchema = z.object({
   email: z.string().trim().email("Invalid email address").max(255),
@@ -129,51 +130,79 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
     if (!validateForm()) return;
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       if (editingUser) {
-        // Update existing user
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({ full_name: formData.full_name })
-          .eq("id", editingUser.id);
+        // Update existing user via edge function
+        const { error } = await supabase.functions.invoke('admin-operations', {
+          body: {
+            operation: 'updateUser',
+            data: {
+              userId: editingUser.id,
+              email: formData.email,
+              full_name: formData.full_name
+            }
+          },
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`
+          }
+        });
 
-        if (profileError) throw profileError;
-
-        // Update password if provided
-        if (formData.password && formData.password.length > 0) {
-          const { error: authError } = await supabase.auth.admin.updateUserById(
-            editingUser.id,
-            { password: formData.password }
-          );
-          if (authError) throw authError;
-        }
+        if (error) throw error;
 
         // Update role
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", editingUser.id);
+        if (formData.role) {
+          await supabase.functions.invoke('admin-operations', {
+            body: {
+              operation: 'updateUserRole',
+              data: {
+                userId: editingUser.id,
+                role: formData.role
+              }
+            },
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`
+            }
+          });
+        }
 
-        if (roleError) throw roleError;
-
-        const { error: insertRoleError } = await supabase
-          .from("user_roles")
-          .insert({ user_id: editingUser.id, role: formData.role });
-
-        if (insertRoleError) throw insertRoleError;
+        // Reset password if provided
+        if (formData.password && formData.password.length > 0) {
+          await supabase.functions.invoke('admin-operations', {
+            body: {
+              operation: 'resetPassword',
+              data: {
+                userId: editingUser.id,
+                newPassword: formData.password
+              }
+            },
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`
+            }
+          });
+        }
 
         toast({ title: "Success", description: "User updated successfully" });
       } else {
-        // Create new user
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: formData.email!,
-          password: formData.password!,
-          email_confirm: true,
-          user_metadata: { full_name: formData.full_name },
+        // Create new user via edge function
+        const { error } = await supabase.functions.invoke('admin-operations', {
+          body: {
+            operation: 'createUser',
+            data: {
+              email: formData.email!,
+              password: formData.password!,
+              full_name: formData.full_name,
+              role: formData.role
+            }
+          },
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`
+          }
         });
 
-        if (authError) throw authError;
+        if (error) throw error;
 
-        toast({ title: "Success", description: "User created successfully" });
+        sonnerToast.success("User created successfully");
       }
 
       setIsDialogOpen(false);
@@ -193,7 +222,18 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
     if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { error } = await supabase.functions.invoke('admin-operations', {
+        body: {
+          operation: 'deleteUser',
+          data: { userId }
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
+      });
+
       if (error) throw error;
 
       toast({ title: "Success", description: "User deleted successfully" });
@@ -205,6 +245,35 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
         description: "Failed to delete user",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleResetPassword = async (userId: string) => {
+    const newPassword = prompt("Enter new password (minimum 6 characters):");
+    if (!newPassword || newPassword.length < 6) {
+      sonnerToast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { error } = await supabase.functions.invoke('admin-operations', {
+        body: {
+          operation: 'resetPassword',
+          data: { userId, newPassword }
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      sonnerToast.success("Password reset successfully");
+    } catch (error: any) {
+      console.error("Error resetting password:", error);
+      sonnerToast.error(error.message || "Failed to reset password");
     }
   };
 
@@ -378,6 +447,14 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
                         <div className="flex justify-end gap-2">
                           <Button variant="outline" size="sm" onClick={() => handleEdit(user)}>
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleResetPassword(user.id)}
+                            title="Reset Password"
+                          >
+                            Reset Password
                           </Button>
                           <Button
                             variant="outline"
