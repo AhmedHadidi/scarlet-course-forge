@@ -6,9 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Calendar as CalendarIcon, Users, BookOpen, Award, TrendingUp, Video, CheckCircle } from "lucide-react";
+import { Download, Calendar as CalendarIcon, Users, BookOpen, Award, TrendingUp, Video, CheckCircle, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface AnalyticsStats {
   totalUsers: number;
@@ -27,6 +28,18 @@ interface TopCourse {
   completionRate: number;
 }
 
+interface TopUser {
+  full_name: string;
+  enrollments: number;
+  avgProgress: number;
+}
+
+interface TopVideo {
+  title: string;
+  course_title: string;
+  views: number;
+}
+
 export const AnalyticsDashboard = () => {
   const [stats, setStats] = useState<AnalyticsStats>({
     totalUsers: 0,
@@ -39,6 +52,9 @@ export const AnalyticsDashboard = () => {
     completionRate: 0,
   });
   const [topCourses, setTopCourses] = useState<TopCourse[]>([]);
+  const [topUsers, setTopUsers] = useState<TopUser[]>([]);
+  const [topVideos, setTopVideos] = useState<TopVideo[]>([]);
+  const [enrollmentTrend, setEnrollmentTrend] = useState<any[]>([]);
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -156,6 +172,111 @@ export const AnalyticsDashboard = () => {
       });
 
       setTopCourses(topCoursesData);
+
+      // Fetch top engaged users
+      const { data: enrollmentsForUsers } = await supabase
+        .from("enrollments")
+        .select(`
+          user_id,
+          progress_percentage,
+          profiles (
+            full_name
+          )
+        `);
+
+      const userEnrollments: { [key: string]: { name: string; count: number; totalProgress: number } } = {};
+      enrollmentsForUsers?.forEach((enrollment: any) => {
+        const userId = enrollment.user_id;
+        if (!userEnrollments[userId]) {
+          userEnrollments[userId] = {
+            name: enrollment.profiles?.full_name || "Unknown",
+            count: 0,
+            totalProgress: 0
+          };
+        }
+        userEnrollments[userId].count++;
+        userEnrollments[userId].totalProgress += enrollment.progress_percentage;
+      });
+
+      const topUsersData = Object.values(userEnrollments)
+        .map(u => ({
+          full_name: u.name,
+          enrollments: u.count,
+          avgProgress: Math.round(u.totalProgress / u.count)
+        }))
+        .sort((a, b) => b.enrollments - a.enrollments)
+        .slice(0, 5);
+
+      setTopUsers(topUsersData);
+
+      // Fetch top watched videos (based on video progress records)
+      const { data: videoProgressData } = await supabase
+        .from("video_progress")
+        .select(`
+          video_id,
+          course_videos (
+            title,
+            courses (
+              title
+            )
+          )
+        `);
+
+      const videoViews: { [key: string]: { title: string; course_title: string; count: number } } = {};
+      videoProgressData?.forEach((vp: any) => {
+        const videoId = vp.video_id;
+        if (!videoViews[videoId] && vp.course_videos) {
+          videoViews[videoId] = {
+            title: vp.course_videos.title,
+            course_title: vp.course_videos.courses?.title || "Unknown",
+            count: 0
+          };
+        }
+        if (videoViews[videoId]) {
+          videoViews[videoId].count++;
+        }
+      });
+
+      const topVideosData = Object.values(videoViews)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
+        .map(v => ({
+          title: v.title,
+          course_title: v.course_title,
+          views: v.count
+        }));
+
+      setTopVideos(topVideosData);
+
+      // Fetch enrollment trend (last 7 days)
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (6 - i));
+        return date.toISOString().split('T')[0];
+      });
+
+      const { data: trendData } = await supabase
+        .from("enrollments")
+        .select("enrolled_at");
+
+      const trendCounts: { [key: string]: number } = {};
+      last7Days.forEach(day => {
+        trendCounts[day] = 0;
+      });
+
+      trendData?.forEach((enrollment: any) => {
+        const date = enrollment.enrolled_at.split('T')[0];
+        if (trendCounts[date] !== undefined) {
+          trendCounts[date]++;
+        }
+      });
+
+      const enrollmentTrendData = last7Days.map(day => ({
+        date: format(new Date(day), "MMM dd"),
+        enrollments: trendCounts[day]
+      }));
+
+      setEnrollmentTrend(enrollmentTrendData);
     } catch (error) {
       console.error("Error fetching analytics:", error);
       toast.error("Failed to load analytics");
@@ -177,7 +298,13 @@ export const AnalyticsDashboard = () => {
       ["Completion Rate", `${stats.completionRate}%`],
       [],
       ["Top Courses", "Enrollments", "Completion Rate"],
-      ...topCourses.map(course => [course.title, course.enrollments, `${course.completionRate}%`])
+      ...topCourses.map(course => [course.title, course.enrollments, `${course.completionRate}%`]),
+      [],
+      ["Top Engaged Users", "Enrollments", "Avg Progress"],
+      ...topUsers.map(user => [user.full_name, user.enrollments, `${user.avgProgress}%`]),
+      [],
+      ["Top Watched Videos", "Course", "Views"],
+      ...topVideos.map(video => [video.title, video.course_title, video.views])
     ].map(row => row.join(",")).join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -273,6 +400,25 @@ export const AnalyticsDashboard = () => {
         })}
       </div>
 
+      {/* Enrollment Trend Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Enrollment Trend (Last 7 Days)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={enrollmentTrend}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="enrollments" stroke="hsl(var(--primary))" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
       {/* Top Courses */}
       <Card>
         <CardHeader>
@@ -293,6 +439,63 @@ export const AnalyticsDashboard = () => {
                   <TableCell className="font-medium">{course.title}</TableCell>
                   <TableCell>{course.enrollments}</TableCell>
                   <TableCell>{course.completionRate}%</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Top Engaged Users */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Top Engaged Users</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User Name</TableHead>
+                <TableHead>Enrollments</TableHead>
+                <TableHead>Avg Progress</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {topUsers.map((user, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{user.full_name}</TableCell>
+                  <TableCell>{user.enrollments}</TableCell>
+                  <TableCell>{user.avgProgress}%</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Top Watched Videos */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Top Watched Videos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Video Title</TableHead>
+                <TableHead>Course</TableHead>
+                <TableHead className="flex items-center gap-1">
+                  <Eye className="h-4 w-4" />
+                  Views
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {topVideos.map((video, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{video.title}</TableCell>
+                  <TableCell>{video.course_title}</TableCell>
+                  <TableCell>{video.views}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

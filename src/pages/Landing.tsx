@@ -29,10 +29,24 @@ const Landing = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [loadingCourses, setLoadingCourses] = useState(true);
+  const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
     fetchCourses();
+    if (user) {
+      fetchUserName();
+    }
   }, [user]);
+
+  const fetchUserName = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .maybeSingle();
+    setUserName(data?.full_name || "User");
+  };
 
   useEffect(() => {
     filterCourses();
@@ -161,39 +175,49 @@ const Landing = () => {
               <GraduationCap className="h-10 w-10 text-white" />
             </div>
             
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-              Master New Skills with
-              <span className="block mt-2 bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
-                Expert-Led Courses
-              </span>
-            </h1>
-            
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Join thousands of learners advancing their careers with our comprehensive online learning platform. Track progress, earn certificates, and achieve your goals.
-            </p>
+            {user && userName ? (
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
+                Welcome back, <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">{userName}</span>!
+              </h1>
+            ) : (
+              <>
+                <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
+                  Master New Skills with
+                  <span className="block mt-2 bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+                    Expert-Led Courses
+                  </span>
+                </h1>
+                
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                  Join thousands of learners advancing their careers with our comprehensive online learning platform. Track progress, earn certificates, and achieve your goals.
+                </p>
+              </>
+            )}
             
             {!user && (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-                <Button
-                  size="lg"
-                  className="gradient-crimson shadow-crimson hover:opacity-90 transition-smooth text-lg px-8"
-                  onClick={() => navigate("/auth")}
-                >
-                  Get Started Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </div>
-            )}
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-3xl font-bold text-secondary">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+              <>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+                  <Button
+                    size="lg"
+                    className="gradient-crimson shadow-crimson hover:opacity-90 transition-smooth text-lg px-8"
+                    onClick={() => navigate("/auth")}
+                  >
+                    Get Started Free
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
                 </div>
-              ))}
-            </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto">
+                  {stats.map((stat, index) => (
+                    <div key={index} className="text-center">
+                      <div className="text-3xl font-bold text-secondary">{stat.value}</div>
+                      <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
