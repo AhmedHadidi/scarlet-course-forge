@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Link as LinkIcon, List, Loader2, X } from "lucide-react";
+import { Upload, Link as LinkIcon, List, Loader2, X, Eye, Save, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface VideoManagementProps {
   courseId: string;
@@ -25,9 +26,24 @@ interface VideoData {
   order_index: number;
 }
 
+interface ExistingVideo {
+  id: string;
+  title: string;
+  video_url: string;
+  description?: string;
+  duration_seconds?: number;
+  order_index: number;
+  video_source: string;
+}
+
 export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: VideoManagementProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Existing videos
+  const [existingVideos, setExistingVideos] = useState<ExistingVideo[]>([]);
+  const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
   
   // YouTube Playlist
   const [playlistUrl, setPlaylistUrl] = useState("");
@@ -38,6 +54,88 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
   // File Upload
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchExistingVideos();
+    }
+  }, [isOpen, courseId]);
+
+  const fetchExistingVideos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("course_videos")
+        .select("*")
+        .eq("course_id", courseId)
+        .order("order_index", { ascending: true });
+
+      if (error) throw error;
+      setExistingVideos(data || []);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+      toast({ title: "Error", description: "Failed to load videos", variant: "destructive" });
+    }
+  };
+
+  const handleEditVideo = (video: ExistingVideo) => {
+    setEditingVideoId(video.id);
+    setEditingTitle(video.title);
+  };
+
+  const handleSaveVideo = async (videoId: string) => {
+    if (!editingTitle.trim()) {
+      toast({ title: "Error", description: "Video title cannot be empty", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("course_videos")
+        .update({ title: editingTitle })
+        .eq("id", videoId);
+
+      if (error) throw error;
+
+      toast({ title: "Success", description: "Video title updated" });
+      setEditingVideoId(null);
+      setEditingTitle("");
+      fetchExistingVideos();
+    } catch (error) {
+      console.error("Error updating video:", error);
+      toast({ title: "Error", description: "Failed to update video", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteVideo = async (videoId: string) => {
+    if (!confirm("Are you sure you want to delete this video?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("course_videos")
+        .delete()
+        .eq("id", videoId);
+
+      if (error) throw error;
+
+      // Update course video count
+      const { data: remainingVideos } = await supabase
+        .from("course_videos")
+        .select("id")
+        .eq("course_id", courseId);
+
+      await supabase
+        .from("courses")
+        .update({ video_count: remainingVideos?.length || 0 })
+        .eq("id", courseId);
+
+      toast({ title: "Success", description: "Video deleted successfully" });
+      fetchExistingVideos();
+      onVideosAdded();
+    } catch (error) {
+      console.error("Error deleting video:", error);
+      toast({ title: "Error", description: "Failed to delete video", variant: "destructive" });
+    }
+  };
 
   const extractPlaylistId = (url: string): string | null => {
     const patterns = [
@@ -254,8 +352,12 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="manual" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="manage" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="manage">
+              <Eye className="h-4 w-4 mr-2" />
+              Manage
+            </TabsTrigger>
             <TabsTrigger value="playlist">
               <List className="h-4 w-4 mr-2" />
               Playlist
@@ -269,6 +371,94 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
               Upload
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="manage" className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label>Existing Videos ({existingVideos.length})</Label>
+              {existingVideos.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  No videos added yet. Use the other tabs to add videos.
+                </p>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">#</TableHead>
+                        <TableHead>Title</TableHead>
+                        <TableHead className="w-32">Source</TableHead>
+                        <TableHead className="w-32 text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {existingVideos.map((video, index) => (
+                        <TableRow key={video.id}>
+                          <TableCell className="font-medium">{index + 1}</TableCell>
+                          <TableCell>
+                            {editingVideoId === video.id ? (
+                              <Input
+                                value={editingTitle}
+                                onChange={(e) => setEditingTitle(e.target.value)}
+                                className="h-8"
+                                autoFocus
+                              />
+                            ) : (
+                              <span>{video.title}</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground capitalize">
+                            {video.video_source.replace(/_/g, " ")}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {editingVideoId === video.id ? (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleSaveVideo(video.id)}
+                                  >
+                                    <Save className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setEditingVideoId(null);
+                                      setEditingTitle("");
+                                    }}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleEditVideo(video)}
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleDeleteVideo(video.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </TabsContent>
 
           <TabsContent value="playlist" className="space-y-4 mt-4">
             <div className="space-y-2">
