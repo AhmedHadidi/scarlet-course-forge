@@ -305,25 +305,22 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
           <h3 className="text-lg font-semibold">User Management</h3>
           <p className="text-sm text-muted-foreground">Manage users and their roles</p>
         </div>
+        <Button 
+          className="gradient-crimson" 
+          data-action="create-user-dialog"
+          onClick={() => {
+            resetForm();
+            setIsDialogOpen(true);
+          }}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add User
+        </Button>
+
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
           if (!open) resetForm();
         }}>
-          <DialogTrigger asChild>
-            <Button 
-              className="gradient-crimson" 
-              data-action="create-user-dialog"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                resetForm();
-                setTimeout(() => setIsDialogOpen(true), 10);
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add User
-            </Button>
-          </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>{editingUser ? "Edit User" : "Create New User"}</DialogTitle>
