@@ -8,41 +8,41 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Red & Maroon Color Palette */
-    --background: 357 82% 22%;
-    --foreground: 0 0% 100%;
+    /* Red & Maroon Color Palette - Light Theme */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
 
-    --card: 345 88% 12%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 10%;
 
-    --popover: 345 88% 12%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 358 78% 28%;
+    --primary: 358 78% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 355 63% 42%;
+    --secondary: 355 63% 52%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 357 82% 22%;
-    --muted-foreground: 0 0% 80%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 355 63% 42%;
+    --accent: 355 63% 52%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 355 63% 30%;
-    --input: 345 88% 12%;
-    --ring: 358 78% 28%;
+    --border: 0 0% 90%;
+    --input: 0 0% 96%;
+    --ring: 358 78% 48%;
 
     --radius: 0.5rem;
 
     /* Custom design tokens */
-    --gradient-crimson: linear-gradient(135deg, hsl(358 78% 28%), hsl(355 63% 42%));
-    --gradient-dark: linear-gradient(180deg, hsl(345 88% 12%), hsl(357 82% 22%));
-    --shadow-crimson: 0 10px 40px -10px hsl(358 78% 28% / 0.5);
+    --gradient-crimson: linear-gradient(135deg, hsl(358 78% 48%), hsl(355 63% 52%));
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 98%), hsl(0 0% 96%));
+    --shadow-crimson: 0 10px 40px -10px hsl(358 78% 48% / 0.3);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
