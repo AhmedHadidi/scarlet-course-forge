@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Award } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import UserNav from "@/components/UserNav";
 
 interface Video {
   id: string;
@@ -187,6 +188,7 @@ const CoursePlayer = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <UserNav />
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Video Player Section */}

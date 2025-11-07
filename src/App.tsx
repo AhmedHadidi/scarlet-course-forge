@@ -8,7 +8,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import Courses from "./pages/Courses";
 import CoursePlayer from "./pages/CoursePlayer";
 import Progress from "./pages/Progress";
 import Certificates from "./pages/Certificates";
@@ -34,14 +33,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/courses"
-              element={
-                <ProtectedRoute>
-                  <Courses />
                 </ProtectedRoute>
               }
             />
