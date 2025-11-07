@@ -77,8 +77,9 @@ const AdminDashboard = () => {
   ];
 
   const menuItems = [
-    { id: "overview", label: "Home", icon: Home },
-    { id: "analytics", label: "My Dashboard", icon: BarChart },
+    { id: "home", label: "Home", icon: Home, isExternal: true, path: "/" },
+    { id: "overview", label: "Dashboard", icon: BarChart },
+    { id: "analytics", label: "Analytics", icon: TrendingUp },
     { id: "users", label: "Users", icon: Users },
     { id: "courses", label: "Courses", icon: BookOpen },
     { id: "certificates", label: "Certificates", icon: Award },
@@ -125,6 +126,20 @@ const AdminDashboard = () => {
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
+              
+              if (item.isExternal) {
+                return (
+                  <a
+                    key={item.id}
+                    href={item.path}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </a>
+                );
+              }
+              
               return (
                 <button
                   key={item.id}
@@ -161,7 +176,7 @@ const AdminDashboard = () => {
               {menuItems.find(item => item.id === activeView)?.label || "Admin Dashboard"}
             </h2>
             <p className="text-muted-foreground mt-1">
-              {activeView === "overview" && "Welcome to your admin dashboard"}
+              {activeView === "overview" && "Manage your platform and monitor performance"}
               {activeView === "users" && "Manage user accounts and permissions"}
               {activeView === "courses" && "Create and manage courses"}
               {activeView === "certificates" && "Issue and manage certificates"}
