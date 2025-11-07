@@ -44,6 +44,7 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
   const [existingVideos, setExistingVideos] = useState<ExistingVideo[]>([]);
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [editingUrl, setEditingUrl] = useState("");
   
   // YouTube Playlist
   const [playlistUrl, setPlaylistUrl] = useState("");
@@ -80,6 +81,7 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
   const handleEditVideo = (video: ExistingVideo) => {
     setEditingVideoId(video.id);
     setEditingTitle(video.title);
+    setEditingUrl(video.video_url);
   };
 
   const handleSaveVideo = async (videoId: string) => {
@@ -88,17 +90,26 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
       return;
     }
 
+    if (!editingUrl.trim()) {
+      toast({ title: "Error", description: "Video URL cannot be empty", variant: "destructive" });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("course_videos")
-        .update({ title: editingTitle })
+        .update({ 
+          title: editingTitle,
+          video_url: editingUrl 
+        })
         .eq("id", videoId);
 
       if (error) throw error;
 
-      toast({ title: "Success", description: "Video title updated" });
+      toast({ title: "Success", description: "Video updated successfully" });
       setEditingVideoId(null);
       setEditingTitle("");
+      setEditingUrl("");
       fetchExistingVideos();
     } catch (error) {
       console.error("Error updating video:", error);
@@ -200,16 +211,28 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
 
     setIsLoading(true);
     try {
-      const urls = manualUrls.split("\n").filter(url => url.trim());
+      const lines = manualUrls.split("\n").filter(line => line.trim());
       const videos: VideoData[] = [];
 
-      for (let i = 0; i < urls.length; i++) {
-        const url = urls[i].trim();
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        let title = `Video ${i + 1}`;
+        let url = line;
+
+        // Check if line contains title | URL format
+        if (line.includes("|")) {
+          const parts = line.split("|").map(p => p.trim());
+          if (parts.length === 2 && parts[0] && parts[1]) {
+            title = parts[0];
+            url = parts[1];
+          }
+        }
+
         const videoId = extractVideoId(url);
         
         if (videoId) {
           videos.push({
-            title: `Video ${i + 1}`,
+            title: title,
             video_url: `https://www.youtube.com/watch?v=${videoId}`,
             description: "",
             order_index: i,
@@ -386,6 +409,7 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
                       <TableRow>
                         <TableHead className="w-12">#</TableHead>
                         <TableHead>Title</TableHead>
+                        <TableHead>Video URL</TableHead>
                         <TableHead className="w-32">Source</TableHead>
                         <TableHead className="w-32 text-right">Actions</TableHead>
                       </TableRow>
@@ -401,9 +425,24 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
                                 onChange={(e) => setEditingTitle(e.target.value)}
                                 className="h-8"
                                 autoFocus
+                                placeholder="Video title"
                               />
                             ) : (
                               <span>{video.title}</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {editingVideoId === video.id ? (
+                              <Input
+                                value={editingUrl}
+                                onChange={(e) => setEditingUrl(e.target.value)}
+                                className="h-8"
+                                placeholder="Video URL"
+                              />
+                            ) : (
+                              <span className="text-xs text-muted-foreground truncate max-w-xs block">
+                                {video.video_url}
+                              </span>
                             )}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground capitalize">
@@ -426,6 +465,7 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
                                     onClick={() => {
                                       setEditingVideoId(null);
                                       setEditingTitle("");
+                                      setEditingUrl("");
                                     }}
                                   >
                                     <X className="h-4 w-4" />
@@ -496,11 +536,11 @@ export const VideoManagement = ({ courseId, isOpen, onClose, onVideosAdded }: Vi
                 id="manual-urls"
                 value={manualUrls}
                 onChange={(e) => setManualUrls(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..."
+                placeholder="Video Title | https://www.youtube.com/watch?v=...&#10;Another Video | https://youtu.be/..."
                 rows={8}
               />
               <p className="text-sm text-muted-foreground">
-                Enter one YouTube video URL per line
+                Enter one video per line. Format: <code className="text-xs bg-muted px-1 py-0.5 rounded">Title | URL</code> or just the URL (will use generic title)
               </p>
             </div>
             <Button 
