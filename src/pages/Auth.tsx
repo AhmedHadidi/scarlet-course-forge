@@ -102,7 +102,7 @@ const Auth = () => {
       toast.success(`Welcome ${userName}!`);
       
       if (roleData) {
-        navigate("/admin-dashboard");
+        navigate("/admin");
       } else {
         navigate("/dashboard");
       }
@@ -162,7 +162,7 @@ const Auth = () => {
         toast.success(`Welcome ${userName}!`);
         
         if (roleData) {
-          navigate("/admin-dashboard");
+          navigate("/admin");
         } else {
           navigate("/dashboard");
         }
