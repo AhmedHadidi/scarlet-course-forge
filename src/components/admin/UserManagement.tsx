@@ -29,7 +29,11 @@ interface User {
   roles: { role: string }[];
 }
 
-export const UserManagement = () => {
+interface UserManagementProps {
+  onOpenDialog?: () => void;
+}
+
+export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -45,6 +49,12 @@ export const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if (onOpenDialog) {
+      onOpenDialog();
+    }
+  }, [onOpenDialog]);
 
   const fetchUsers = async () => {
     try {
@@ -236,7 +246,7 @@ export const UserManagement = () => {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className="gradient-crimson">
+            <Button className="gradient-crimson" data-action="create-user-dialog">
               <Plus className="mr-2 h-4 w-4" />
               Add User
             </Button>

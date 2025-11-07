@@ -216,7 +216,7 @@ export const CourseManagement = () => {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className="gradient-crimson">
+            <Button className="gradient-crimson" data-action="create-course-dialog">
               <Plus className="mr-2 h-4 w-4" />
               Create Course
             </Button>
