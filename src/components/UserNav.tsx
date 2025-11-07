@@ -6,15 +6,22 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const UserNav = () => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, userRole } = useAuth();
 
-  const navItems = [
+  const allNavItems = [
     { path: "/dashboard", icon: Home, label: "Home" },
-    { path: "/progress", icon: TrendingUp, label: "My Progress" },
+    { path: "/admin", icon: BookOpen, label: "Courses", adminOnly: true },
+    { path: "/progress", icon: TrendingUp, label: "My Progress", userOnly: true },
     { path: "/certificates", icon: Award, label: "Certificates" },
     { path: "/profile", icon: User, label: "Profile" },
     { path: "/notifications", icon: Bell, label: "Notifications" },
   ];
+
+  const navItems = allNavItems.filter(item => {
+    if (item.adminOnly) return userRole === 'admin';
+    if (item.userOnly) return userRole !== 'admin';
+    return true;
+  });
 
   return (
     <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
