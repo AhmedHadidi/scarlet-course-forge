@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ interface Course {
 
 const Courses = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
@@ -95,14 +97,21 @@ const Courses = () => {
           title: "Enrolled Successfully",
           description: "You can now access this course from your dashboard.",
         });
+        // Navigate to course player
+        navigate(`/courses/${courseId}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error enrolling:", error);
-      toast({
-        title: "Enrollment Failed",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
+      if (error.code === "23505") {
+        // Already enrolled, navigate to course
+        navigate(`/courses/${courseId}`);
+      } else {
+        toast({
+          title: "Enrollment Failed",
+          description: "Please try again later.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -172,8 +181,11 @@ const Courses = () => {
                   </CardHeader>
                   <CardContent>
                     {isEnrolled ? (
-                      <Button className="w-full" variant="outline" disabled>
-                        Already Enrolled
+                      <Button 
+                        className="w-full" 
+                        onClick={() => navigate(`/courses/${course.id}`)}
+                      >
+                        Continue Learning
                       </Button>
                     ) : (
                       <Button

@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
+import CoursePlayer from "./pages/CoursePlayer";
 import Progress from "./pages/Progress";
 import Certificates from "./pages/Certificates";
 import Profile from "./pages/Profile";
@@ -41,6 +42,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Courses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/courses/:courseId"
+              element={
+                <ProtectedRoute>
+                  <CoursePlayer />
                 </ProtectedRoute>
               }
             />
