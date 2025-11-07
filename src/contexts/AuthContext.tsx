@@ -35,9 +35,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               .from("user_roles")
               .select("role")
               .eq("user_id", session.user.id)
-              .single();
+              .order("role", { ascending: true }); // admin comes before user alphabetically
             
-            setUserRole(roleData?.role || null);
+            // Prioritize admin role if user has multiple roles
+            const role = roleData?.find(r => r.role === 'admin')?.role || roleData?.[0]?.role || null;
+            setUserRole(role);
           }, 0);
         } else {
           setUserRole(null);
@@ -55,9 +57,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .from("user_roles")
           .select("role")
           .eq("user_id", session.user.id)
-          .single()
+          .order("role", { ascending: true })
           .then(({ data: roleData }) => {
-            setUserRole(roleData?.role || null);
+            // Prioritize admin role if user has multiple roles
+            const role = roleData?.find(r => r.role === 'admin')?.role || roleData?.[0]?.role || null;
+            setUserRole(role);
             setLoading(false);
           });
       } else {

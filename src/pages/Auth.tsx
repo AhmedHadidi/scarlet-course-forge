@@ -34,9 +34,10 @@ const Auth = () => {
           .from("user_roles")
           .select("role")
           .eq("user_id", session.user.id)
-          .single();
+          .eq("role", "admin")
+          .maybeSingle();
 
-        if (roleData?.role === "admin") {
+        if (roleData) {
           navigate("/admin", { replace: true });
         } else {
           navigate("/dashboard", { replace: true });
@@ -82,16 +83,17 @@ const Auth = () => {
 
       if (error) throw error;
 
-      // Check user role and redirect accordingly
+      // Check if user has admin role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", data.user.id)
-        .single();
+        .eq("role", "admin")
+        .maybeSingle();
 
       toast.success("Signed in successfully!");
       
-      if (roleData?.role === "admin") {
+      if (roleData) {
         navigate("/admin");
       } else {
         navigate("/dashboard");
@@ -133,16 +135,17 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Check user role and redirect accordingly
+        // Check if user has admin role
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", data.user.id)
-          .single();
+          .eq("role", "admin")
+          .maybeSingle();
 
         toast.success("Account created! Redirecting...");
         
-        if (roleData?.role === "admin") {
+        if (roleData) {
           navigate("/admin");
         } else {
           navigate("/dashboard");
