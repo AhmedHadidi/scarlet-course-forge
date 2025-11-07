@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,11 +20,37 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Handle OAuth callback redirect
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      const isCallback = searchParams.get("callback");
+      if (!isCallback) return;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .single();
+
+        if (roleData?.role === "admin") {
+          navigate("/admin", { replace: true });
+        } else {
+          navigate("/dashboard", { replace: true });
+        }
+      }
+    };
+
+    handleOAuthCallback();
+  }, [searchParams, navigate]);
 
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/auth?callback=true`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -107,8 +133,20 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
+        // Check user role and redirect accordingly
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .single();
+
         toast.success("Account created! Redirecting...");
-        navigate("/dashboard");
+        
+        if (roleData?.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -124,7 +162,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 gradient-dark">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md border-border/50 shadow-crimson">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
