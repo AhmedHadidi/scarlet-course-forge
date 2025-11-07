@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap } from "lucide-react";
+import { CourseManagement } from "@/components/admin/CourseManagement";
+import { UserManagement } from "@/components/admin/UserManagement";
 
 const AdminDashboard = () => {
   const { signOut } = useAuth();
@@ -67,9 +69,9 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen gradient-dark">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/30 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -176,23 +178,11 @@ const AdminDashboard = () => {
               </TabsContent>
 
               <TabsContent value="users" className="pt-4">
-                <div className="rounded-lg border border-border/50 p-6 text-center">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">User Management</h3>
-                  <p className="text-muted-foreground">
-                    User management interface coming soon
-                  </p>
-                </div>
+                <UserManagement />
               </TabsContent>
 
               <TabsContent value="courses" className="pt-4">
-                <div className="rounded-lg border border-border/50 p-6 text-center">
-                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Course Management</h3>
-                  <p className="text-muted-foreground">
-                    Course management interface coming soon
-                  </p>
-                </div>
+                <CourseManagement />
               </TabsContent>
 
               <TabsContent value="certificates" className="pt-4">
