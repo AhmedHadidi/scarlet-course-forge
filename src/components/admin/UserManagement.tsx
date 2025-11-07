@@ -39,6 +39,9 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
   const [users, setUsers] = useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<string>("");
+  const [newPassword, setNewPassword] = useState("");
   const [formData, setFormData] = useState<Partial<UserFormData>>({
     email: "",
     password: "",
@@ -234,7 +237,12 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
   };
 
   const handleResetPassword = async (userId: string) => {
-    const newPassword = prompt("Enter new password (minimum 6 characters):");
+    setResetPasswordUserId(userId);
+    setNewPassword("");
+    setIsResetPasswordDialogOpen(true);
+  };
+
+  const confirmResetPassword = async () => {
     if (!newPassword || newPassword.length < 6) {
       sonnerToast.error("Password must be at least 6 characters");
       return;
@@ -246,7 +254,7 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
       const { error } = await supabase.functions.invoke('admin-operations', {
         body: {
           operation: 'resetPassword',
-          data: { userId, newPassword }
+          data: { userId: resetPasswordUserId, newPassword }
         },
         headers: {
           Authorization: `Bearer ${session?.access_token}`
@@ -256,6 +264,8 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
       if (error) throw error;
 
       sonnerToast.success("Password reset successfully");
+      setIsResetPasswordDialogOpen(false);
+      setNewPassword("");
     } catch (error: any) {
       console.error("Error resetting password:", error);
       sonnerToast.error(error.message || "Failed to reset password");
@@ -296,6 +306,9 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
           <p className="text-sm text-muted-foreground">Manage users and their roles</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          if (open && !editingUser) {
+            resetForm();
+          }
           setIsDialogOpen(open);
           if (!open) resetForm();
         }}>
@@ -303,11 +316,6 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
             <Button 
               className="gradient-crimson" 
               data-action="create-user-dialog"
-              onClick={(e) => {
-                e.preventDefault();
-                resetForm();
-                setTimeout(() => setIsDialogOpen(true), 0);
-              }}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add User
@@ -466,6 +474,38 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Enter a new password for this user (minimum 6 characters)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsResetPasswordDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="gradient-crimson" onClick={confirmResetPassword}>
+              Reset Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
