@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, BookOpen, TrendingUp, Award, User, Bell, LogOut, GraduationCap } from "lucide-react";
+import { Home, BookOpen, TrendingUp, Award, User, Bell, LogOut, GraduationCap, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -8,20 +8,24 @@ const UserNav = () => {
   const location = useLocation();
   const { signOut, userRole } = useAuth();
 
-  const allNavItems = [
+  // Admin menu items
+  const adminNavItems = [
     { path: "/dashboard", icon: Home, label: "Home" },
-    { path: "/admin", icon: BookOpen, label: "Courses", adminOnly: true },
-    { path: "/progress", icon: TrendingUp, label: "My Progress", userOnly: true },
+    { path: "/admin", icon: BarChart, label: "My Dashboard" },
+    { path: "/profile", icon: User, label: "My Profile" },
+  ];
+
+  // Regular user menu items
+  const userNavItems = [
+    { path: "/dashboard", icon: Home, label: "Home" },
+    { path: "/admin", icon: BookOpen, label: "Courses" },
+    { path: "/progress", icon: TrendingUp, label: "My Progress" },
     { path: "/certificates", icon: Award, label: "Certificates" },
     { path: "/profile", icon: User, label: "Profile" },
     { path: "/notifications", icon: Bell, label: "Notifications" },
   ];
 
-  const navItems = allNavItems.filter(item => {
-    if (item.adminOnly) return userRole === 'admin';
-    if (item.userOnly) return userRole !== 'admin';
-    return true;
-  });
+  const navItems = userRole === 'admin' ? adminNavItems : userNavItems;
 
   return (
     <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
