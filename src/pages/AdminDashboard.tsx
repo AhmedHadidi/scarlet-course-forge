@@ -103,56 +103,9 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Top Header Navigation - Only shown on overview */}
-      {activeView === "overview" && (
-        <header className="bg-card border-b border-border">
-          <div className="container mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full gradient-crimson flex items-center justify-center">
-                  <GraduationCap className="h-5 w-5 text-white" />
-                </div>
-                <h1 className="text-xl font-bold">LearnHub</h1>
-              </div>
-              
-              <nav className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  onClick={() => setActiveView("overview")}
-                  className={activeView === "overview" ? "bg-muted" : ""}
-                >
-                  <Home className="mr-2 h-4 w-4" />
-                  Home
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => setActiveView("analytics")}
-                >
-                  <BarChart className="mr-2 h-4 w-4" />
-                  My Dashboard
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => setActiveView("profile")}
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  My Profile
-                </Button>
-                <Button variant="ghost" onClick={signOut} className="ml-4">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </Button>
-              </nav>
-            </div>
-          </div>
-        </header>
-      )}
-
-      <div className="flex flex-1">
-        {/* Sidebar - Hidden on overview */}
-        {activeView !== "overview" && (
-          <aside className="w-64 bg-card border-r border-border flex flex-col">
+    <div className="min-h-screen bg-background flex">
+      {/* Sidebar */}
+      <aside className="w-64 bg-card border-r border-border flex flex-col">
         {/* Logo */}
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-3">
@@ -197,28 +150,25 @@ const AdminDashboard = () => {
             Sign Out
           </Button>
         </div>
-          </aside>
-        )}
+      </aside>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto">
-        {/* Header - Only show on non-overview pages */}
-        {activeView !== "overview" && (
-          <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
-            <div className="px-8 py-6">
-              <h2 className="text-3xl font-bold">
-                {menuItems.find(item => item.id === activeView)?.label || "Admin Dashboard"}
-              </h2>
-              <p className="text-muted-foreground mt-1">
-                {activeView === "users" && "Manage user accounts and permissions"}
-                {activeView === "courses" && "Create and manage courses"}
-                {activeView === "certificates" && "Issue and manage certificates"}
-                {activeView === "analytics" && "View platform analytics and reports"}
-                {activeView === "profile" && "Manage your profile settings"}
-              </p>
-            </div>
-          </header>
-        )}
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        {/* Header */}
+        <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
+          <div className="px-8 py-6">
+            <h2 className="text-3xl font-bold">
+              {menuItems.find(item => item.id === activeView)?.label || "Admin Dashboard"}
+            </h2>
+            <p className="text-muted-foreground mt-1">
+              {activeView === "overview" && "Welcome to your admin dashboard"}
+              {activeView === "users" && "Manage user accounts and permissions"}
+              {activeView === "courses" && "Create and manage courses"}
+              {activeView === "certificates" && "Issue and manage certificates"}
+              {activeView === "analytics" && "View platform analytics and reports"}
+            </p>
+          </div>
+        </header>
 
         <div className="p-8">
           {/* Overview */}
@@ -311,18 +261,6 @@ const AdminDashboard = () => {
 
           {/* Analytics View */}
           {activeView === "analytics" && <AnalyticsDashboard />}
-
-          {/* Profile View */}
-          {activeView === "profile" && (
-            <div className="rounded-lg border border-border/50 p-12 text-center">
-              <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">My Profile</h3>
-              <p className="text-muted-foreground">
-                Profile management interface coming soon
-              </p>
-            </div>
-          )}
-        </div>
         </div>
       </div>
     </div>
