@@ -203,10 +203,10 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
         if (error) throw error;
 
         sonnerToast.success("User created successfully");
+        resetForm(); // Clear fields after successful creation
       }
 
       setIsDialogOpen(false);
-      resetForm();
       fetchUsers();
     } catch (error: any) {
       console.error("Error saving user:", error);

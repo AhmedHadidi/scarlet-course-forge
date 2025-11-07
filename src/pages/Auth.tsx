@@ -38,7 +38,7 @@ const Auth = () => {
           .maybeSingle();
 
         if (roleData) {
-          navigate("/admin", { replace: true });
+          window.location.href = 'https://scarlet-course-forge.lovable.app/admin';
         } else {
           navigate("/dashboard", { replace: true });
         }
@@ -102,7 +102,7 @@ const Auth = () => {
       toast.success(`Welcome ${userName}!`);
       
       if (roleData) {
-        navigate("/admin");
+        window.location.href = 'https://scarlet-course-forge.lovable.app/admin';
       } else {
         navigate("/dashboard");
       }
@@ -162,7 +162,7 @@ const Auth = () => {
         toast.success(`Welcome ${userName}!`);
         
         if (roleData) {
-          navigate("/admin");
+          window.location.href = 'https://scarlet-course-forge.lovable.app/admin';
         } else {
           navigate("/dashboard");
         }
