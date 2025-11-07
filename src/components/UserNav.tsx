@@ -10,7 +10,6 @@ const UserNav = () => {
 
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Home" },
-    { path: "/courses", icon: BookOpen, label: "Courses" },
     { path: "/progress", icon: TrendingUp, label: "My Progress" },
     { path: "/certificates", icon: Award, label: "Certificates" },
     { path: "/profile", icon: User, label: "Profile" },
