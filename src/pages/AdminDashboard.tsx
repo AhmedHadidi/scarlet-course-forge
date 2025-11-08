@@ -3,10 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, User } from "lucide-react";
+import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, FileText } from "lucide-react";
 import { CourseManagement } from "@/components/admin/CourseManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
+import { QuizManagement } from "@/components/admin/QuizManagement";
 
 const AdminDashboard = () => {
   const { signOut } = useAuth();
@@ -82,6 +83,7 @@ const AdminDashboard = () => {
     { id: "analytics", label: "Analytics", icon: TrendingUp },
     { id: "users", label: "Users", icon: Users },
     { id: "courses", label: "Courses", icon: BookOpen },
+    { id: "quizzes", label: "Quizzes", icon: FileText },
     { id: "certificates", label: "Certificates", icon: Award },
   ];
 
@@ -179,6 +181,7 @@ const AdminDashboard = () => {
               {activeView === "overview" && "Manage your platform and monitor performance"}
               {activeView === "users" && "Manage user accounts and permissions"}
               {activeView === "courses" && "Create and manage courses"}
+              {activeView === "quizzes" && "Create and manage course quizzes"}
               {activeView === "certificates" && "Issue and manage certificates"}
               {activeView === "analytics" && "View platform analytics and reports"}
             </p>
@@ -262,6 +265,9 @@ const AdminDashboard = () => {
 
           {/* Courses View */}
           {activeView === "courses" && <CourseManagement />}
+
+          {/* Quizzes View */}
+          {activeView === "quizzes" && <QuizManagement />}
 
           {/* Certificates View */}
           {activeView === "certificates" && (

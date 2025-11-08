@@ -14,6 +14,7 @@ import Certificates from "./pages/Certificates";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import AdminDashboard from "./pages/AdminDashboard";
+import QuizTake from "./pages/QuizTake";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/quiz/:quizId"
+              element={
+                <ProtectedRoute>
+                  <QuizTake />
                 </ProtectedRoute>
               }
             />

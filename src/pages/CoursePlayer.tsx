@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Award } from "lucide-react";
+import { CheckCircle2, Award, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
@@ -35,6 +35,8 @@ const CoursePlayer = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [quizId, setQuizId] = useState<string | null>(null);
+  const [hasCompletedQuiz, setHasCompletedQuiz] = useState(false);
 
   useEffect(() => {
     if (user && courseId) {
@@ -94,6 +96,29 @@ const CoursePlayer = () => {
 
       setVideos(videosWithProgress);
       calculateProgress(videosWithProgress);
+
+      // Check if there's a quiz for this course
+      const { data: quizData } = await supabase
+        .from("quizzes")
+        .select("id")
+        .eq("course_id", courseId)
+        .maybeSingle();
+
+      if (quizData) {
+        setQuizId(quizData.id);
+
+        // Check if user has passed the quiz
+        const { data: attemptData } = await supabase
+          .from("quiz_attempts")
+          .select("passed")
+          .eq("user_id", user?.id)
+          .eq("quiz_id", quizData.id)
+          .eq("passed", true)
+          .maybeSingle();
+
+        setHasCompletedQuiz(!!attemptData);
+      }
+
       setLoading(false);
     } catch (error) {
       console.error("Error fetching course data:", error);
@@ -258,7 +283,17 @@ const CoursePlayer = () => {
                     </Button>
                   )}
 
-                  {progress === 100 && (
+                  {progress === 100 && quizId && !hasCompletedQuiz && (
+                    <Button
+                      onClick={() => navigate(`/quiz/${quizId}`)}
+                      variant="default"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Take Quiz
+                    </Button>
+                  )}
+
+                  {progress === 100 && hasCompletedQuiz && (
                     <Button
                       onClick={() => navigate("/certificates")}
                       variant="outline"
@@ -288,9 +323,18 @@ const CoursePlayer = () => {
                   </p>
                 </div>
 
-                {progress === 100 && (
+                {progress === 100 && quizId && !hasCompletedQuiz && (
                   <Button
-                    onClick={() => navigate("/certificates")}
+                    onClick={() => navigate(`/quiz/${quizId}`)}
+                    className="w-full"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Take Quiz
+                  </Button>
+                )}
+                {progress === 100 && hasCompletedQuiz && (
+                  <Button
+                    onClick={() => navigate('/certificates')}
                     className="w-full"
                   >
                     <Award className="mr-2 h-4 w-4" />
