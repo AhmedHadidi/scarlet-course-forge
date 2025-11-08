@@ -17,6 +17,7 @@ interface Quiz {
   title: string;
   description: string | null;
   passing_score: number;
+  allow_retakes: boolean;
   course_id: string;
   courses: {
     title: string;
@@ -53,6 +54,8 @@ export default function QuizTake() {
     totalQuestions: number;
     correctAnswers: number;
   } | null>(null);
+  const [previousAttempt, setPreviousAttempt] = useState<any>(null);
+  const [canTakeQuiz, setCanTakeQuiz] = useState(true);
 
   useEffect(() => {
     if (!user || !quizId) return;
@@ -70,6 +73,25 @@ export default function QuizTake() {
 
       if (quizError) throw quizError;
       setQuiz(quizData);
+
+      // Check for previous attempts
+      const { data: attemptData, error: attemptError } = await supabase
+        .from("quiz_attempts")
+        .select("*")
+        .eq("user_id", user!.id)
+        .eq("quiz_id", quizId)
+        .order("attempted_at", { ascending: false })
+        .limit(1);
+
+      if (!attemptError && attemptData && attemptData.length > 0) {
+        setPreviousAttempt(attemptData[0]);
+        // If retakes are not allowed, prevent taking the quiz again
+        if (!quizData.allow_retakes) {
+          setCanTakeQuiz(false);
+          setLoading(false);
+          return;
+        }
+      }
 
       // Fetch questions
       const { data: questionsData, error: questionsError } = await supabase
@@ -218,6 +240,64 @@ export default function QuizTake() {
             <Button onClick={() => navigate("/dashboard")}>Return to Dashboard</Button>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  if (!canTakeQuiz && previousAttempt) {
+    return (
+      <div className="min-h-screen bg-background">
+        <UserNav />
+        <div className="container mx-auto px-4 py-8 max-w-2xl">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                {previousAttempt.passed ? (
+                  <CheckCircle className="h-8 w-8 text-green-500" />
+                ) : (
+                  <XCircle className="h-8 w-8 text-red-500" />
+                )}
+                <div>
+                  <CardTitle>Quiz Already Completed</CardTitle>
+                  <CardDescription>{quiz.courses.title}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2">Your Previous Result</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground mb-1">Score</p>
+                    <p className="text-2xl font-bold">{previousAttempt.score}%</p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground mb-1">Status</p>
+                    <Badge variant={previousAttempt.passed ? "default" : "destructive"} className="text-sm">
+                      {previousAttempt.passed ? "Passed" : "Failed"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-lg bg-muted p-4">
+                <p className="text-sm text-muted-foreground">
+                  You have already taken this quiz. Retakes are not allowed for this quiz.
+                  {previousAttempt.passed && " You have passed and can continue with the course."}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => navigate("/dashboard")} variant="outline" className="flex-1">
+                  Back to Dashboard
+                </Button>
+                {previousAttempt.passed && (
+                  <Button onClick={() => navigate("/progress")} className="flex-1">
+                    View Progress
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }

@@ -196,6 +196,30 @@ export type Database = {
           },
         ]
       }
+      feature_settings: {
+        Row: {
+          created_at: string
+          feature_name: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          feature_name: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          feature_name?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -324,6 +348,7 @@ export type Database = {
       }
       quizzes: {
         Row: {
+          allow_retakes: boolean
           course_id: string
           created_at: string
           description: string | null
@@ -332,6 +357,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          allow_retakes?: boolean
           course_id: string
           created_at?: string
           description?: string | null
@@ -340,6 +366,7 @@ export type Database = {
           title: string
         }
         Update: {
+          allow_retakes?: boolean
           course_id?: string
           created_at?: string
           description?: string | null

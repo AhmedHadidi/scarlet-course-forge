@@ -8,6 +8,7 @@ import { CourseManagement } from "@/components/admin/CourseManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { QuizManagement } from "@/components/admin/QuizManagement";
+import { FeatureManagement } from "@/components/admin/FeatureManagement";
 
 const AdminDashboard = () => {
   const { signOut } = useAuth();
@@ -84,7 +85,7 @@ const AdminDashboard = () => {
     { id: "users", label: "Users", icon: Users },
     { id: "courses", label: "Courses", icon: BookOpen },
     { id: "quizzes", label: "Quizzes", icon: FileText },
-    { id: "certificates", label: "Certificates", icon: Award },
+    { id: "features", label: "Features", icon: Award },
   ];
 
   const handleQuickAction = (action: string) => {
@@ -182,7 +183,7 @@ const AdminDashboard = () => {
               {activeView === "users" && "Manage user accounts and permissions"}
               {activeView === "courses" && "Create and manage courses"}
               {activeView === "quizzes" && "Create and manage course quizzes"}
-              {activeView === "certificates" && "Issue and manage certificates"}
+              {activeView === "features" && "Control feature visibility for users"}
               {activeView === "analytics" && "View platform analytics and reports"}
             </p>
           </div>
@@ -269,16 +270,8 @@ const AdminDashboard = () => {
           {/* Quizzes View */}
           {activeView === "quizzes" && <QuizManagement />}
 
-          {/* Certificates View */}
-          {activeView === "certificates" && (
-            <div className="rounded-lg border border-border/50 p-12 text-center">
-              <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Certificate Management</h3>
-              <p className="text-muted-foreground">
-                Certificate management interface coming soon
-              </p>
-            </div>
-          )}
+          {/* Features View */}
+          {activeView === "features" && <FeatureManagement />}
 
           {/* Analytics View */}
           {activeView === "analytics" && <AnalyticsDashboard />}

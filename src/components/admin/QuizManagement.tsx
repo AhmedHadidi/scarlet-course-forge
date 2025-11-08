@@ -24,6 +24,7 @@ interface Quiz {
   description: string | null;
   course_id: string;
   passing_score: number;
+  allow_retakes: boolean;
   courses: { title: string };
 }
 
@@ -56,6 +57,7 @@ export const QuizManagement = () => {
     description: "",
     course_id: "",
     passing_score: 70,
+    allow_retakes: false,
   });
 
   const [questionForm, setQuestionForm] = useState({
@@ -153,6 +155,7 @@ export const QuizManagement = () => {
             title: quizForm.title,
             description: quizForm.description,
             passing_score: quizForm.passing_score,
+            allow_retakes: quizForm.allow_retakes,
           })
           .eq("id", editingQuiz.id);
 
@@ -164,6 +167,7 @@ export const QuizManagement = () => {
           description: quizForm.description,
           course_id: quizForm.course_id,
           passing_score: quizForm.passing_score,
+          allow_retakes: quizForm.allow_retakes,
         });
 
         if (error) throw error;
@@ -172,7 +176,7 @@ export const QuizManagement = () => {
 
       setIsQuizDialogOpen(false);
       setEditingQuiz(null);
-      setQuizForm({ title: "", description: "", course_id: "", passing_score: 70 });
+      setQuizForm({ title: "", description: "", course_id: "", passing_score: 70, allow_retakes: false });
       fetchQuizzes();
     } catch (error: any) {
       sonnerToast.error(error.message);
@@ -356,12 +360,13 @@ export const QuizManagement = () => {
                         size="icon"
                         onClick={() => {
                           setEditingQuiz(quiz);
-                          setQuizForm({
-                            title: quiz.title,
-                            description: quiz.description || "",
-                            course_id: quiz.course_id,
-                            passing_score: quiz.passing_score,
-                          });
+        setQuizForm({
+          title: quiz.title,
+          description: quiz.description || "",
+          course_id: quiz.course_id,
+          passing_score: quiz.passing_score,
+          allow_retakes: quiz.allow_retakes,
+        });
                           setIsQuizDialogOpen(true);
                         }}
                       >
@@ -373,15 +378,18 @@ export const QuizManagement = () => {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3">{quiz.description}</p>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary">Passing: {quiz.passing_score}%</Badge>
-                    <Button size="sm" variant="outline" onClick={() => setSelectedQuiz(quiz.id)}>
-                      Manage Questions
-                    </Button>
-                  </div>
-                </CardContent>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-3">{quiz.description}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-2">
+                        <Badge variant="secondary">Passing: {quiz.passing_score}%</Badge>
+                        {quiz.allow_retakes && <Badge variant="outline">Retakes Allowed</Badge>}
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedQuiz(quiz.id)}>
+                        Manage Questions
+                      </Button>
+                    </div>
+                  </CardContent>
               </Card>
             ))}
           </div>
@@ -513,6 +521,16 @@ export const QuizManagement = () => {
                 value={quizForm.passing_score}
                 onChange={(e) => setQuizForm({ ...quizForm, passing_score: parseInt(e.target.value) || 70 })}
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="allow-retakes"
+                checked={quizForm.allow_retakes}
+                onCheckedChange={(checked) => setQuizForm({ ...quizForm, allow_retakes: checked as boolean })}
+              />
+              <Label htmlFor="allow-retakes" className="text-sm font-normal cursor-pointer">
+                Allow users to retake this quiz multiple times
+              </Label>
             </div>
           </div>
           <DialogFooter>

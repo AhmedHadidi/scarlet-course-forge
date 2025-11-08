@@ -3,10 +3,13 @@ import { cn } from "@/lib/utils";
 import { Home, BookOpen, TrendingUp, Award, User, Bell, LogOut, GraduationCap, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 const UserNav = () => {
   const location = useLocation();
   const { signOut, userRole } = useAuth();
+  const [featureSettings, setFeatureSettings] = useState<Record<string, boolean>>({});
 
   // Admin menu items
   const adminNavItems = [
@@ -16,16 +19,47 @@ const UserNav = () => {
   ];
 
   // Regular user menu items
-  const userNavItems = [
-    { path: "/dashboard", icon: Home, label: "Home" },
+  const userNavItems: Array<{ path: string; icon: any; label: string; feature?: string }> = [
     { path: "/admin", icon: BookOpen, label: "Courses" },
     { path: "/progress", icon: TrendingUp, label: "My Progress" },
-    { path: "/certificates", icon: Award, label: "Certificates" },
+    { path: "/certificates", icon: Award, label: "Certificates", feature: "certificates" },
     { path: "/profile", icon: User, label: "Profile" },
-    { path: "/notifications", icon: Bell, label: "Notifications" },
+    { path: "/notifications", icon: Bell, label: "Notifications", feature: "notifications" },
   ];
 
+  useEffect(() => {
+    fetchFeatureSettings();
+  }, []);
+
+  const fetchFeatureSettings = async () => {
+    try {
+      const { data } = await supabase
+        .from("feature_settings")
+        .select("feature_name, is_enabled");
+      
+      if (data) {
+        const settings: Record<string, boolean> = {};
+        data.forEach(item => {
+          settings[item.feature_name] = item.is_enabled;
+        });
+        setFeatureSettings(settings);
+      }
+    } catch (error) {
+      console.error("Error fetching feature settings:", error);
+    }
+  };
+
   const navItems = userRole === 'admin' ? adminNavItems : userNavItems;
+  
+  // Filter nav items based on feature settings for regular users
+  const filteredNavItems = userRole === 'admin' 
+    ? navItems 
+    : navItems.filter(item => {
+        if ('feature' in item && item.feature) {
+          return featureSettings[item.feature] !== false;
+        }
+        return true;
+      });
 
   return (
     <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
@@ -41,7 +75,7 @@ const UserNav = () => {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (
@@ -67,7 +101,7 @@ const UserNav = () => {
 
         {/* Mobile Navigation */}
         <nav className="md:hidden flex items-center gap-1 mt-4 overflow-x-auto pb-2">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (
