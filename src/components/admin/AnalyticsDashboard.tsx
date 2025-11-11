@@ -299,69 +299,92 @@ export const AnalyticsDashboard = () => {
 
       setEnrollmentTrend(enrollmentTrendData);
 
-      // Fetch detailed user progress
-      const { data: userProgressData, error: userProgressError } = await supabase
+      // Fetch detailed user progress - using separate queries to avoid RLS issues
+      const { data: enrollmentsData, error: userProgressError } = await supabase
         .from("enrollments")
-        .select(`
-          progress_percentage,
-          enrolled_at,
-          profiles (
-            full_name
-          ),
-          courses (
-            title
-          )
-        `)
+        .select("user_id, course_id, progress_percentage, enrolled_at")
         .order('enrolled_at', { ascending: false })
         .limit(50);
 
       if (userProgressError) {
         console.error("Error fetching user progress:", userProgressError);
       }
-      console.log("User progress data:", userProgressData);
 
-      const userProgressList = (userProgressData || []).map((enrollment: any) => ({
-        user_name: enrollment.profiles?.full_name || "Unknown",
-        course_title: enrollment.courses?.title || "Unknown",
+      // Fetch all profiles needed
+      const userIds = [...new Set(enrollmentsData?.map(e => e.user_id) || [])];
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+
+      // Fetch all courses needed  
+      const courseIds = [...new Set(enrollmentsData?.map(e => e.course_id) || [])];
+      const { data: coursesDataForProgress } = await supabase
+        .from("courses")
+        .select("id, title")
+        .in("id", courseIds);
+
+      // Create lookup maps
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]));
+      const coursesMap = new Map(coursesDataForProgress?.map(c => [c.id, c.title]));
+
+      const userProgressList = (enrollmentsData || []).map((enrollment: any) => ({
+        user_name: profilesMap.get(enrollment.user_id) || "Unknown",
+        course_title: coursesMap.get(enrollment.course_id) || "Unknown",
         progress_percentage: enrollment.progress_percentage,
         enrolled_at: format(new Date(enrollment.enrolled_at), "MMM dd, yyyy")
       }));
 
       setUserProgress(userProgressList);
 
-      // Fetch user quiz performance
-      const { data: quizPerformanceData, error: quizPerformanceError } = await supabase
+      // Fetch user quiz performance - using separate queries to avoid RLS issues
+      const { data: quizAttemptsData, error: quizPerformanceError } = await supabase
         .from("quiz_attempts")
-        .select(`
-          score,
-          passed,
-          attempted_at,
-          profiles (
-            full_name
-          ),
-          quizzes (
-            title,
-            courses (
-              title
-            )
-          )
-        `)
+        .select("user_id, quiz_id, score, passed, attempted_at")
         .order('attempted_at', { ascending: false })
         .limit(50);
 
       if (quizPerformanceError) {
         console.error("Error fetching quiz performance:", quizPerformanceError);
       }
-      console.log("Quiz performance data:", quizPerformanceData);
 
-      const quizPerformanceList = (quizPerformanceData || []).map((attempt: any) => ({
-        user_name: attempt.profiles?.full_name || "Unknown",
-        quiz_title: attempt.quizzes?.title || "Unknown",
-        course_title: attempt.quizzes?.courses?.title || "Unknown",
-        score: attempt.score,
-        passed: attempt.passed,
-        attempted_at: format(new Date(attempt.attempted_at), "MMM dd, yyyy HH:mm")
-      }));
+      // Fetch profiles for quiz attempts
+      const quizUserIds = [...new Set(quizAttemptsData?.map(qa => qa.user_id) || [])];
+      const { data: quizProfilesData } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", quizUserIds);
+
+      // Fetch quizzes with course info
+      const quizIds = [...new Set(quizAttemptsData?.map(qa => qa.quiz_id) || [])];
+      const { data: quizzesData } = await supabase
+        .from("quizzes")
+        .select("id, title, course_id")
+        .in("id", quizIds);
+
+      // Fetch courses for quizzes
+      const quizCourseIds = [...new Set(quizzesData?.map(q => q.course_id) || [])];
+      const { data: quizCoursesData } = await supabase
+        .from("courses")
+        .select("id, title")
+        .in("id", quizCourseIds);
+
+      // Create lookup maps
+      const quizProfilesMap = new Map(quizProfilesData?.map(p => [p.id, p.full_name]));
+      const quizzesMap = new Map(quizzesData?.map(q => [q.id, { title: q.title, course_id: q.course_id }]));
+      const quizCoursesMap = new Map(quizCoursesData?.map(c => [c.id, c.title]));
+
+      const quizPerformanceList = (quizAttemptsData || []).map((attempt: any) => {
+        const quiz = quizzesMap.get(attempt.quiz_id);
+        return {
+          user_name: quizProfilesMap.get(attempt.user_id) || "Unknown",
+          quiz_title: quiz?.title || "Unknown",
+          course_title: quiz ? quizCoursesMap.get(quiz.course_id) || "Unknown" : "Unknown",
+          score: attempt.score,
+          passed: attempt.passed,
+          attempted_at: format(new Date(attempt.attempted_at), "MMM dd, yyyy HH:mm")
+        };
+      });
 
       setUserQuizPerformance(quizPerformanceList);
     } catch (error) {
