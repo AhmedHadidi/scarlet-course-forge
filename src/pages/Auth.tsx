@@ -189,7 +189,7 @@ const Auth = () => {
               <GraduationCap className="h-8 w-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Welcome to LearnHub</CardTitle>
+          <CardTitle className="text-2xl">Welcome to MOI AI Learning Hub</CardTitle>
           <CardDescription>Sign in to access your courses and progress</CardDescription>
         </CardHeader>
         <CardContent>

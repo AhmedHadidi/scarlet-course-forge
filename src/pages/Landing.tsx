@@ -182,14 +182,23 @@ const Landing = () => {
             ) : (
               <>
                 <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-                  Master New Skills with
+                  Welcome to the
                   <span className="block mt-2 bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
-                    Expert-Led Courses
+                    MOI AI Learning Hub
                   </span>
                 </h1>
                 
-                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                  Join thousands of learners advancing their careers with our comprehensive online learning platform. Track progress, earn certificates, and achieve your goals.
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  Empowering the Ministry's employees to lead the future of media through Artificial Intelligence and advanced technologies.
+                </p>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  Discover a growing collection of expert-led courses designed to help you understand, apply, and innovate with AI.
+                </p>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  From fundamentals of machine learning to real-world applications in media, communication, and digital transformation — this platform is your gateway to mastering tomorrow's skills, today.
+                </p>
+                <p className="text-2xl font-semibold text-secondary mt-6">
+                  Learn. Innovate. Transform.
                 </p>
               </>
             )}
@@ -309,7 +318,7 @@ const Landing = () => {
       {/* Features Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">Why Choose LearnHub?</h2>
+          <h2 className="text-4xl font-bold mb-4">Why Choose MOI AI Learning Hub?</h2>
           <p className="text-xl text-muted-foreground">Everything you need to succeed in your learning journey</p>
         </div>
 
@@ -377,7 +386,7 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t border-border/50 py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2025 LearnHub. All rights reserved.</p>
+          <p>&copy; 2025 MOI AI Learning Hub. All rights reserved.</p>
         </div>
       </footer>
     </div>
