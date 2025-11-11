@@ -40,6 +40,22 @@ interface TopVideo {
   views: number;
 }
 
+interface UserProgress {
+  user_name: string;
+  course_title: string;
+  progress_percentage: number;
+  enrolled_at: string;
+}
+
+interface UserQuizPerformance {
+  user_name: string;
+  quiz_title: string;
+  course_title: string;
+  score: number;
+  passed: boolean;
+  attempted_at: string;
+}
+
 export const AnalyticsDashboard = () => {
   const [stats, setStats] = useState<AnalyticsStats>({
     totalUsers: 0,
@@ -54,6 +70,8 @@ export const AnalyticsDashboard = () => {
   const [topCourses, setTopCourses] = useState<TopCourse[]>([]);
   const [topUsers, setTopUsers] = useState<TopUser[]>([]);
   const [topVideos, setTopVideos] = useState<TopVideo[]>([]);
+  const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
+  const [userQuizPerformance, setUserQuizPerformance] = useState<UserQuizPerformance[]>([]);
   const [enrollmentTrend, setEnrollmentTrend] = useState<any[]>([]);
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
@@ -280,6 +298,62 @@ export const AnalyticsDashboard = () => {
       }));
 
       setEnrollmentTrend(enrollmentTrendData);
+
+      // Fetch detailed user progress
+      const { data: userProgressData } = await supabase
+        .from("enrollments")
+        .select(`
+          progress_percentage,
+          enrolled_at,
+          profiles (
+            full_name
+          ),
+          courses (
+            title
+          )
+        `)
+        .order('enrolled_at', { ascending: false })
+        .limit(50);
+
+      const userProgressList = (userProgressData || []).map((enrollment: any) => ({
+        user_name: enrollment.profiles?.full_name || "Unknown",
+        course_title: enrollment.courses?.title || "Unknown",
+        progress_percentage: enrollment.progress_percentage,
+        enrolled_at: format(new Date(enrollment.enrolled_at), "MMM dd, yyyy")
+      }));
+
+      setUserProgress(userProgressList);
+
+      // Fetch user quiz performance
+      const { data: quizPerformanceData } = await supabase
+        .from("quiz_attempts")
+        .select(`
+          score,
+          passed,
+          attempted_at,
+          profiles (
+            full_name
+          ),
+          quizzes (
+            title,
+            courses (
+              title
+            )
+          )
+        `)
+        .order('attempted_at', { ascending: false })
+        .limit(50);
+
+      const quizPerformanceList = (quizPerformanceData || []).map((attempt: any) => ({
+        user_name: attempt.profiles?.full_name || "Unknown",
+        quiz_title: attempt.quizzes?.title || "Unknown",
+        course_title: attempt.quizzes?.courses?.title || "Unknown",
+        score: attempt.score,
+        passed: attempt.passed,
+        attempted_at: format(new Date(attempt.attempted_at), "MMM dd, yyyy HH:mm")
+      }));
+
+      setUserQuizPerformance(quizPerformanceList);
     } catch (error) {
       console.error("Error fetching analytics:", error);
       toast.error("Failed to load analytics");
@@ -503,6 +577,96 @@ export const AnalyticsDashboard = () => {
               ))}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      {/* User Course Progress */}
+      <Card>
+        <CardHeader>
+          <CardTitle>User Course Progress</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="max-h-[500px] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User Name</TableHead>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Progress</TableHead>
+                  <TableHead>Enrolled Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {userProgress.map((progress, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{progress.user_name}</TableCell>
+                    <TableCell>{progress.course_title}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary transition-all" 
+                            style={{ width: `${progress.progress_percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-sm">{progress.progress_percentage}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{progress.enrolled_at}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* User Quiz Performance */}
+      <Card>
+        <CardHeader>
+          <CardTitle>User Quiz Performance</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="max-h-[500px] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User Name</TableHead>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Quiz</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Attempted At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {userQuizPerformance.map((performance, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{performance.user_name}</TableCell>
+                    <TableCell>{performance.course_title}</TableCell>
+                    <TableCell>{performance.quiz_title}</TableCell>
+                    <TableCell>
+                      <span className={performance.score >= 70 ? "text-green-600 font-semibold" : "text-red-600"}>
+                        {performance.score}%
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {performance.passed ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Passed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          Failed
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>{performance.attempted_at}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
