@@ -300,7 +300,7 @@ export const AnalyticsDashboard = () => {
       setEnrollmentTrend(enrollmentTrendData);
 
       // Fetch detailed user progress
-      const { data: userProgressData } = await supabase
+      const { data: userProgressData, error: userProgressError } = await supabase
         .from("enrollments")
         .select(`
           progress_percentage,
@@ -315,6 +315,11 @@ export const AnalyticsDashboard = () => {
         .order('enrolled_at', { ascending: false })
         .limit(50);
 
+      if (userProgressError) {
+        console.error("Error fetching user progress:", userProgressError);
+      }
+      console.log("User progress data:", userProgressData);
+
       const userProgressList = (userProgressData || []).map((enrollment: any) => ({
         user_name: enrollment.profiles?.full_name || "Unknown",
         course_title: enrollment.courses?.title || "Unknown",
@@ -325,7 +330,7 @@ export const AnalyticsDashboard = () => {
       setUserProgress(userProgressList);
 
       // Fetch user quiz performance
-      const { data: quizPerformanceData } = await supabase
+      const { data: quizPerformanceData, error: quizPerformanceError } = await supabase
         .from("quiz_attempts")
         .select(`
           score,
@@ -343,6 +348,11 @@ export const AnalyticsDashboard = () => {
         `)
         .order('attempted_at', { ascending: false })
         .limit(50);
+
+      if (quizPerformanceError) {
+        console.error("Error fetching quiz performance:", quizPerformanceError);
+      }
+      console.log("Quiz performance data:", quizPerformanceData);
 
       const quizPerformanceList = (quizPerformanceData || []).map((attempt: any) => ({
         user_name: attempt.profiles?.full_name || "Unknown",
