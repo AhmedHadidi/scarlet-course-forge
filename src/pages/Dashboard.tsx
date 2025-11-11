@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ interface Enrollment {
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
@@ -165,7 +167,11 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <Progress value={enrollment.progress_percentage} className="mb-4" />
-                    <Button className="w-full" variant="outline">
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
+                      onClick={() => navigate(`/courses/${enrollment.courses.id}`)}
+                    >
                       Continue Learning
                     </Button>
                   </CardContent>
