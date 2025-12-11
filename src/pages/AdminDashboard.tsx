@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, FileText } from "lucide-react";
+import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, FileText, Newspaper } from "lucide-react";
 import { CourseManagement } from "@/components/admin/CourseManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { QuizManagement } from "@/components/admin/QuizManagement";
 import { FeatureManagement } from "@/components/admin/FeatureManagement";
+import { NewsManagement } from "@/components/admin/NewsManagement";
 
 const AdminDashboard = () => {
   const { signOut } = useAuth();
@@ -85,6 +86,7 @@ const AdminDashboard = () => {
     { id: "users", label: "Users", icon: Users },
     { id: "courses", label: "Courses", icon: BookOpen },
     { id: "quizzes", label: "Quizzes", icon: FileText },
+    { id: "news", label: "News & Bulletins", icon: Newspaper },
     { id: "features", label: "Features", icon: Award },
   ];
 
@@ -183,6 +185,7 @@ const AdminDashboard = () => {
               {activeView === "users" && "Manage user accounts and permissions"}
               {activeView === "courses" && "Create and manage courses"}
               {activeView === "quizzes" && "Create and manage course quizzes"}
+              {activeView === "news" && "Manage news articles, categories, and weekly bulletins"}
               {activeView === "features" && "Control feature visibility for users"}
               {activeView === "analytics" && "View platform analytics and reports"}
             </p>
@@ -269,6 +272,9 @@ const AdminDashboard = () => {
 
           {/* Quizzes View */}
           {activeView === "quizzes" && <QuizManagement />}
+
+          {/* News View */}
+          {activeView === "news" && <NewsManagement />}
 
           {/* Features View */}
           {activeView === "features" && <FeatureManagement />}

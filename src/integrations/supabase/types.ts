@@ -220,6 +220,146 @@ export type Database = {
         }
         Relationships: []
       }
+      news_article_categories: {
+        Row: {
+          article_id: string
+          category_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          article_id: string
+          category_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          article_id?: string
+          category_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_article_categories_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_article_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "news_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_articles: {
+        Row: {
+          bulletin_id: string | null
+          created_at: string
+          full_content: string
+          id: string
+          image_url: string | null
+          is_published: boolean
+          short_description: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bulletin_id?: string | null
+          created_at?: string
+          full_content: string
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          short_description: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bulletin_id?: string | null
+          created_at?: string
+          full_content?: string
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          short_description?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_articles_bulletin_id_fkey"
+            columns: ["bulletin_id"]
+            isOneToOne: false
+            referencedRelation: "news_bulletins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_bulletins: {
+        Row: {
+          bulletin_number: string
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          published_at: string | null
+          title: string
+          updated_at: string
+          week_start_date: string
+        }
+        Insert: {
+          bulletin_number: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          title: string
+          updated_at?: string
+          week_start_date: string
+        }
+        Update: {
+          bulletin_number?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          title?: string
+          updated_at?: string
+          week_start_date?: string
+        }
+        Relationships: []
+      }
+      news_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -380,6 +520,35 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_category_preferences: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_category_preferences_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "news_categories"
             referencedColumns: ["id"]
           },
         ]

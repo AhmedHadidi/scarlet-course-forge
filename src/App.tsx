@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import AdminDashboard from "./pages/AdminDashboard";
 import QuizTake from "./pages/QuizTake";
+import WeeklyBulletin from "./pages/WeeklyBulletin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -90,6 +91,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <QuizTake />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bulletin/:id"
+              element={
+                <ProtectedRoute>
+                  <WeeklyBulletin />
                 </ProtectedRoute>
               }
             />
