@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, GraduationCap } from "lucide-react";
 import { z } from "zod";
+import { CategoryPreferencesStep } from "@/components/CategoryPreferencesStep";
 
 const authSchema = z.object({
   email: z.string().email("Invalid email address").max(255),
@@ -19,6 +20,8 @@ const authSchema = z.object({
 const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [newUserId, setNewUserId] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -143,29 +146,10 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Fetch user profile to get full name
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", data.user.id)
-          .maybeSingle();
-
-        // Check if user has admin role
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .eq("role", "admin")
-          .maybeSingle();
-
-        const userName = profileData?.full_name || validated.fullName || "User";
-        toast.success(`Welcome ${userName}!`);
-        
-        if (roleData) {
-          window.location.href = 'https://scarlet-course-forge.lovable.app/admin';
-        } else {
-          navigate("/dashboard");
-        }
+        const userName = validated.fullName || "User";
+        toast.success(`Welcome ${userName}! Let's set up your preferences.`);
+        setNewUserId(data.user.id);
+        setShowPreferences(true);
       }
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -180,6 +164,28 @@ const Auth = () => {
     }
   };
 
+  const handlePreferencesComplete = async () => {
+    // Check if user has admin role before redirecting
+    if (newUserId) {
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", newUserId)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (roleData) {
+        window.location.href = 'https://scarlet-course-forge.lovable.app/admin';
+      } else {
+        navigate("/dashboard");
+      }
+    }
+  };
+
+  const handlePreferencesSkip = () => {
+    handlePreferencesComplete();
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md border-border/50 shadow-crimson">
@@ -189,10 +195,23 @@ const Auth = () => {
               <GraduationCap className="h-8 w-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Welcome to MOI AI Learning Hub</CardTitle>
-          <CardDescription>Sign in to access your courses and progress</CardDescription>
+          <CardTitle className="text-2xl">
+            {showPreferences ? "Set Your Preferences" : "Welcome to MOI AI Learning Hub"}
+          </CardTitle>
+          <CardDescription>
+            {showPreferences
+              ? "Select AI topics to receive personalized weekly bulletins"
+              : "Sign in to access your courses and progress"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
+          {showPreferences && newUserId ? (
+            <CategoryPreferencesStep
+              userId={newUserId}
+              onComplete={handlePreferencesComplete}
+              onSkip={handlePreferencesSkip}
+            />
+          ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Sign In</TabsTrigger>
@@ -358,6 +377,7 @@ const Auth = () => {
               </Button>
             </TabsContent>
           </Tabs>
+          )}
         </CardContent>
       </Card>
     </div>
