@@ -389,14 +389,14 @@ export const NewsArticleManagement = () => {
               <div className="space-y-2">
                 <Label>Bulletin (نشرة الذكاء الاصطناعي)</Label>
                 <Select
-                  value={formData.bulletin_id}
-                  onValueChange={(value) => setFormData({ ...formData, bulletin_id: value })}
+                  value={formData.bulletin_id || "none"}
+                  onValueChange={(value) => setFormData({ ...formData, bulletin_id: value === "none" ? "" : value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select bulletin (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {bulletins.map((bulletin) => (
                       <SelectItem key={bulletin.id} value={bulletin.id}>
                         {bulletin.bulletin_number} - {bulletin.title}
