@@ -280,9 +280,12 @@ export const NewsArticleManagement = () => {
           <Newspaper className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-semibold">News Articles</h3>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          if (open) resetForm();
+          setDialogOpen(open);
+        }}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
+            <Button>
               <Plus className="mr-2 h-4 w-4" />
               Add Article
             </Button>
