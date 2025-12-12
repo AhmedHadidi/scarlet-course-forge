@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,7 +20,14 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    
+    if (!resendApiKey) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const resend = new Resend(resendApiKey);
 
     const { bulletinId }: BulletinEmailRequest = await req.json();
 
@@ -123,6 +131,7 @@ serve(async (req: Request): Promise<Response> => {
     });
 
     let sentCount = 0;
+    const errors: string[] = [];
 
     // Send personalized email to each user
     for (const userId of userIds) {
@@ -155,7 +164,7 @@ serve(async (req: Request): Promise<Response> => {
         })
         .join("");
 
-      const bulletinUrl = `${Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".lovable.app")}/bulletin/${bulletinId}`;
+      const bulletinUrl = `https://wcmfpcejlldihchyaavn.lovable.app/bulletin/${bulletinId}`;
 
       const emailHtml = `
         <!DOCTYPE html>
@@ -190,22 +199,35 @@ serve(async (req: Request): Promise<Response> => {
         </html>
       `;
 
-      // Log the email (in production, integrate with email service like Resend)
-      console.log(`Would send email to ${user.email}:`);
-      console.log(`Subject: ${bulletin.title} - Your Weekly AI News`);
-      console.log(`Articles: ${relevantArticles.length}`);
-      
-      // TODO: Integrate with Resend or another email service
-      // For now, just count as sent
-      sentCount++;
+      try {
+        // Send email using Resend
+        const emailResult = await resend.emails.send({
+          from: "MOI AI Learning Hub <onboarding@resend.dev>",
+          to: [user.email],
+          subject: `${bulletin.title} - Your Weekly AI News`,
+          html: emailHtml,
+        });
+
+        if (emailResult.error) {
+          console.error(`Failed to send email to ${user.email}:`, emailResult.error);
+          errors.push(`${user.email}: ${emailResult.error.message}`);
+        } else {
+          console.log(`Email sent successfully to ${user.email}, id: ${emailResult.data?.id}`);
+          sentCount++;
+        }
+      } catch (emailError: any) {
+        console.error(`Error sending email to ${user.email}:`, emailError);
+        errors.push(`${user.email}: ${emailError.message}`);
+      }
     }
 
-    console.log(`Processed ${sentCount} users for bulletin ${bulletinId}`);
+    console.log(`Sent ${sentCount} emails for bulletin ${bulletinId}`);
 
     return new Response(
       JSON.stringify({ 
         sent: sentCount, 
-        message: `Email preparation complete for ${sentCount} users. Note: Actual email sending requires Resend integration.` 
+        errors: errors.length > 0 ? errors : undefined,
+        message: `Successfully sent ${sentCount} emails` 
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
