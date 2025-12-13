@@ -5,9 +5,22 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, Newspaper, ArrowRight } from "lucide-react";
+import { Loader2, Calendar, Newspaper, ArrowRight, Settings } from "lucide-react";
 import { format } from "date-fns";
 import UserNav from "@/components/UserNav";
+
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface Article {
+  id: string;
+  title: string;
+  short_description: string;
+  image_url: string | null;
+  categories: Category[];
+}
 
 interface Bulletin {
   id: string;
@@ -16,23 +29,34 @@ interface Bulletin {
   description: string | null;
   week_start_date: string;
   published_at: string | null;
-  article_count?: number;
+  articles: Article[];
 }
 
 const Bulletins = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [bulletins, setBulletins] = useState<Bulletin[]>([]);
+  const [userPreferences, setUserPreferences] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      fetchBulletins();
+      fetchUserPreferencesAndBulletins();
     }
   }, [user]);
 
-  const fetchBulletins = async () => {
+  const fetchUserPreferencesAndBulletins = async () => {
     try {
+      // Fetch user's category preferences
+      const { data: prefsData } = await supabase
+        .from("user_category_preferences")
+        .select("category_id")
+        .eq("user_id", user!.id);
+
+      const preferredCategoryIds = (prefsData || []).map((p) => p.category_id);
+      setUserPreferences(preferredCategoryIds);
+
+      // Fetch all published bulletins
       const { data: bulletinsData, error } = await supabase
         .from("news_bulletins")
         .select("*")
@@ -41,20 +65,49 @@ const Bulletins = () => {
 
       if (error) throw error;
 
-      // Get article counts for each bulletin
-      const bulletinsWithCounts = await Promise.all(
+      // Fetch articles with categories for each bulletin
+      const bulletinsWithArticles = await Promise.all(
         (bulletinsData || []).map(async (bulletin) => {
-          const { count } = await supabase
+          const { data: articlesData } = await supabase
             .from("news_articles")
-            .select("*", { count: "exact", head: true })
+            .select("id, title, short_description, image_url")
             .eq("bulletin_id", bulletin.id)
             .eq("is_published", true);
 
-          return { ...bulletin, article_count: count || 0 };
+          // Get categories for each article
+          const articlesWithCategories = await Promise.all(
+            (articlesData || []).map(async (article) => {
+              const { data: catData } = await supabase
+                .from("news_article_categories")
+                .select("category_id, news_categories(id, name)")
+                .eq("article_id", article.id);
+
+              const categories = (catData || []).map((c: any) => ({
+                id: c.news_categories.id,
+                name: c.news_categories.name,
+              }));
+
+              return { ...article, categories };
+            })
+          );
+
+          // Filter articles based on user preferences (if user has preferences)
+          const filteredArticles = preferredCategoryIds.length > 0
+            ? articlesWithCategories.filter((article) =>
+                article.categories.some((cat) => preferredCategoryIds.includes(cat.id))
+              )
+            : articlesWithCategories;
+
+          return { ...bulletin, articles: filteredArticles };
         })
       );
 
-      setBulletins(bulletinsWithCounts);
+      // Only show bulletins that have matching articles
+      const filteredBulletins = bulletinsWithArticles.filter(
+        (b) => b.articles.length > 0
+      );
+
+      setBulletins(filteredBulletins);
     } catch (error) {
       console.error("Error fetching bulletins:", error);
     } finally {
@@ -74,9 +127,22 @@ const Bulletins = () => {
             </div>
             <h2 className="text-3xl font-bold">Weekly AI Bulletins</h2>
           </div>
-          <p className="text-muted-foreground">
-            Stay updated with the latest AI news and insights
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-muted-foreground">
+              {userPreferences.length > 0
+                ? "Showing news based on your preferences"
+                : "Set your preferences in your profile to see personalized news"}
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/profile")}
+              className="text-primary"
+            >
+              <Settings className="h-4 w-4 mr-1" />
+              Preferences
+            </Button>
+          </div>
         </div>
 
         {loading ? (
@@ -86,7 +152,11 @@ const Bulletins = () => {
         ) : bulletins.length === 0 ? (
           <div className="text-center py-12">
             <Newspaper className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No bulletins published yet.</p>
+            <p className="text-muted-foreground">
+              {userPreferences.length > 0
+                ? "No news matching your preferences yet."
+                : "No bulletins published yet."}
+            </p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -100,7 +170,7 @@ const Bulletins = () => {
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="outline">{bulletin.bulletin_number}</Badge>
                     <span className="text-sm text-muted-foreground">
-                      {bulletin.article_count} articles
+                      {bulletin.articles.length} articles
                     </span>
                   </div>
                   <CardTitle className="text-lg group-hover:text-primary transition-colors">
