@@ -16,6 +16,7 @@ import Notifications from "./pages/Notifications";
 import AdminDashboard from "./pages/AdminDashboard";
 import QuizTake from "./pages/QuizTake";
 import WeeklyBulletin from "./pages/WeeklyBulletin";
+import Bulletins from "./pages/Bulletins";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -75,6 +76,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Notifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bulletins"
+              element={
+                <ProtectedRoute>
+                  <Bulletins />
                 </ProtectedRoute>
               }
             />

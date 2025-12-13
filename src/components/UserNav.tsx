@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, BookOpen, TrendingUp, Award, User, Bell, LogOut, GraduationCap, BarChart } from "lucide-react";
+import { Home, BookOpen, TrendingUp, Award, User, Bell, LogOut, GraduationCap, BarChart, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ const UserNav = () => {
   // Regular user menu items
   const userNavItems: Array<{ path: string; icon: any; label: string; feature?: string }> = [
     { path: "/admin", icon: BookOpen, label: "Courses" },
+    { path: "/bulletins", icon: Newspaper, label: "AI News" },
     { path: "/progress", icon: TrendingUp, label: "My Progress" },
     { path: "/certificates", icon: Award, label: "Certificates", feature: "certificates" },
     { path: "/profile", icon: User, label: "Profile" },
