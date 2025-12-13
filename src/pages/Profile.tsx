@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Mail, Lock, Upload } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { User, Mail, Lock, Upload, Newspaper } from "lucide-react";
 import UserNav from "@/components/UserNav";
 import { useToast } from "@/hooks/use-toast";
+
+interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+}
 
 const Profile = () => {
   const { user } = useAuth();
@@ -23,9 +30,14 @@ const Profile = () => {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [savingPreferences, setSavingPreferences] = useState(false);
 
   useEffect(() => {
     fetchProfile();
+    fetchCategories();
+    fetchUserPreferences();
   }, [user]);
 
   const fetchProfile = async () => {
@@ -48,6 +60,38 @@ const Profile = () => {
       console.error("Error fetching profile:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data } = await supabase
+        .from("news_categories")
+        .select("*")
+        .order("name");
+
+      if (data) {
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const fetchUserPreferences = async () => {
+    if (!user) return;
+
+    try {
+      const { data } = await supabase
+        .from("user_category_preferences")
+        .select("category_id")
+        .eq("user_id", user.id);
+
+      if (data) {
+        setSelectedCategories(data.map((p) => p.category_id));
+      }
+    } catch (error) {
+      console.error("Error fetching preferences:", error);
     }
   };
 
@@ -111,6 +155,53 @@ const Profile = () => {
         description: "Could not change password.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleCategoryToggle = (categoryId: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  const handleSavePreferences = async () => {
+    if (!user) return;
+    setSavingPreferences(true);
+
+    try {
+      // Delete existing preferences
+      await supabase
+        .from("user_category_preferences")
+        .delete()
+        .eq("user_id", user.id);
+
+      // Insert new preferences
+      if (selectedCategories.length > 0) {
+        const { error } = await supabase.from("user_category_preferences").insert(
+          selectedCategories.map((categoryId) => ({
+            user_id: user.id,
+            category_id: categoryId,
+          }))
+        );
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Preferences Updated",
+        description: "Your news preferences have been saved.",
+      });
+    } catch (error) {
+      console.error("Error saving preferences:", error);
+      toast({
+        title: "Update Failed",
+        description: "Could not save preferences.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingPreferences(false);
     }
   };
 
@@ -193,6 +284,62 @@ const Profile = () => {
                   disabled={saving}
                 >
                   {saving ? "Saving..." : "Save Changes"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* News Preferences */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Newspaper className="h-5 w-5" />
+                  News Preferences
+                </CardTitle>
+                <CardDescription>
+                  Select the AI news categories you're interested in
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {categories.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">
+                    No categories available yet.
+                  </p>
+                ) : (
+                  <div className="grid gap-3">
+                    {categories.map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-start space-x-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors"
+                      >
+                        <Checkbox
+                          id={category.id}
+                          checked={selectedCategories.includes(category.id)}
+                          onCheckedChange={() => handleCategoryToggle(category.id)}
+                        />
+                        <div className="flex-1">
+                          <Label
+                            htmlFor={category.id}
+                            className="font-medium cursor-pointer"
+                          >
+                            {category.name}
+                          </Label>
+                          {category.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {category.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <Button
+                  variant="outline"
+                  onClick={handleSavePreferences}
+                  disabled={savingPreferences}
+                >
+                  {savingPreferences ? "Saving..." : "Save Preferences"}
                 </Button>
               </CardContent>
             </Card>
