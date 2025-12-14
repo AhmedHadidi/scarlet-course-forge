@@ -119,6 +119,8 @@ const Bulletins = () => {
         (b) => b.articles.length > 0
       );
 
+      console.log("Final bulletins with articles:", filteredBulletins);
+      console.log("Setting bulletins state with", filteredBulletins.length, "bulletins");
       setBulletins(filteredBulletins);
     } catch (error) {
       console.error("Error fetching bulletins:", error);
