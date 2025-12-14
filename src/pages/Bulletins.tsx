@@ -161,13 +161,22 @@ const Bulletins = () => {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
+        ) : userPreferences.length === 0 ? (
+          <div className="text-center py-12">
+            <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Set Your Preferences</h3>
+            <p className="text-muted-foreground mb-4">
+              To see personalized AI news, please set your category preferences.
+            </p>
+            <Button onClick={() => navigate("/profile")}>
+              Go to Profile Settings
+            </Button>
+          </div>
         ) : bulletins.length === 0 ? (
           <div className="text-center py-12">
             <Newspaper className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              {userPreferences.length > 0
-                ? "No news matching your preferences yet."
-                : "No bulletins published yet."}
+              No news matching your preferences yet.
             </p>
           </div>
         ) : (
