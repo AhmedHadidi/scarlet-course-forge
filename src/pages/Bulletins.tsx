@@ -90,9 +90,11 @@ const Bulletins = () => {
                 .select("category_id, news_categories(id, name)")
                 .eq("article_id", article.id);
 
+              console.log("Raw category data for article", article.id, ":", catData);
+              
               const categories = (catData || []).map((c: any) => ({
-                id: c.news_categories.id,
-                name: c.news_categories.name,
+                id: c.category_id,
+                name: c.news_categories?.name || "Unknown",
               }));
 
               return { ...article, categories };
