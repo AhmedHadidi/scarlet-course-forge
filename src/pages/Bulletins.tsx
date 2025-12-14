@@ -40,18 +40,26 @@ const Bulletins = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       fetchUserPreferencesAndBulletins();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchUserPreferencesAndBulletins = async () => {
+    if (!user?.id) return;
+    
     try {
       // Fetch user's category preferences
-      const { data: prefsData } = await supabase
+      const { data: prefsData, error: prefsError } = await supabase
         .from("user_category_preferences")
         .select("category_id")
-        .eq("user_id", user!.id);
+        .eq("user_id", user.id);
+
+      if (prefsError) {
+        console.error("Error fetching preferences:", prefsError);
+      }
+      
+      console.log("User preferences:", prefsData);
 
       const preferredCategoryIds = (prefsData || []).map((p) => p.category_id);
       setUserPreferences(preferredCategoryIds);
@@ -92,12 +100,16 @@ const Bulletins = () => {
           );
 
           // Filter articles based on user preferences (if user has preferences)
+          console.log("Preferred category IDs:", preferredCategoryIds);
+          console.log("Articles with categories:", articlesWithCategories);
+          
           const filteredArticles = preferredCategoryIds.length > 0
             ? articlesWithCategories.filter((article) =>
                 article.categories.some((cat) => preferredCategoryIds.includes(cat.id))
               )
             : articlesWithCategories;
 
+          console.log("Filtered articles:", filteredArticles);
           return { ...bulletin, articles: filteredArticles };
         })
       );
