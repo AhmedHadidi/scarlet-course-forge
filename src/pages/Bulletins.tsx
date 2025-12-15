@@ -47,7 +47,9 @@ const Bulletins = () => {
 
   const fetchUserPreferencesAndBulletins = async () => {
     if (!user?.id) return;
-    
+
+    const normalizeId = (v: unknown) => String(v ?? "").trim();
+
     try {
       // Fetch user's category preferences
       const { data: prefsData, error: prefsError } = await supabase
@@ -58,10 +60,12 @@ const Bulletins = () => {
       if (prefsError) {
         console.error("Error fetching preferences:", prefsError);
       }
-      
-      console.log("User preferences:", prefsData);
 
-      const preferredCategoryIds = (prefsData || []).map((p) => p.category_id);
+      const preferredCategoryIds = (prefsData || [])
+        .map((p) => normalizeId(p.category_id))
+        .filter(Boolean);
+
+      const preferredCategoryIdSet = new Set(preferredCategoryIds);
       setUserPreferences(preferredCategoryIds);
 
       // Fetch all published bulletins
@@ -90,39 +94,36 @@ const Bulletins = () => {
                 .select("category_id, news_categories(id, name)")
                 .eq("article_id", article.id);
 
-              console.log("Raw category data for article", article.id, ":", catData);
-              
-              const categories = (catData || []).map((c: any) => ({
-                id: c.category_id,
-                name: c.news_categories?.name || "Unknown",
-              }));
+              const categories = (catData || [])
+                .map((c: any) => {
+                  const id = normalizeId(c.category_id ?? c.news_categories?.id);
+                  if (!id) return null;
+
+                  return {
+                    id,
+                    name: c.news_categories?.name || "Unknown",
+                  };
+                })
+                .filter(Boolean) as Category[];
 
               return { ...article, categories };
             })
           );
 
-          // Filter articles based on user preferences (if user has preferences)
-          console.log("Preferred category IDs:", preferredCategoryIds);
-          console.log("Articles with categories:", articlesWithCategories);
-          
-          const filteredArticles = preferredCategoryIds.length > 0
+          const filteredArticles = preferredCategoryIdSet.size
             ? articlesWithCategories.filter((article) =>
-                article.categories.some((cat) => preferredCategoryIds.includes(cat.id))
+                article.categories.some((cat) =>
+                  preferredCategoryIdSet.has(normalizeId(cat.id))
+                )
               )
             : articlesWithCategories;
 
-          console.log("Filtered articles:", filteredArticles);
           return { ...bulletin, articles: filteredArticles };
         })
       );
 
       // Only show bulletins that have matching articles
-      const filteredBulletins = bulletinsWithArticles.filter(
-        (b) => b.articles.length > 0
-      );
-
-      console.log("Final bulletins with articles:", filteredBulletins);
-      console.log("Setting bulletins state with", filteredBulletins.length, "bulletins");
+      const filteredBulletins = bulletinsWithArticles.filter((b) => b.articles.length > 0);
       setBulletins(filteredBulletins);
     } catch (error) {
       console.error("Error fetching bulletins:", error);
