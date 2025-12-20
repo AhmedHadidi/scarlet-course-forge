@@ -52,6 +52,8 @@ const WeeklyBulletin = () => {
   }, [id, user]);
 
   const fetchBulletinData = async () => {
+    const normalizeId = (v: unknown) => String(v ?? "").trim();
+
     try {
       // Fetch bulletin
       const { data: bulletinData, error: bulletinError } = await supabase
@@ -69,6 +71,20 @@ const WeeklyBulletin = () => {
 
       setBulletin(bulletinData);
 
+      // Fetch user preferences (used to filter articles)
+      const { data: prefsData, error: prefsError } = await supabase
+        .from("user_category_preferences")
+        .select("category_id")
+        .eq("user_id", user!.id);
+
+      if (prefsError) throw prefsError;
+
+      const preferredCategoryIdSet = new Set(
+        (prefsData || [])
+          .map((p) => normalizeId(p.category_id))
+          .filter(Boolean)
+      );
+
       // Fetch articles for this bulletin
       const { data: articlesData, error: articlesError } = await supabase
         .from("news_articles")
@@ -80,7 +96,9 @@ const WeeklyBulletin = () => {
       if (articlesError) throw articlesError;
 
       // Fetch categories for each article
-      const { data: allCategories } = await supabase.from("news_categories").select("*");
+      const { data: allCategories } = await supabase
+        .from("news_categories")
+        .select("id, name");
 
       const articlesWithCategories = await Promise.all(
         (articlesData || []).map(async (article) => {
@@ -97,7 +115,15 @@ const WeeklyBulletin = () => {
         })
       );
 
-      setArticles(articlesWithCategories);
+      const filteredArticles = preferredCategoryIdSet.size
+        ? articlesWithCategories.filter((article) =>
+            article.categories.some((cat) =>
+              preferredCategoryIdSet.has(normalizeId(cat.id))
+            )
+          )
+        : articlesWithCategories;
+
+      setArticles(filteredArticles);
     } catch (error) {
       console.error("Error fetching bulletin:", error);
     } finally {
