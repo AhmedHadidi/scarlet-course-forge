@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,8 @@ interface Answer {
 export default function QuizTake() {
   const { quizId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const attemptType = (searchParams.get("type") as "pre" | "post") || "post";
   const { user } = useAuth();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -60,7 +62,7 @@ export default function QuizTake() {
   useEffect(() => {
     if (!user || !quizId) return;
     fetchQuizData();
-  }, [user, quizId]);
+  }, [user, quizId, attemptType]);
 
   const fetchQuizData = async () => {
     try {
@@ -74,19 +76,20 @@ export default function QuizTake() {
       if (quizError) throw quizError;
       setQuiz(quizData);
 
-      // Check for previous attempts
+      // Check for previous attempts of this type
       const { data: attemptData, error: attemptError } = await supabase
         .from("quiz_attempts")
         .select("*")
         .eq("user_id", user!.id)
         .eq("quiz_id", quizId)
+        .eq("attempt_type", attemptType)
         .order("attempted_at", { ascending: false })
         .limit(1);
 
       if (!attemptError && attemptData && attemptData.length > 0) {
         setPreviousAttempt(attemptData[0]);
-        // If retakes are not allowed, prevent taking the quiz again
-        if (!quizData.allow_retakes) {
+        // Pre-quiz can only be taken once; post-quiz respects allow_retakes
+        if (attemptType === "pre" || !quizData.allow_retakes) {
           setCanTakeQuiz(false);
           setLoading(false);
           return;
@@ -182,18 +185,19 @@ export default function QuizTake() {
       const score = Math.round((correctCount / questions.length) * 100);
       const passed = score >= quiz.passing_score;
 
-      // Save quiz attempt
+      // Save quiz attempt with attempt_type
       const { error } = await supabase.from("quiz_attempts").insert({
         user_id: user.id,
         quiz_id: quiz.id,
         score: score,
         passed: passed,
+        attempt_type: attemptType,
       });
 
       if (error) throw error;
 
-      // Update enrollment if passed
-      if (passed) {
+      // Update enrollment if passed the post-quiz
+      if (passed && attemptType === "post") {
         const { error: enrollmentError } = await supabase
           .from("enrollments")
           .update({ completed_at: new Date().toISOString() })
@@ -211,7 +215,11 @@ export default function QuizTake() {
         correctAnswers: correctCount,
       });
 
-      sonnerToast.success(passed ? "Congratulations! You passed!" : "Quiz submitted");
+      if (attemptType === "pre") {
+        sonnerToast.success("Pre-quiz completed! You can now start the course.");
+      } else {
+        sonnerToast.success(passed ? "Congratulations! You passed!" : "Quiz submitted");
+      }
     } catch (error: any) {
       sonnerToast.error("Failed to submit quiz");
       console.error(error);
@@ -303,6 +311,7 @@ export default function QuizTake() {
   }
 
   if (result) {
+    const isPreQuiz = attemptType === "pre";
     return (
       <div className="min-h-screen bg-background">
         <UserNav />
@@ -310,17 +319,25 @@ export default function QuizTake() {
           <Card className="text-center">
             <CardHeader>
               <div className="flex justify-center mb-4">
-                {result.passed ? (
+                {isPreQuiz ? (
+                  <CheckCircle className="h-16 w-16 text-primary" />
+                ) : result.passed ? (
                   <Award className="h-16 w-16 text-primary" />
                 ) : (
                   <XCircle className="h-16 w-16 text-destructive" />
                 )}
               </div>
               <CardTitle className="text-3xl">
-                {result.passed ? "Congratulations!" : "Quiz Completed"}
+                {isPreQuiz
+                  ? "Pre-Quiz Completed!"
+                  : result.passed
+                  ? "Congratulations!"
+                  : "Quiz Completed"}
               </CardTitle>
               <CardDescription>
-                {result.passed
+                {isPreQuiz
+                  ? "Your baseline score has been recorded. You can now start the course."
+                  : result.passed
                   ? "You have successfully passed the quiz!"
                   : "Keep practicing to improve your score"}
               </CardDescription>
@@ -335,26 +352,42 @@ export default function QuizTake() {
                       {result.correctAnswers} / {result.totalQuestions}
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Passing Score:</span>
-                    <span className="font-semibold">{quiz.passing_score}%</span>
-                  </div>
+                  {!isPreQuiz && (
+                    <div className="flex justify-between text-sm">
+                      <span>Passing Score:</span>
+                      <span className="font-semibold">{quiz.passing_score}%</span>
+                    </div>
+                  )}
                 </div>
                 <Progress value={result.score} className="h-3" />
-                <Badge variant={result.passed ? "default" : "destructive"} className="text-lg py-2 px-4">
-                  {result.passed ? "PASSED" : "NOT PASSED"}
-                </Badge>
+                {isPreQuiz ? (
+                  <Badge variant="secondary" className="text-lg py-2 px-4">
+                    BASELINE RECORDED
+                  </Badge>
+                ) : (
+                  <Badge variant={result.passed ? "default" : "destructive"} className="text-lg py-2 px-4">
+                    {result.passed ? "PASSED" : "NOT PASSED"}
+                  </Badge>
+                )}
               </div>
               <div className="flex gap-3 justify-center">
-                {result.passed && (
-                  <Button onClick={() => navigate(`/certificates`)}>
-                    <Award className="h-4 w-4 mr-2" />
-                    View Certificate
+                {isPreQuiz ? (
+                  <Button onClick={() => navigate(`/courses/${quiz.course_id}`)}>
+                    Start Course
                   </Button>
+                ) : (
+                  <>
+                    {result.passed && (
+                      <Button onClick={() => navigate(`/certificates`)}>
+                        <Award className="h-4 w-4 mr-2" />
+                        View Certificate
+                      </Button>
+                    )}
+                    <Button variant="outline" onClick={() => navigate("/progress")}>
+                      View Progress
+                    </Button>
+                  </>
                 )}
-                <Button variant="outline" onClick={() => navigate("/progress")}>
-                  View Progress
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -375,10 +408,15 @@ export default function QuizTake() {
           <h1 className="text-3xl font-bold mb-2">{quiz.title}</h1>
           <p className="text-muted-foreground mb-4">{quiz.courses.title}</p>
           <div className="flex items-center gap-4 mb-4">
+            <Badge variant={attemptType === "pre" ? "secondary" : "default"}>
+              {attemptType === "pre" ? "Pre-Quiz" : "Final Quiz"}
+            </Badge>
             <Badge variant="outline">
               Question {currentQuestionIndex + 1} of {questions.length}
             </Badge>
-            <Badge variant="secondary">Passing Score: {quiz.passing_score}%</Badge>
+            {attemptType === "post" && (
+              <Badge variant="secondary">Passing Score: {quiz.passing_score}%</Badge>
+            )}
           </div>
           <Progress value={progressPercentage} className="h-2" />
         </div>

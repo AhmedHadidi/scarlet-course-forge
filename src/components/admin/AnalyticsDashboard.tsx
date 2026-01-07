@@ -51,9 +51,11 @@ interface UserQuizPerformance {
   user_name: string;
   quiz_title: string;
   course_title: string;
-  score: number;
-  passed: boolean;
-  attempted_at: string;
+  pre_score: number | null;
+  post_score: number | null;
+  passed: boolean | null;
+  pre_attempted_at: string | null;
+  post_attempted_at: string | null;
 }
 
 export const AnalyticsDashboard = () => {
@@ -340,9 +342,9 @@ export const AnalyticsDashboard = () => {
       // Fetch user quiz performance - using separate queries to avoid RLS issues
       const { data: quizAttemptsData, error: quizPerformanceError } = await supabase
         .from("quiz_attempts")
-        .select("user_id, quiz_id, score, passed, attempted_at")
+        .select("user_id, quiz_id, score, passed, attempted_at, attempt_type")
         .order('attempted_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (quizPerformanceError) {
         console.error("Error fetching quiz performance:", quizPerformanceError);
@@ -374,17 +376,40 @@ export const AnalyticsDashboard = () => {
       const quizzesMap = new Map(quizzesData?.map(q => [q.id, { title: q.title, course_id: q.course_id }]));
       const quizCoursesMap = new Map(quizCoursesData?.map(c => [c.id, c.title]));
 
-      const quizPerformanceList = (quizAttemptsData || []).map((attempt: any) => {
+      // Group attempts by user+quiz to show pre/post scores together
+      const userQuizMap = new Map<string, UserQuizPerformance>();
+      
+      (quizAttemptsData || []).forEach((attempt: any) => {
         const quiz = quizzesMap.get(attempt.quiz_id);
-        return {
-          user_name: quizProfilesMap.get(attempt.user_id) || "Unknown",
-          quiz_title: quiz?.title || "Unknown",
-          course_title: quiz ? quizCoursesMap.get(quiz.course_id) || "Unknown" : "Unknown",
-          score: attempt.score,
-          passed: attempt.passed,
-          attempted_at: format(new Date(attempt.attempted_at), "MMM dd, yyyy HH:mm")
-        };
+        const key = `${attempt.user_id}-${attempt.quiz_id}`;
+        
+        if (!userQuizMap.has(key)) {
+          userQuizMap.set(key, {
+            user_name: quizProfilesMap.get(attempt.user_id) || "Unknown",
+            quiz_title: quiz?.title || "Unknown",
+            course_title: quiz ? quizCoursesMap.get(quiz.course_id) || "Unknown" : "Unknown",
+            pre_score: null,
+            post_score: null,
+            passed: null,
+            pre_attempted_at: null,
+            post_attempted_at: null,
+          });
+        }
+        
+        const entry = userQuizMap.get(key)!;
+        const attemptType = attempt.attempt_type || "post";
+        
+        if (attemptType === "pre") {
+          entry.pre_score = attempt.score;
+          entry.pre_attempted_at = format(new Date(attempt.attempted_at), "MMM dd, yyyy HH:mm");
+        } else {
+          entry.post_score = attempt.score;
+          entry.passed = attempt.passed;
+          entry.post_attempted_at = format(new Date(attempt.attempted_at), "MMM dd, yyyy HH:mm");
+        }
       });
+
+      const quizPerformanceList = Array.from(userQuizMap.values());
 
       setUserQuizPerformance(quizPerformanceList);
     } catch (error) {
@@ -657,7 +682,7 @@ export const AnalyticsDashboard = () => {
       {/* User Quiz Performance */}
       <Card>
         <CardHeader>
-          <CardTitle>User Quiz Performance</CardTitle>
+          <CardTitle>User Quiz Performance (Pre vs Post)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="max-h-[500px] overflow-y-auto">
@@ -667,36 +692,67 @@ export const AnalyticsDashboard = () => {
                   <TableHead>User Name</TableHead>
                   <TableHead>Course</TableHead>
                   <TableHead>Quiz</TableHead>
-                  <TableHead>Score</TableHead>
+                  <TableHead>Pre-Quiz Score</TableHead>
+                  <TableHead>Post-Quiz Score</TableHead>
+                  <TableHead>Improvement</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Attempted At</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {userQuizPerformance.map((performance, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{performance.user_name}</TableCell>
-                    <TableCell>{performance.course_title}</TableCell>
-                    <TableCell>{performance.quiz_title}</TableCell>
-                    <TableCell>
-                      <span className={performance.score >= 70 ? "text-green-600 font-semibold" : "text-red-600"}>
-                        {performance.score}%
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {performance.passed ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Passed
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          Failed
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{performance.attempted_at}</TableCell>
-                  </TableRow>
-                ))}
+                {userQuizPerformance.map((performance, index) => {
+                  const improvement = performance.pre_score !== null && performance.post_score !== null
+                    ? performance.post_score - performance.pre_score
+                    : null;
+                  return (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{performance.user_name}</TableCell>
+                      <TableCell>{performance.course_title}</TableCell>
+                      <TableCell>{performance.quiz_title}</TableCell>
+                      <TableCell>
+                        {performance.pre_score !== null ? (
+                          <span className="text-muted-foreground">{performance.pre_score}%</span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">Not taken</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {performance.post_score !== null ? (
+                          <span className={performance.passed ? "text-green-600 font-semibold" : "text-red-600"}>
+                            {performance.post_score}%
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">Not taken</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {improvement !== null ? (
+                          <span className={improvement >= 0 ? "text-green-600 font-semibold" : "text-red-600"}>
+                            {improvement >= 0 ? "+" : ""}{improvement}%
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {performance.passed !== null ? (
+                          performance.passed ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Passed
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              Failed
+                            </span>
+                          )
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            In Progress
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

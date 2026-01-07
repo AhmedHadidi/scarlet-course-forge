@@ -36,7 +36,8 @@ const CoursePlayer = () => {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [quizId, setQuizId] = useState<string | null>(null);
-  const [hasCompletedQuiz, setHasCompletedQuiz] = useState(false);
+  const [hasCompletedPreQuiz, setHasCompletedPreQuiz] = useState(false);
+  const [hasCompletedPostQuiz, setHasCompletedPostQuiz] = useState(false);
 
   useEffect(() => {
     if (user && courseId) {
@@ -107,16 +108,28 @@ const CoursePlayer = () => {
       if (quizData) {
         setQuizId(quizData.id);
 
-        // Check if user has passed the quiz
-        const { data: attemptData } = await supabase
+        // Check if user has completed the pre-quiz
+        const { data: preAttemptData } = await supabase
+          .from("quiz_attempts")
+          .select("id")
+          .eq("user_id", user?.id)
+          .eq("quiz_id", quizData.id)
+          .eq("attempt_type", "pre")
+          .maybeSingle();
+
+        setHasCompletedPreQuiz(!!preAttemptData);
+
+        // Check if user has passed the post-quiz
+        const { data: postAttemptData } = await supabase
           .from("quiz_attempts")
           .select("passed")
           .eq("user_id", user?.id)
           .eq("quiz_id", quizData.id)
+          .eq("attempt_type", "post")
           .eq("passed", true)
           .maybeSingle();
 
-        setHasCompletedQuiz(!!attemptData);
+        setHasCompletedPostQuiz(!!postAttemptData);
       }
 
       setLoading(false);
@@ -283,17 +296,27 @@ const CoursePlayer = () => {
                     </Button>
                   )}
 
-                  {progress === 100 && quizId && !hasCompletedQuiz && (
+                  {quizId && !hasCompletedPreQuiz && (
                     <Button
-                      onClick={() => navigate(`/quiz/${quizId}`)}
+                      onClick={() => navigate(`/quiz/${quizId}?type=pre`)}
                       variant="default"
                     >
                       <FileText className="mr-2 h-4 w-4" />
-                      Take Quiz
+                      Take Pre-Quiz
                     </Button>
                   )}
 
-                  {progress === 100 && hasCompletedQuiz && (
+                  {progress === 100 && quizId && hasCompletedPreQuiz && !hasCompletedPostQuiz && (
+                    <Button
+                      onClick={() => navigate(`/quiz/${quizId}?type=post`)}
+                      variant="default"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Take Final Quiz
+                    </Button>
+                  )}
+
+                  {progress === 100 && hasCompletedPostQuiz && (
                     <Button
                       onClick={() => navigate("/certificates")}
                       variant="outline"
@@ -323,16 +346,25 @@ const CoursePlayer = () => {
                   </p>
                 </div>
 
-                {progress === 100 && quizId && !hasCompletedQuiz && (
+                {quizId && !hasCompletedPreQuiz && (
                   <Button
-                    onClick={() => navigate(`/quiz/${quizId}`)}
+                    onClick={() => navigate(`/quiz/${quizId}?type=pre`)}
                     className="w-full"
                   >
                     <FileText className="mr-2 h-4 w-4" />
-                    Take Quiz
+                    Take Pre-Quiz First
                   </Button>
                 )}
-                {progress === 100 && hasCompletedQuiz && (
+                {progress === 100 && quizId && hasCompletedPreQuiz && !hasCompletedPostQuiz && (
+                  <Button
+                    onClick={() => navigate(`/quiz/${quizId}?type=post`)}
+                    className="w-full"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Take Final Quiz
+                  </Button>
+                )}
+                {progress === 100 && hasCompletedPostQuiz && (
                   <Button
                     onClick={() => navigate('/certificates')}
                     className="w-full"
