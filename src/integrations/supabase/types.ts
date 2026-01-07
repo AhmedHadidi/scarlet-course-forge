@@ -418,6 +418,7 @@ export type Database = {
       }
       quiz_attempts: {
         Row: {
+          attempt_type: string
           attempted_at: string
           id: string
           passed: boolean
@@ -426,6 +427,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attempt_type?: string
           attempted_at?: string
           id?: string
           passed: boolean
@@ -434,6 +436,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attempt_type?: string
           attempted_at?: string
           id?: string
           passed?: boolean
