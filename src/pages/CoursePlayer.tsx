@@ -224,6 +224,34 @@ const CoursePlayer = () => {
 
   const currentVideo = videos[currentVideoIndex];
 
+  // If there's a quiz and user hasn't completed pre-quiz, show pre-quiz screen
+  if (quizId && !hasCompletedPreQuiz) {
+    return (
+      <div className="min-h-screen bg-background">
+        <UserNav />
+        <div className="container mx-auto px-4 py-16">
+          <Card className="max-w-lg mx-auto">
+            <CardContent className="p-8 text-center space-y-6">
+              <FileText className="h-16 w-16 mx-auto text-primary" />
+              <h1 className="text-2xl font-bold">{course.title}</h1>
+              <p className="text-muted-foreground">
+                Before you start this course, please take a short pre-quiz to assess your current knowledge.
+              </p>
+              <Button
+                onClick={() => navigate(`/quiz/${quizId}?type=pre`)}
+                size="lg"
+                className="w-full"
+              >
+                <FileText className="mr-2 h-5 w-5" />
+                Take Pre-Quiz
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <UserNav />
@@ -296,17 +324,7 @@ const CoursePlayer = () => {
                     </Button>
                   )}
 
-                  {quizId && !hasCompletedPreQuiz && (
-                    <Button
-                      onClick={() => navigate(`/quiz/${quizId}?type=pre`)}
-                      variant="default"
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      Take Pre-Quiz
-                    </Button>
-                  )}
-
-                  {progress === 100 && quizId && hasCompletedPreQuiz && !hasCompletedPostQuiz && (
+                  {progress === 100 && quizId && !hasCompletedPostQuiz && (
                     <Button
                       onClick={() => navigate(`/quiz/${quizId}?type=post`)}
                       variant="default"
@@ -346,16 +364,7 @@ const CoursePlayer = () => {
                   </p>
                 </div>
 
-                {quizId && !hasCompletedPreQuiz && (
-                  <Button
-                    onClick={() => navigate(`/quiz/${quizId}?type=pre`)}
-                    className="w-full"
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    Take Pre-Quiz First
-                  </Button>
-                )}
-                {progress === 100 && quizId && hasCompletedPreQuiz && !hasCompletedPostQuiz && (
+                {progress === 100 && quizId && !hasCompletedPostQuiz && (
                   <Button
                     onClick={() => navigate(`/quiz/${quizId}?type=post`)}
                     className="w-full"
