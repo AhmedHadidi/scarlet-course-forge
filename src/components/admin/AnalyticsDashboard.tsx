@@ -95,120 +95,107 @@ export const AnalyticsDashboard = () => {
     try {
       setLoading(true);
 
-      // Build date filter
-      let dateFilter = "";
-      if (dateFrom) {
-        dateFilter = `created_at.gte.${dateFrom.toISOString()}`;
-      }
-      if (dateTo) {
-        dateFilter += dateFilter ? `,created_at.lte.${dateTo.toISOString()}` : `created_at.lte.${dateTo.toISOString()}`;
-      }
-
-      // Fetch total users using edge function for accurate count
+      // Get session once
       const { data: { session } } = await supabase.auth.getSession();
-      const { data: usersData } = await supabase.functions.invoke('admin-operations', {
-        body: { operation: 'listUsers' },
-        headers: { Authorization: `Bearer ${session?.access_token}` }
-      });
-      const totalUsers = usersData?.users?.length || 0;
 
-      // Fetch active users (users with enrollments)
-      const { data: activeUsersData } = await supabase
-        .from("enrollments")
-        .select("user_id", { count: "exact" });
-      const activeUsers = new Set(activeUsersData?.map(e => e.user_id)).size;
+      // Run all independent queries in parallel for faster loading
+      const [
+        usersResult,
+        activeUsersResult,
+        enrollmentCountResult,
+        courseCountResult,
+        certificateCountResult,
+        videoCountResult,
+        quizAttemptsResult,
+        enrollmentsProgressResult,
+        coursesWithEnrollmentsResult,
+        enrollmentsForUsersResult,
+        videoProgressResult,
+        enrollmentTrendResult,
+        enrollmentsDetailResult,
+        quizAttemptsDetailResult,
+      ] = await Promise.all([
+        // Total users via edge function
+        supabase.functions.invoke('admin-operations', {
+          body: { operation: 'listUsers' },
+          headers: { Authorization: `Bearer ${session?.access_token}` }
+        }),
+        // Active users
+        supabase.from("enrollments").select("user_id"),
+        // Enrollment count
+        supabase.from("enrollments").select("*", { count: "exact", head: true }),
+        // Course count with optional filter
+        categoryFilter !== "all" 
+          ? supabase.from("courses").select("*", { count: "exact", head: true }).eq("category_id", categoryFilter)
+          : supabase.from("courses").select("*", { count: "exact", head: true }),
+        // Certificates count
+        supabase.from("certificates").select("*", { count: "exact", head: true }),
+        // Videos count
+        supabase.from("course_videos").select("*", { count: "exact", head: true }),
+        // Quiz attempts for avg score
+        supabase.from("quiz_attempts").select("score"),
+        // Enrollments for completion rate
+        supabase.from("enrollments").select("progress_percentage"),
+        // Courses with enrollments for top courses
+        supabase.from("courses").select(`id, title, enrollments (id, progress_percentage)`),
+        // Enrollments for top users
+        supabase.from("enrollments").select(`user_id, progress_percentage, profiles (full_name)`),
+        // Video progress for top videos
+        supabase.from("video_progress").select(`video_id, course_videos (title, courses (title))`),
+        // Enrollment trend data
+        supabase.from("enrollments").select("enrolled_at"),
+        // User progress detail
+        supabase.from("enrollments").select("user_id, course_id, progress_percentage, enrolled_at").order('enrolled_at', { ascending: false }).limit(50),
+        // Quiz attempts detail
+        supabase.from("quiz_attempts").select("user_id, quiz_id, score, passed, attempted_at, attempt_type").order('attempted_at', { ascending: false }).limit(100),
+      ]);
 
-      // Fetch enrollments with optional date filter
-      let enrollmentQuery = supabase.from("enrollments").select("*", { count: "exact", head: true });
-      const { count: totalEnrollments } = await enrollmentQuery;
+      // Process results
+      const totalUsers = usersResult.data?.users?.length || 0;
+      const activeUsers = new Set(activeUsersResult.data?.map(e => e.user_id)).size;
+      const totalEnrollments = enrollmentCountResult.count || 0;
+      const totalCourses = courseCountResult.count || 0;
+      const totalCertificates = certificateCountResult.count || 0;
+      const totalVideos = videoCountResult.count || 0;
 
-      // Fetch courses with optional category filter
-      let courseQuery = supabase.from("courses").select("*", { count: "exact", head: true });
-      if (categoryFilter !== "all") {
-        courseQuery = courseQuery.eq("category_id", categoryFilter);
-      }
-      const { count: totalCourses } = await courseQuery;
-
-      // Fetch certificates
-      const { count: totalCertificates } = await supabase
-        .from("certificates")
-        .select("*", { count: "exact", head: true });
-
-      // Fetch total videos
-      const { count: totalVideos } = await supabase
-        .from("course_videos")
-        .select("*", { count: "exact", head: true });
-
-      // Fetch quiz attempts for average score
-      const { data: quizAttempts } = await supabase
-        .from("quiz_attempts")
-        .select("score");
-      
+      const quizAttempts = quizAttemptsResult.data;
       const avgQuizScore = quizAttempts && quizAttempts.length > 0
         ? Math.round(quizAttempts.reduce((sum, attempt) => sum + attempt.score, 0) / quizAttempts.length)
         : 0;
 
-      // Fetch enrollments for completion rate
-      const { data: enrollments } = await supabase
-        .from("enrollments")
-        .select("progress_percentage");
-      
+      const enrollments = enrollmentsProgressResult.data;
       const completionRate = enrollments && enrollments.length > 0
         ? Math.round(enrollments.reduce((sum, e) => sum + e.progress_percentage, 0) / enrollments.length)
         : 0;
 
-      // Fetch top courses
-      const { data: coursesData } = await supabase
-        .from("courses")
-        .select(`
-          id,
-          title,
-          enrollments (
-            id,
-            progress_percentage
-          )
-        `);
-
-      const topCoursesData = (coursesData || [])
+      // Top courses
+      const topCoursesData = (coursesWithEnrollmentsResult.data || [])
         .map(course => ({
           title: course.title,
           enrollments: course.enrollments?.length || 0,
           completionRate: course.enrollments && course.enrollments.length > 0
-            ? Math.round(
-                course.enrollments.reduce((sum: number, e: any) => sum + e.progress_percentage, 0) / 
-                course.enrollments.length
-              )
+            ? Math.round(course.enrollments.reduce((sum: number, e: any) => sum + e.progress_percentage, 0) / course.enrollments.length)
             : 0
         }))
         .sort((a, b) => b.enrollments - a.enrollments)
         .slice(0, 5);
 
       setStats({
-        totalUsers: totalUsers || 0,
+        totalUsers,
         activeUsers,
-        totalEnrollments: totalEnrollments || 0,
-        totalCourses: totalCourses || 0,
-        totalCertificates: totalCertificates || 0,
-        totalVideos: totalVideos || 0,
+        totalEnrollments,
+        totalCourses,
+        totalCertificates,
+        totalVideos,
         avgQuizScore,
         completionRate,
       });
 
       setTopCourses(topCoursesData);
 
-      // Fetch top engaged users
-      const { data: enrollmentsForUsers } = await supabase
-        .from("enrollments")
-        .select(`
-          user_id,
-          progress_percentage,
-          profiles (
-            full_name
-          )
-        `);
-
+      // Top engaged users
       const userEnrollments: { [key: string]: { name: string; count: number; totalProgress: number } } = {};
-      enrollmentsForUsers?.forEach((enrollment: any) => {
+      enrollmentsForUsersResult.data?.forEach((enrollment: any) => {
         const userId = enrollment.user_id;
         if (!userEnrollments[userId]) {
           userEnrollments[userId] = {
@@ -232,21 +219,9 @@ export const AnalyticsDashboard = () => {
 
       setTopUsers(topUsersData);
 
-      // Fetch top watched videos (based on video progress records)
-      const { data: videoProgressData } = await supabase
-        .from("video_progress")
-        .select(`
-          video_id,
-          course_videos (
-            title,
-            courses (
-              title
-            )
-          )
-        `);
-
+      // Top watched videos
       const videoViews: { [key: string]: { title: string; course_title: string; count: number } } = {};
-      videoProgressData?.forEach((vp: any) => {
+      videoProgressResult.data?.forEach((vp: any) => {
         const videoId = vp.video_id;
         if (!videoViews[videoId] && vp.course_videos) {
           videoViews[videoId] = {
@@ -271,115 +246,71 @@ export const AnalyticsDashboard = () => {
 
       setTopVideos(topVideosData);
 
-      // Fetch enrollment trend (last 7 days)
+      // Enrollment trend (last 7 days)
       const last7Days = Array.from({ length: 7 }, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - (6 - i));
         return date.toISOString().split('T')[0];
       });
 
-      const { data: trendData } = await supabase
-        .from("enrollments")
-        .select("enrolled_at");
-
       const trendCounts: { [key: string]: number } = {};
-      last7Days.forEach(day => {
-        trendCounts[day] = 0;
-      });
+      last7Days.forEach(day => { trendCounts[day] = 0; });
 
-      trendData?.forEach((enrollment: any) => {
+      enrollmentTrendResult.data?.forEach((enrollment: any) => {
         const date = enrollment.enrolled_at.split('T')[0];
         if (trendCounts[date] !== undefined) {
           trendCounts[date]++;
         }
       });
 
-      const enrollmentTrendData = last7Days.map(day => ({
+      setEnrollmentTrend(last7Days.map(day => ({
         date: format(new Date(day), "MMM dd"),
         enrollments: trendCounts[day]
-      }));
+      })));
 
-      setEnrollmentTrend(enrollmentTrendData);
+      // User progress - fetch related data in parallel
+      const enrollmentsData = enrollmentsDetailResult.data || [];
+      const userIds = [...new Set(enrollmentsData.map(e => e.user_id))];
+      const courseIds = [...new Set(enrollmentsData.map(e => e.course_id))];
 
-      // Fetch detailed user progress - using separate queries to avoid RLS issues
-      const { data: enrollmentsData, error: userProgressError } = await supabase
-        .from("enrollments")
-        .select("user_id, course_id, progress_percentage, enrolled_at")
-        .order('enrolled_at', { ascending: false })
-        .limit(50);
+      const [profilesResult, coursesForProgressResult] = await Promise.all([
+        userIds.length > 0 ? supabase.from("profiles").select("id, full_name").in("id", userIds) : { data: [] as { id: string; full_name: string }[] },
+        courseIds.length > 0 ? supabase.from("courses").select("id, title").in("id", courseIds) : { data: [] as { id: string; title: string }[] },
+      ]);
 
-      if (userProgressError) {
-        console.error("Error fetching user progress:", userProgressError);
-      }
+      const profilesMap = new Map<string, string>((profilesResult.data || []).map(p => [p.id, p.full_name]));
+      const coursesMap = new Map<string, string>((coursesForProgressResult.data || []).map(c => [c.id, c.title]));
 
-      // Fetch all profiles needed
-      const userIds = [...new Set(enrollmentsData?.map(e => e.user_id) || [])];
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", userIds);
-
-      // Fetch all courses needed  
-      const courseIds = [...new Set(enrollmentsData?.map(e => e.course_id) || [])];
-      const { data: coursesDataForProgress } = await supabase
-        .from("courses")
-        .select("id, title")
-        .in("id", courseIds);
-
-      // Create lookup maps
-      const profilesMap = new Map(profilesData?.map(p => [p.id, p.full_name]));
-      const coursesMap = new Map(coursesDataForProgress?.map(c => [c.id, c.title]));
-
-      const userProgressList = (enrollmentsData || []).map((enrollment: any) => ({
+      setUserProgress(enrollmentsData.map((enrollment: any) => ({
         user_name: profilesMap.get(enrollment.user_id) || "Unknown",
         course_title: coursesMap.get(enrollment.course_id) || "Unknown",
         progress_percentage: enrollment.progress_percentage,
         enrolled_at: format(new Date(enrollment.enrolled_at), "MMM dd, yyyy")
-      }));
+      })));
 
-      setUserProgress(userProgressList);
+      // Quiz performance - fetch related data in parallel
+      const quizAttemptsData = quizAttemptsDetailResult.data || [];
+      const quizUserIds = [...new Set(quizAttemptsData.map(qa => qa.user_id))];
+      const quizIds = [...new Set(quizAttemptsData.map(qa => qa.quiz_id))];
 
-      // Fetch user quiz performance - using separate queries to avoid RLS issues
-      const { data: quizAttemptsData, error: quizPerformanceError } = await supabase
-        .from("quiz_attempts")
-        .select("user_id, quiz_id, score, passed, attempted_at, attempt_type")
-        .order('attempted_at', { ascending: false })
-        .limit(100);
+      const [quizProfilesResult, quizzesResult] = await Promise.all([
+        quizUserIds.length > 0 ? supabase.from("profiles").select("id, full_name").in("id", quizUserIds) : { data: [] as { id: string; full_name: string }[] },
+        quizIds.length > 0 ? supabase.from("quizzes").select("id, title, course_id").in("id", quizIds) : { data: [] as { id: string; title: string; course_id: string }[] },
+      ]);
 
-      if (quizPerformanceError) {
-        console.error("Error fetching quiz performance:", quizPerformanceError);
-      }
+      const quizCourseIds = [...new Set((quizzesResult.data || []).map(q => q.course_id))];
+      const quizCoursesResult = quizCourseIds.length > 0 
+        ? await supabase.from("courses").select("id, title").in("id", quizCourseIds)
+        : { data: [] as { id: string; title: string }[] };
 
-      // Fetch profiles for quiz attempts
-      const quizUserIds = [...new Set(quizAttemptsData?.map(qa => qa.user_id) || [])];
-      const { data: quizProfilesData } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", quizUserIds);
+      const quizProfilesMap = new Map<string, string>((quizProfilesResult.data || []).map(p => [p.id, p.full_name]));
+      const quizzesMap = new Map<string, { title: string; course_id: string }>((quizzesResult.data || []).map(q => [q.id, { title: q.title, course_id: q.course_id }]));
+      const quizCoursesMap = new Map<string, string>((quizCoursesResult.data || []).map(c => [c.id, c.title]));
 
-      // Fetch quizzes with course info
-      const quizIds = [...new Set(quizAttemptsData?.map(qa => qa.quiz_id) || [])];
-      const { data: quizzesData } = await supabase
-        .from("quizzes")
-        .select("id, title, course_id")
-        .in("id", quizIds);
-
-      // Fetch courses for quizzes
-      const quizCourseIds = [...new Set(quizzesData?.map(q => q.course_id) || [])];
-      const { data: quizCoursesData } = await supabase
-        .from("courses")
-        .select("id, title")
-        .in("id", quizCourseIds);
-
-      // Create lookup maps
-      const quizProfilesMap = new Map(quizProfilesData?.map(p => [p.id, p.full_name]));
-      const quizzesMap = new Map(quizzesData?.map(q => [q.id, { title: q.title, course_id: q.course_id }]));
-      const quizCoursesMap = new Map(quizCoursesData?.map(c => [c.id, c.title]));
-
-      // Group attempts by user+quiz to show pre/post scores together
+      // Group attempts by user+quiz
       const userQuizMap = new Map<string, UserQuizPerformance>();
       
-      (quizAttemptsData || []).forEach((attempt: any) => {
+      quizAttemptsData.forEach((attempt: any) => {
         const quiz = quizzesMap.get(attempt.quiz_id);
         const key = `${attempt.user_id}-${attempt.quiz_id}`;
         
@@ -409,9 +340,7 @@ export const AnalyticsDashboard = () => {
         }
       });
 
-      const quizPerformanceList = Array.from(userQuizMap.values());
-
-      setUserQuizPerformance(quizPerformanceList);
+      setUserQuizPerformance(Array.from(userQuizMap.values()));
     } catch (error) {
       console.error("Error fetching analytics:", error);
       toast.error("Failed to load analytics");
