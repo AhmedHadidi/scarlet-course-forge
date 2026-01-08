@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVerifyAdmin } from "@/hooks/useVerifyAdmin";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -8,9 +9,11 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { user, userRole, loading } = useAuth();
+  const { user, loading } = useAuth();
+  const { isVerifiedAdmin, isVerifying } = useVerifyAdmin();
 
-  if (loading) {
+  // Show loading while auth or admin verification is in progress
+  if (loading || (requiredRole === 'admin' && isVerifying)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -22,7 +25,8 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to="/auth" replace />;
   }
 
-  if (requiredRole && userRole !== requiredRole) {
+  // For admin routes, require server-side verification
+  if (requiredRole === 'admin' && isVerifiedAdmin !== true) {
     return <Navigate to="/" replace />;
   }
 
