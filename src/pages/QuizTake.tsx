@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { toast as sonnerToast } from "sonner";
-import { Loader2, CheckCircle, XCircle, Award } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Award, Download } from "lucide-react";
 import UserNav from "@/components/UserNav";
+import { downloadCertificatePDF } from "@/lib/generateCertificate";
 
 interface Quiz {
   id: string;
@@ -21,6 +22,7 @@ interface Quiz {
   course_id: string;
   courses: {
     title: string;
+    difficulty_level: string;
   };
 }
 
@@ -55,21 +57,34 @@ export default function QuizTake() {
     passed: boolean;
     totalQuestions: number;
     correctAnswers: number;
+    certificateId?: string;
   } | null>(null);
   const [previousAttempt, setPreviousAttempt] = useState<any>(null);
   const [canTakeQuiz, setCanTakeQuiz] = useState(true);
+  const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
     if (!user || !quizId) return;
     fetchQuizData();
+    fetchUserProfile();
   }, [user, quizId, attemptType]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single();
+    if (data) setUserName(data.full_name);
+  };
 
   const fetchQuizData = async () => {
     try {
       // Fetch quiz details
       const { data: quizData, error: quizError } = await supabase
         .from("quizzes")
-        .select("*, courses(title)")
+        .select("*, courses(title, difficulty_level)")
         .eq("id", quizId)
         .single();
 
@@ -196,7 +211,8 @@ export default function QuizTake() {
 
       if (error) throw error;
 
-      // Update enrollment if passed the post-quiz
+      // Update enrollment and create certificate if passed the post-quiz
+      let certificateId: string | undefined;
       if (passed && attemptType === "post") {
         const { error: enrollmentError } = await supabase
           .from("enrollments")
@@ -206,6 +222,21 @@ export default function QuizTake() {
           .is("completed_at", null);
 
         if (enrollmentError) console.error("Failed to update enrollment:", enrollmentError);
+
+        // Create certificate
+        const newCertificateId = crypto.randomUUID();
+        const { error: certError } = await supabase.from("certificates").insert({
+          id: newCertificateId,
+          user_id: user.id,
+          course_id: quiz.course_id,
+          certificate_url: `certificate-${newCertificateId}`,
+        });
+
+        if (certError) {
+          console.error("Failed to create certificate:", certError);
+        } else {
+          certificateId = newCertificateId;
+        }
       }
 
       setResult({
@@ -213,6 +244,7 @@ export default function QuizTake() {
         passed,
         totalQuestions: questions.length,
         correctAnswers: correctCount,
+        certificateId,
       });
 
       if (attemptType === "pre") {
@@ -370,17 +402,35 @@ export default function QuizTake() {
                   </Badge>
                 )}
               </div>
-              <div className="flex gap-3 justify-center">
+              <div className="flex flex-wrap gap-3 justify-center">
                 {isPreQuiz ? (
                   <Button onClick={() => navigate(`/courses/${quiz.course_id}`)}>
                     Start Course
                   </Button>
                 ) : (
                   <>
+                    {result.passed && result.certificateId && (
+                      <Button
+                        onClick={() => {
+                          downloadCertificatePDF({
+                            userName: userName || "Student",
+                            courseName: quiz.courses.title,
+                            courseLevel: quiz.courses.difficulty_level,
+                            quizScore: result.score,
+                            passingScore: quiz.passing_score,
+                            completionDate: new Date(),
+                            certificateId: result.certificateId!,
+                          });
+                        }}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Certificate
+                      </Button>
+                    )}
                     {result.passed && (
-                      <Button onClick={() => navigate(`/certificates`)}>
+                      <Button variant="outline" onClick={() => navigate(`/certificates`)}>
                         <Award className="h-4 w-4 mr-2" />
-                        View Certificate
+                        View All Certificates
                       </Button>
                     )}
                     <Button variant="outline" onClick={() => navigate("/progress")}>
