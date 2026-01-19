@@ -1,9 +1,81 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { z } from 'https://esm.sh/zod@3.23.8';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Validation schemas for each operation
+const emailSchema = z.string()
+  .trim()
+  .email('Invalid email format')
+  .max(255, 'Email must be less than 255 characters');
+
+const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .max(100, 'Password must be less than 100 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number')
+  .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one special character');
+
+const fullNameSchema = z.string()
+  .trim()
+  .min(2, 'Name must be at least 2 characters')
+  .max(100, 'Name must be less than 100 characters')
+  .regex(/^[a-zA-Z\s\-'\.]+$/, 'Name can only contain letters, spaces, hyphens, apostrophes, and periods');
+
+const uuidSchema = z.string().uuid('Invalid user ID format');
+
+const roleSchema = z.enum(['admin', 'user'], {
+  errorMap: () => ({ message: 'Role must be either "admin" or "user"' })
+});
+
+const createUserSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  full_name: fullNameSchema,
+  role: roleSchema.optional()
+});
+
+const updateUserSchema = z.object({
+  userId: uuidSchema,
+  email: emailSchema.optional(),
+  full_name: fullNameSchema.optional()
+}).refine(data => data.email || data.full_name, {
+  message: 'At least one field (email or full_name) must be provided for update'
+});
+
+const deleteUserSchema = z.object({
+  userId: uuidSchema
+});
+
+const resetPasswordSchema = z.object({
+  userId: uuidSchema,
+  newPassword: passwordSchema
+});
+
+const updateUserRoleSchema = z.object({
+  userId: uuidSchema,
+  role: roleSchema
+});
+
+const operationSchema = z.enum([
+  'createUser',
+  'updateUser', 
+  'deleteUser',
+  'resetPassword',
+  'updateUserRole',
+  'listUsers'
+], {
+  errorMap: () => ({ message: 'Invalid operation type' })
+});
+
+// Helper function to format Zod errors
+function formatZodError(error: z.ZodError): string {
+  return error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -54,13 +126,28 @@ Deno.serve(async (req) => {
       throw new Error('Insufficient permissions');
     }
 
-    const { operation, data } = await req.json();
+    const body = await req.json();
+    
+    // Validate operation type
+    const operationResult = operationSchema.safeParse(body.operation);
+    if (!operationResult.success) {
+      throw new Error(formatZodError(operationResult.error));
+    }
+    
+    const operation = operationResult.data;
+    const data = body.data;
 
     console.log('Admin operation:', operation, 'by user:', user.id);
 
     switch (operation) {
       case 'createUser': {
-        const { email, password, full_name, role } = data;
+        // Validate input
+        const validationResult = createUserSchema.safeParse(data);
+        if (!validationResult.success) {
+          throw new Error(formatZodError(validationResult.error));
+        }
+        
+        const { email, password, full_name, role } = validationResult.data;
         
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
@@ -86,9 +173,15 @@ Deno.serve(async (req) => {
       }
 
       case 'updateUser': {
-        const { userId, email, full_name } = data;
+        // Validate input
+        const validationResult = updateUserSchema.safeParse(data);
+        if (!validationResult.success) {
+          throw new Error(formatZodError(validationResult.error));
+        }
         
-        const updates: any = {};
+        const { userId, email, full_name } = validationResult.data;
+        
+        const updates: Record<string, unknown> = {};
         if (email) updates.email = email;
         if (full_name) updates.user_metadata = { full_name };
 
@@ -114,7 +207,13 @@ Deno.serve(async (req) => {
       }
 
       case 'deleteUser': {
-        const { userId } = data;
+        // Validate input
+        const validationResult = deleteUserSchema.safeParse(data);
+        if (!validationResult.success) {
+          throw new Error(formatZodError(validationResult.error));
+        }
+        
+        const { userId } = validationResult.data;
         
         const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
@@ -127,7 +226,13 @@ Deno.serve(async (req) => {
       }
 
       case 'resetPassword': {
-        const { userId, newPassword } = data;
+        // Validate input
+        const validationResult = resetPasswordSchema.safeParse(data);
+        if (!validationResult.success) {
+          throw new Error(formatZodError(validationResult.error));
+        }
+        
+        const { userId, newPassword } = validationResult.data;
         
         const { data: updatedUser, error: resetError } = await supabaseAdmin.auth.admin.updateUserById(
           userId,
@@ -143,18 +248,24 @@ Deno.serve(async (req) => {
       }
 
       case 'updateUserRole': {
-        const { userId, role } = data;
+        // Validate input
+        const validationResult = updateUserRoleSchema.safeParse(data);
+        if (!validationResult.success) {
+          throw new Error(formatZodError(validationResult.error));
+        }
+        
+        const { userId, role } = validationResult.data;
         
         // Delete existing roles
         await supabaseAdmin.from('user_roles').delete().eq('user_id', userId);
         
         // Insert new role
-        const { error: roleError } = await supabaseAdmin.from('user_roles').insert({
+        const { error: insertRoleError } = await supabaseAdmin.from('user_roles').insert({
           user_id: userId,
           role: role
         });
 
-        if (roleError) throw roleError;
+        if (insertRoleError) throw insertRoleError;
 
         console.log('User role updated:', userId, role);
         return new Response(JSON.stringify({ success: true }), {
@@ -163,6 +274,8 @@ Deno.serve(async (req) => {
       }
 
       case 'listUsers': {
+        // No input validation needed for listUsers
+        
         // Get all profiles
         const { data: profiles, error: profilesError } = await supabaseAdmin
           .from('profiles')
