@@ -7,14 +7,37 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, GraduationCap } from "lucide-react";
+import { Loader2, GraduationCap, Check, X } from "lucide-react";
 import { z } from "zod";
 import { CategoryPreferencesStep } from "@/components/CategoryPreferencesStep";
 
-const authSchema = z.object({
+// Password complexity requirements
+const passwordRequirements = [
+  { regex: /.{8,}/, label: "At least 8 characters" },
+  { regex: /[A-Z]/, label: "One uppercase letter" },
+  { regex: /[a-z]/, label: "One lowercase letter" },
+  { regex: /[0-9]/, label: "One number" },
+  { regex: /[!@#$%^&*(),.?":{}|<>]/, label: "One special character (!@#$%^&*)" },
+];
+
+const strongPasswordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(100, "Password must be less than 100 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character");
+
+const loginSchema = z.object({
   email: z.string().email("Invalid email address").max(255),
-  password: z.string().min(6, "Password must be at least 6 characters").max(100),
-  fullName: z.string().min(2, "Name must be at least 2 characters").max(100).optional(),
+  password: z.string().min(1, "Password is required").max(100),
+});
+
+const signupSchema = z.object({
+  email: z.string().email("Invalid email address").max(255),
+  password: strongPasswordSchema,
+  fullName: z.string().min(2, "Name must be at least 2 characters").max(100),
 });
 
 const Auth = () => {
@@ -22,8 +45,20 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState("login");
   const [showPreferences, setShowPreferences] = useState(false);
   const [newUserId, setNewUserId] = useState<string | null>(null);
+  const [signupPassword, setSignupPassword] = useState("");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Check which password requirements are met
+  const getPasswordStrength = (password: string) => {
+    return passwordRequirements.map((req) => ({
+      ...req,
+      met: req.regex.test(password),
+    }));
+  };
+
+  const passwordStrength = getPasswordStrength(signupPassword);
+  const allRequirementsMet = passwordStrength.every((req) => req.met);
 
   // Handle OAuth callback redirect
   useEffect(() => {
@@ -76,7 +111,7 @@ const Auth = () => {
     const password = formData.get("password") as string;
 
     try {
-      const validated = authSchema.parse({ email, password });
+      const validated = loginSchema.parse({ email, password });
       setLoading(true);
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -128,7 +163,7 @@ const Auth = () => {
     const fullName = formData.get("fullName") as string;
 
     try {
-      const validated = authSchema.parse({ email, password, fullName });
+      const validated = signupSchema.parse({ email, password, fullName });
       setLoading(true);
 
       const redirectUrl = `${window.location.origin}/`;
@@ -325,9 +360,30 @@ const Auth = () => {
                     placeholder="••••••••"
                     required
                     disabled={loading}
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
                   />
+                  {signupPassword && (
+                    <div className="mt-2 space-y-1">
+                      {passwordStrength.map((req, index) => (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 text-xs ${
+                            req.met ? "text-green-600" : "text-muted-foreground"
+                          }`}
+                        >
+                          {req.met ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <X className="h-3 w-3" />
+                          )}
+                          {req.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading || !allRequirementsMet}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
