@@ -12,7 +12,6 @@ import { toast as sonnerToast } from "sonner";
 import { Loader2, CheckCircle, XCircle, Award, Download } from "lucide-react";
 import UserNav from "@/components/UserNav";
 import { downloadCertificatePDF } from "@/lib/generateCertificate";
-import { ensureCertificateForUserCourse } from "@/lib/certificates";
 
 interface Quiz {
   id: string;
@@ -34,10 +33,10 @@ interface Question {
   order_index: number;
 }
 
+// Answer interface without is_correct - server validates answers
 interface Answer {
   id: string;
   answer_text: string;
-  is_correct: boolean;
 }
 
 export default function QuizTake() {
@@ -122,12 +121,12 @@ export default function QuizTake() {
       if (questionsError) throw questionsError;
       setQuestions(questionsData || []);
 
-      // Fetch answers for all questions
+      // Fetch answers for all questions using the secure view (excludes is_correct)
       if (questionsData && questionsData.length > 0) {
         const questionIds = questionsData.map((q) => q.id);
         const { data: answersData, error: answersError } = await supabase
-          .from("quiz_answers")
-          .select("*")
+          .from("quiz_answers_display")
+          .select("id, question_id, answer_text")
           .in("question_id", questionIds);
 
         if (answersError) throw answersError;
@@ -181,77 +180,52 @@ export default function QuizTake() {
     setSubmitting(true);
 
     try {
-      // Calculate score
-      let correctCount = 0;
-      questions.forEach((question) => {
-        const userAnswerIds = userAnswers[question.id] || [];
-        const correctAnswers = answers[question.id].filter((a) => a.is_correct);
-        const correctAnswerIds = correctAnswers.map((a) => a.id);
+      // Get the current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Not authenticated");
+      }
 
-        // Check if user selected all correct answers and no incorrect ones
-        const isCorrect =
-          userAnswerIds.length === correctAnswerIds.length &&
-          userAnswerIds.every((id) => correctAnswerIds.includes(id));
-
-        if (isCorrect) {
-          correctCount++;
+      // Submit quiz to server-side edge function for secure validation
+      // This prevents cheating by calculating score server-side
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-quiz`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            quizId: quiz.id,
+            userAnswers,
+            attemptType,
+          }),
         }
-      });
+      );
 
-      const score = Math.round((correctCount / questions.length) * 100);
-      const passed = score >= quiz.passing_score;
+      const data = await response.json();
 
-      // Save quiz attempt with attempt_type
-      const { error } = await supabase.from("quiz_attempts").insert({
-        user_id: user.id,
-        quiz_id: quiz.id,
-        score: score,
-        passed: passed,
-        attempt_type: attemptType,
-      });
-
-      if (error) throw error;
-
-      // Update enrollment and create certificate if passed the post-quiz
-      let certificateId: string | undefined;
-      if (passed && attemptType === "post") {
-        const { error: enrollmentError } = await supabase
-          .from("enrollments")
-          .update({ completed_at: new Date().toISOString() })
-          .eq("user_id", user.id)
-          .eq("course_id", quiz.course_id)
-          .is("completed_at", null);
-
-        if (enrollmentError) console.error("Failed to update enrollment:", enrollmentError);
-
-        const ensureResult = await ensureCertificateForUserCourse({
-          userId: user.id,
-          courseId: quiz.course_id,
-        });
-
-        if (ensureResult.error) {
-          console.error("Failed to create certificate:", ensureResult.error);
-          sonnerToast.error("We couldn't save your certificate. Please try again from Certificates.");
-        } else if (ensureResult.certificateId) {
-          certificateId = ensureResult.certificateId;
-        }
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit quiz");
       }
 
       setResult({
-        score,
-        passed,
-        totalQuestions: questions.length,
-        correctAnswers: correctCount,
-        certificateId,
+        score: data.score,
+        passed: data.passed,
+        totalQuestions: data.totalQuestions,
+        correctAnswers: data.correctAnswers,
+        certificateId: data.certificateId,
       });
 
       if (attemptType === "pre") {
         sonnerToast.success("Pre-quiz completed! You can now start the course.");
       } else {
-        sonnerToast.success(passed ? "Congratulations! You passed!" : "Quiz submitted");
+        sonnerToast.success(data.passed ? "Congratulations! You passed!" : "Quiz submitted");
       }
     } catch (error: any) {
-      sonnerToast.error("Failed to submit quiz");
+      sonnerToast.error(error.message || "Failed to submit quiz");
       console.error(error);
     } finally {
       setSubmitting(false);
