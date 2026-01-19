@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Award, Download, Calendar, Trophy } from "lucide-react";
 import UserNav from "@/components/UserNav";
 import { downloadCertificatePDF } from "@/lib/generateCertificate";
+import { backfillCertificatesForUser } from "@/lib/certificates";
 
 interface Certificate {
   id: string;
@@ -43,7 +44,10 @@ const Certificates = () => {
     if (!user) return;
 
     try {
-      // Fetch certificates, user profile, and quiz attempts in parallel
+      // Ensure certificate rows exist for any already-passed post-quizzes (backfill)
+      await backfillCertificatesForUser(user.id);
+
+      // Fetch certificates and user profile in parallel
       const [certificatesResult, profileResult] = await Promise.all([
         supabase
           .from("certificates")

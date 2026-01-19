@@ -12,6 +12,7 @@ import { toast as sonnerToast } from "sonner";
 import { Loader2, CheckCircle, XCircle, Award, Download } from "lucide-react";
 import UserNav from "@/components/UserNav";
 import { downloadCertificatePDF } from "@/lib/generateCertificate";
+import { ensureCertificateForUserCourse } from "@/lib/certificates";
 
 interface Quiz {
   id: string;
@@ -223,19 +224,16 @@ export default function QuizTake() {
 
         if (enrollmentError) console.error("Failed to update enrollment:", enrollmentError);
 
-        // Create certificate
-        const newCertificateId = crypto.randomUUID();
-        const { error: certError } = await supabase.from("certificates").insert({
-          id: newCertificateId,
-          user_id: user.id,
-          course_id: quiz.course_id,
-          certificate_url: `certificate-${newCertificateId}`,
+        const ensureResult = await ensureCertificateForUserCourse({
+          userId: user.id,
+          courseId: quiz.course_id,
         });
 
-        if (certError) {
-          console.error("Failed to create certificate:", certError);
-        } else {
-          certificateId = newCertificateId;
+        if (ensureResult.error) {
+          console.error("Failed to create certificate:", ensureResult.error);
+          sonnerToast.error("We couldn't save your certificate. Please try again from Certificates.");
+        } else if (ensureResult.certificateId) {
+          certificateId = ensureResult.certificateId;
         }
       }
 
