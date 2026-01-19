@@ -20,8 +20,8 @@ export const generateCertificatePDF = (data: CertificateData): jsPDF => {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Background gradient effect using rectangles
-  doc.setFillColor(15, 23, 42); // Dark slate background
+  // White background
+  doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, pageWidth, pageHeight, "F");
 
   // Decorative border
@@ -61,7 +61,7 @@ export const generateCertificatePDF = (data: CertificateData): jsPDF => {
   doc.setFont("helvetica", "normal");
   doc.text("CERTIFICATE", pageWidth / 2, 40, { align: "center" });
 
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(15, 23, 42);
   doc.setFontSize(36);
   doc.setFont("helvetica", "bold");
   doc.text("OF COMPLETION", pageWidth / 2, 55, { align: "center" });
@@ -78,7 +78,7 @@ export const generateCertificatePDF = (data: CertificateData): jsPDF => {
   doc.text("This is to certify that", pageWidth / 2, 80, { align: "center" });
 
   // User name
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(15, 23, 42);
   doc.setFontSize(28);
   doc.setFont("helvetica", "bold");
   doc.text(data.userName, pageWidth / 2, 95, { align: "center" });
@@ -108,7 +108,7 @@ export const generateCertificatePDF = (data: CertificateData): jsPDF => {
   doc.text(`Level: ${data.courseLevel.charAt(0).toUpperCase() + data.courseLevel.slice(1)}`, pageWidth / 2, 138, { align: "center" });
 
   // Quiz score section
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(15, 23, 42);
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
   doc.text("with a quiz score of", pageWidth / 2, 152, { align: "center" });
@@ -130,7 +130,7 @@ export const generateCertificatePDF = (data: CertificateData): jsPDF => {
     day: "numeric",
   });
 
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(15, 23, 42);
   doc.setFontSize(11);
   doc.text(`Issued on ${formattedDate}`, pageWidth / 2, 188, { align: "center" });
 
