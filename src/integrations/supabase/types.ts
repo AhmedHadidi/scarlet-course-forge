@@ -611,7 +611,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      quiz_answers_display: {
+        Row: {
+          answer_text: string | null
+          created_at: string | null
+          id: string | null
+          question_id: string | null
+        }
+        Insert: {
+          answer_text?: string | null
+          created_at?: string | null
+          id?: string | null
+          question_id?: string | null
+        }
+        Update: {
+          answer_text?: string | null
+          created_at?: string | null
+          id?: string | null
+          question_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
