@@ -6,10 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, GraduationCap, Check, X } from "lucide-react";
 import { z } from "zod";
 import { CategoryPreferencesStep } from "@/components/CategoryPreferencesStep";
+
+interface Department {
+  id: string;
+  name: string;
+}
 
 // Password complexity requirements
 const passwordRequirements = [
@@ -46,8 +52,25 @@ const Auth = () => {
   const [showPreferences, setShowPreferences] = useState(false);
   const [newUserId, setNewUserId] = useState<string | null>(null);
   const [signupPassword, setSignupPassword] = useState("");
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Fetch departments on mount
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const { data, error } = await supabase
+        .from("departments")
+        .select("id, name")
+        .order("name");
+      
+      if (!error && data) {
+        setDepartments(data);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   // Check which password requirements are met
   const getPasswordStrength = (password: string) => {
@@ -162,6 +185,11 @@ const Auth = () => {
     const password = formData.get("password") as string;
     const fullName = formData.get("fullName") as string;
 
+    if (!selectedDepartment) {
+      toast.error("Please select your department");
+      return;
+    }
+
     try {
       const validated = signupSchema.parse({ email, password, fullName });
       setLoading(true);
@@ -181,6 +209,12 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
+        // Update profile with department_id
+        await supabase
+          .from("profiles")
+          .update({ department_id: selectedDepartment })
+          .eq("id", data.user.id);
+
         const userName = validated.fullName || "User";
         toast.success(`Welcome ${userName}! Let's set up your preferences.`);
         setNewUserId(data.user.id);
@@ -339,6 +373,21 @@ const Auth = () => {
                     required
                     disabled={loading}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-department">Department *</Label>
+                  <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>

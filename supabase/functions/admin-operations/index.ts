@@ -28,15 +28,16 @@ const fullNameSchema = z.string()
 
 const uuidSchema = z.string().uuid('Invalid user ID format');
 
-const roleSchema = z.enum(['admin', 'user'], {
-  errorMap: () => ({ message: 'Role must be either "admin" or "user"' })
+const roleSchema = z.enum(['admin', 'sub_admin', 'user'], {
+  errorMap: () => ({ message: 'Role must be "admin", "sub_admin", or "user"' })
 });
 
 const createUserSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   full_name: fullNameSchema,
-  role: roleSchema.optional()
+  role: roleSchema.optional(),
+  department_id: z.string().uuid().optional()
 });
 
 const updateUserSchema = z.object({
@@ -147,7 +148,7 @@ Deno.serve(async (req) => {
           throw new Error(formatZodError(validationResult.error));
         }
         
-        const { email, password, full_name, role } = validationResult.data;
+        const { email, password, full_name, role, department_id } = validationResult.data;
         
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
@@ -164,6 +165,14 @@ Deno.serve(async (req) => {
             user_id: newUser.user.id,
             role: role
           });
+        }
+
+        // Update profile with department_id if provided
+        if (department_id) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ department_id })
+            .eq('id', newUser.user.id);
         }
 
         console.log('User created:', newUser.user.id);
@@ -276,13 +285,20 @@ Deno.serve(async (req) => {
       case 'listUsers': {
         // No input validation needed for listUsers
         
-        // Get all profiles
+        // Get all profiles with department info
         const { data: profiles, error: profilesError } = await supabaseAdmin
           .from('profiles')
-          .select('id, full_name, created_at')
+          .select('id, full_name, created_at, department_id')
           .order('created_at', { ascending: false });
 
         if (profilesError) throw profilesError;
+
+        // Get department names
+        const { data: departments } = await supabaseAdmin
+          .from('departments')
+          .select('id, name');
+        
+        const departmentMap = new Map((departments || []).map(d => [d.id, d.name]));
 
         // Get user details including emails and roles
         const usersWithDetails = await Promise.all(
@@ -296,7 +312,8 @@ Deno.serve(async (req) => {
             return {
               ...profile,
               email: authUser?.email || 'N/A',
-              roles: rolesData || []
+              roles: rolesData || [],
+              department_name: profile.department_id ? departmentMap.get(profile.department_id) : null
             };
           })
         );

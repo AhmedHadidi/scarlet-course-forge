@@ -3,13 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, FileText, Newspaper } from "lucide-react";
+import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, FileText, Newspaper, Building2 } from "lucide-react";
 import { CourseManagement } from "@/components/admin/CourseManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { QuizManagement } from "@/components/admin/QuizManagement";
 import { FeatureManagement } from "@/components/admin/FeatureManagement";
 import { NewsManagement } from "@/components/admin/NewsManagement";
+import { DepartmentManagement } from "@/components/admin/DepartmentManagement";
 
 const AdminDashboard = () => {
   const { signOut } = useAuth();
@@ -84,6 +85,7 @@ const AdminDashboard = () => {
     { id: "overview", label: "Dashboard", icon: BarChart },
     { id: "analytics", label: "Analytics", icon: TrendingUp },
     { id: "users", label: "Users", icon: Users },
+    { id: "departments", label: "Departments", icon: Building2 },
     { id: "courses", label: "Courses", icon: BookOpen },
     { id: "quizzes", label: "Quizzes", icon: FileText },
     { id: "news", label: "News & Bulletins", icon: Newspaper },
@@ -183,6 +185,7 @@ const AdminDashboard = () => {
             <p className="text-muted-foreground mt-1">
               {activeView === "overview" && "Manage your platform and monitor performance"}
               {activeView === "users" && "Manage user accounts and permissions"}
+              {activeView === "departments" && "Manage departments and assign sub-admins"}
               {activeView === "courses" && "Create and manage courses"}
               {activeView === "quizzes" && "Create and manage course quizzes"}
               {activeView === "news" && "Manage news articles, categories, and weekly bulletins"}
@@ -266,6 +269,9 @@ const AdminDashboard = () => {
 
           {/* Users View */}
           {activeView === "users" && <UserManagement />}
+
+          {/* Departments View */}
+          {activeView === "departments" && <DepartmentManagement />}
 
           {/* Courses View */}
           {activeView === "courses" && <CourseManagement />}

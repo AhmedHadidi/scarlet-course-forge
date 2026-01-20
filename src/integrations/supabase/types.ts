@@ -161,6 +161,59 @@ export type Database = {
           },
         ]
       }
+      department_admins: {
+        Row: {
+          created_at: string
+          department_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_admins_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       enrollments: {
         Row: {
           completed_at: string | null
@@ -364,6 +417,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          department_id: string | null
           full_name: string
           id: string
           updated_at: string
@@ -371,6 +425,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          department_id?: string | null
           full_name: string
           id: string
           updated_at?: string
@@ -378,11 +433,20 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          department_id?: string | null
           full_name?: string
           id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_answers: {
         Row: {
@@ -649,9 +713,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_department_admin: {
+        Args: { _department_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "sub_admin"
       difficulty_level: "beginner" | "intermediate" | "advanced"
       video_source: "youtube_single" | "youtube_playlist" | "uploaded"
     }
@@ -781,7 +849,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "sub_admin"],
       difficulty_level: ["beginner", "intermediate", "advanced"],
       video_source: ["youtube_single", "youtube_playlist", "uploaded"],
     },
