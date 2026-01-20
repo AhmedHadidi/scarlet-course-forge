@@ -17,10 +17,16 @@ const userSchema = z.object({
   email: z.string().trim().email("Invalid email address").max(255),
   password: z.string().min(6, "Password must be at least 6 characters").max(100),
   full_name: z.string().trim().min(1, "Name is required").max(100),
-  role: z.enum(["admin", "user"]),
+  role: z.enum(["admin", "sub_admin", "user"]),
+  department_id: z.string().uuid().optional(),
 });
 
 type UserFormData = z.infer<typeof userSchema>;
+
+interface Department {
+  id: string;
+  name: string;
+}
 
 interface User {
   id: string;
@@ -28,6 +34,8 @@ interface User {
   full_name: string;
   created_at: string;
   roles: { role: string }[];
+  department_id?: string;
+  department_name?: string;
 }
 
 interface UserManagementProps {
@@ -37,6 +45,7 @@ interface UserManagementProps {
 export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
@@ -47,11 +56,13 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
     password: "",
     full_name: "",
     role: "user",
+    department_id: undefined,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof UserFormData, string>>>({});
 
   useEffect(() => {
     fetchUsers();
+    fetchDepartments();
   }, []);
 
   useEffect(() => {
@@ -59,6 +70,17 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
       onOpenDialog();
     }
   }, [onOpenDialog]);
+
+  const fetchDepartments = async () => {
+    const { data, error } = await supabase
+      .from("departments")
+      .select("id, name")
+      .order("name");
+
+    if (!error && data) {
+      setDepartments(data);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -173,14 +195,15 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
         toast({ title: "Success", description: "User updated successfully" });
       } else {
         // Create new user via edge function
-        const { error } = await supabase.functions.invoke('admin-operations', {
+        const { data: createData, error } = await supabase.functions.invoke('admin-operations', {
           body: {
             operation: 'createUser',
             data: {
               email: formData.email!,
               password: formData.password!,
               full_name: formData.full_name,
-              role: formData.role
+              role: formData.role,
+              department_id: formData.department_id
             }
           },
           headers: {
@@ -200,6 +223,7 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
         password: "",
         full_name: "",
         role: "user",
+        department_id: undefined,
       });
       setErrors({});
       setIsDialogOpen(false);
@@ -286,7 +310,8 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
       email: user.email,
       password: "",
       full_name: user.full_name,
-      role: user.roles[0]?.role as "admin" | "user" || "user",
+      role: user.roles[0]?.role as "admin" | "sub_admin" | "user" || "user",
+      department_id: user.department_id,
     });
     setIsDialogOpen(true);
   };
@@ -297,6 +322,7 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
       password: "",
       full_name: "",
       role: "user",
+      department_id: undefined,
     });
     setEditingUser(null);
     setErrors({});
@@ -304,6 +330,32 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
 
   const getUserRole = (user: User): string => {
     return user.roles[0]?.role || "user";
+  };
+
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case "admin":
+        return (
+          <Badge variant="default" className="capitalize">
+            <ShieldCheck className="mr-1 h-3 w-3" />
+            Admin
+          </Badge>
+        );
+      case "sub_admin":
+        return (
+          <Badge variant="outline" className="capitalize border-primary text-primary">
+            <ShieldCheck className="mr-1 h-3 w-3" />
+            Sub-Admin
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="secondary" className="capitalize">
+            <ShieldOff className="mr-1 h-3 w-3" />
+            User
+          </Badge>
+        );
+    }
   };
 
   return (
@@ -396,14 +448,35 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
                 <Label htmlFor="role">Role *</Label>
                 <Select
                   value={formData.role}
-                  onValueChange={(value) => setFormData({ ...formData, role: value as "admin" | "user" })}
+                  onValueChange={(value) => setFormData({ ...formData, role: value as "admin" | "sub_admin" | "user" })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="user">User (Learner)</SelectItem>
+                    <SelectItem value="sub_admin">Sub-Admin</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="department">Department</Label>
+                <Select
+                  value={formData.department_id || "none"}
+                  onValueChange={(value) => setFormData({ ...formData, department_id: value === "none" ? undefined : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Department</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -451,19 +524,7 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
                       <TableCell className="font-medium">{user.full_name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        <Badge variant={role === "admin" ? "default" : "secondary"} className="capitalize">
-                          {role === "admin" ? (
-                            <>
-                              <ShieldCheck className="mr-1 h-3 w-3" />
-                              Admin
-                            </>
-                          ) : (
-                            <>
-                              <ShieldOff className="mr-1 h-3 w-3" />
-                              User
-                            </>
-                          )}
-                        </Badge>
+                        {getRoleBadge(role)}
                       </TableCell>
                       <TableCell>
                         {new Date(user.created_at).toLocaleDateString()}
