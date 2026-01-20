@@ -58,6 +58,13 @@ interface UserQuizPerformance {
   post_attempted_at: string | null;
 }
 
+interface CertificateDetail {
+  certificate_id: string;
+  user_name: string;
+  course_title: string;
+  issued_at: string;
+}
+
 export const AnalyticsDashboard = () => {
   const [stats, setStats] = useState<AnalyticsStats>({
     totalUsers: 0,
@@ -74,6 +81,7 @@ export const AnalyticsDashboard = () => {
   const [topVideos, setTopVideos] = useState<TopVideo[]>([]);
   const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
   const [userQuizPerformance, setUserQuizPerformance] = useState<UserQuizPerformance[]>([]);
+  const [certificateDetails, setCertificateDetails] = useState<CertificateDetail[]>([]);
   const [enrollmentTrend, setEnrollmentTrend] = useState<any[]>([]);
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
@@ -114,6 +122,7 @@ export const AnalyticsDashboard = () => {
         enrollmentTrendResult,
         enrollmentsDetailResult,
         quizAttemptsDetailResult,
+        certificatesDetailResult,
       ] = await Promise.all([
         // Total users via edge function
         supabase.functions.invoke('admin-operations', {
@@ -148,6 +157,8 @@ export const AnalyticsDashboard = () => {
         supabase.from("enrollments").select("user_id, course_id, progress_percentage, enrolled_at").order('enrolled_at', { ascending: false }).limit(50),
         // Quiz attempts detail
         supabase.from("quiz_attempts").select("user_id, quiz_id, score, passed, attempted_at, attempt_type").order('attempted_at', { ascending: false }).limit(100),
+        // Certificate details
+        supabase.from("certificates").select("id, user_id, course_id, issued_at").order('issued_at', { ascending: false }).limit(100),
       ]);
 
       // Process results
@@ -341,6 +352,26 @@ export const AnalyticsDashboard = () => {
       });
 
       setUserQuizPerformance(Array.from(userQuizMap.values()));
+
+      // Certificate details - fetch related data in parallel
+      const certificatesData = certificatesDetailResult.data || [];
+      const certUserIds = [...new Set(certificatesData.map(c => c.user_id))];
+      const certCourseIds = [...new Set(certificatesData.map(c => c.course_id))];
+
+      const [certProfilesResult, certCoursesResult] = await Promise.all([
+        certUserIds.length > 0 ? supabase.from("profiles").select("id, full_name").in("id", certUserIds) : { data: [] as { id: string; full_name: string }[] },
+        certCourseIds.length > 0 ? supabase.from("courses").select("id, title").in("id", certCourseIds) : { data: [] as { id: string; title: string }[] },
+      ]);
+
+      const certProfilesMap = new Map<string, string>((certProfilesResult.data || []).map(p => [p.id, p.full_name]));
+      const certCoursesMap = new Map<string, string>((certCoursesResult.data || []).map(c => [c.id, c.title]));
+
+      setCertificateDetails(certificatesData.map((cert: any) => ({
+        certificate_id: cert.id,
+        user_name: certProfilesMap.get(cert.user_id) || "Unknown",
+        course_title: certCoursesMap.get(cert.course_id) || "Unknown",
+        issued_at: format(new Date(cert.issued_at), "MMM dd, yyyy HH:mm")
+      })));
     } catch (error) {
       console.error("Error fetching analytics:", error);
       toast.error("Failed to load analytics");
@@ -368,7 +399,11 @@ export const AnalyticsDashboard = () => {
       ...topUsers.map(user => [user.full_name, user.enrollments, `${user.avgProgress}%`]),
       [],
       ["Top Watched Videos", "Course", "Views"],
-      ...topVideos.map(video => [video.title, video.course_title, video.views])
+      ...topVideos.map(video => [video.title, video.course_title, video.views]),
+      [],
+      ["Certificate Details"],
+      ["Certificate ID", "User Name", "Course", "Issued At"],
+      ...certificateDetails.map(cert => [cert.certificate_id, cert.user_name, cert.course_title, cert.issued_at])
     ].map(row => row.join(",")).join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -682,6 +717,48 @@ export const AnalyticsDashboard = () => {
                     </TableRow>
                   );
                 })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Certificate Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Award className="h-5 w-5" />
+            Certificate Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="max-h-[500px] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Certificate ID</TableHead>
+                  <TableHead>User Name</TableHead>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Issued At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {certificateDetails.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                      No certificates issued yet
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  certificateDetails.map((cert, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-mono text-xs">{cert.certificate_id}</TableCell>
+                      <TableCell className="font-medium">{cert.user_name}</TableCell>
+                      <TableCell>{cert.course_title}</TableCell>
+                      <TableCell>{cert.issued_at}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
