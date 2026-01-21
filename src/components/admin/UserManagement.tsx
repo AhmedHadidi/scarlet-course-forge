@@ -15,7 +15,13 @@ import { toast as sonnerToast } from "sonner";
 
 const userSchema = z.object({
   email: z.string().trim().email("Invalid email address").max(255),
-  password: z.string().min(6, "Password must be at least 6 characters").max(100),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .max(100)
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character"),
   full_name: z.string().trim().min(1, "Name is required").max(100),
   role: z.enum(["admin", "sub_admin", "user"]),
   department_id: z.string().uuid().optional(),
@@ -442,6 +448,11 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
                   placeholder="••••••••"
                 />
                 {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                {!editingUser && (
+                  <p className="text-xs text-muted-foreground">
+                    Min 8 chars, uppercase, lowercase, number, and special character (!@#$%^&*...)
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
