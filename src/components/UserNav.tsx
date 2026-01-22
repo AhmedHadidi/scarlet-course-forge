@@ -18,9 +18,16 @@ const UserNav = () => {
     { path: "/profile", icon: User, label: "My Profile" },
   ];
 
+  // Sub-admin menu items
+  const subAdminNavItems = [
+    { path: "/dashboard", icon: Home, label: "Home" },
+    { path: "/subadmin", icon: BarChart, label: "My Dashboard" },
+    { path: "/profile", icon: User, label: "My Profile" },
+  ];
+
   // Regular user menu items
   const userNavItems: Array<{ path: string; icon: any; label: string; feature?: string }> = [
-    { path: "/admin", icon: BookOpen, label: "Courses" },
+    { path: "/dashboard", icon: BookOpen, label: "Courses" },
     { path: "/bulletins", icon: Newspaper, label: "AI News" },
     { path: "/progress", icon: TrendingUp, label: "My Progress" },
     { path: "/certificates", icon: Award, label: "Certificates", feature: "certificates" },
@@ -50,10 +57,14 @@ const UserNav = () => {
     }
   };
 
-  const navItems = userRole === 'admin' ? adminNavItems : userNavItems;
+  const navItems = userRole === 'admin' 
+    ? adminNavItems 
+    : userRole === 'sub_admin' 
+      ? subAdminNavItems 
+      : userNavItems;
   
   // Filter nav items based on feature settings for regular users
-  const filteredNavItems = userRole === 'admin' 
+  const filteredNavItems = userRole === 'admin' || userRole === 'sub_admin'
     ? navItems 
     : navItems.filter(item => {
         if ('feature' in item && item.feature) {
