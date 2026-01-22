@@ -14,6 +14,7 @@ import Certificates from "./pages/Certificates";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import AdminDashboard from "./pages/AdminDashboard";
+import SubAdminDashboard from "./pages/SubAdminDashboard";
 import QuizTake from "./pages/QuizTake";
 import WeeklyBulletin from "./pages/WeeklyBulletin";
 import Bulletins from "./pages/Bulletins";
@@ -92,6 +93,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/subadmin"
+              element={
+                <ProtectedRoute requiredRole="sub_admin">
+                  <SubAdminDashboard />
                 </ProtectedRoute>
               }
             />
