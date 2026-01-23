@@ -108,41 +108,50 @@ export const SubAdminAnalytics = ({ departmentId }: SubAdminAnalyticsProps) => {
         };
       });
 
-      // Build Quiz Performance data
+      // Build Quiz Performance data using nested Map to avoid UUID split issues
       const quizPerformanceData: QuizPerformance[] = [];
-      const userQuizMap = new Map<string, { pre: number | null; post: number | null }>();
+      const userQuizMap = new Map<string, Map<string, { pre: number | null; post: number | null }>>();
 
       quizAttempts.forEach(attempt => {
-        const key = `${attempt.user_id}-${attempt.quiz_id}`;
-        if (!userQuizMap.has(key)) {
-          userQuizMap.set(key, { pre: null, post: null });
+        const userId = attempt.user_id;
+        const quizId = attempt.quiz_id;
+        
+        if (!userQuizMap.has(userId)) {
+          userQuizMap.set(userId, new Map());
         }
-        const entry = userQuizMap.get(key)!;
+        const userQuizzes = userQuizMap.get(userId)!;
+        
+        if (!userQuizzes.has(quizId)) {
+          userQuizzes.set(quizId, { pre: null, post: null });
+        }
+        const entry = userQuizzes.get(quizId)!;
+        
         if (attempt.attempt_type === "pre") {
-          entry.pre = attempt.score;
+          entry.pre = entry.pre === null ? attempt.score : Math.max(entry.pre, attempt.score);
         } else {
           entry.post = entry.post === null ? attempt.score : Math.max(entry.post, attempt.score);
         }
       });
 
-      userQuizMap.forEach((scores, key) => {
-        const [userId, quizId] = key.split("-");
-        const quizInfo = quizMap.get(quizId);
-        if (quizInfo) {
-          const improvement = scores.pre !== null && scores.post !== null
-            ? scores.post - scores.pre
-            : null;
+      userQuizMap.forEach((quizzes, userId) => {
+        quizzes.forEach((scores, quizId) => {
+          const quizInfo = quizMap.get(quizId);
+          if (quizInfo) {
+            const improvement = scores.pre !== null && scores.post !== null
+              ? scores.post - scores.pre
+              : null;
 
-          quizPerformanceData.push({
-            userId,
-            userName: userMap.get(userId) || "Unknown",
-            courseName: courseMap.get(quizInfo.courseId) || "Unknown Course",
-            quizTitle: quizInfo.title,
-            preScore: scores.pre,
-            postScore: scores.post,
-            improvement,
-          });
-        }
+            quizPerformanceData.push({
+              userId,
+              userName: userMap.get(userId) || "Unknown",
+              courseName: courseMap.get(quizInfo.courseId) || "Unknown Course",
+              quizTitle: quizInfo.title,
+              preScore: scores.pre,
+              postScore: scores.post,
+              improvement,
+            });
+          }
+        });
       });
 
       // Build Certificate Details data
