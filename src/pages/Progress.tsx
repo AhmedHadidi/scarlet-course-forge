@@ -251,7 +251,12 @@ const Progress = () => {
             {enrollments.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">No enrolled courses yet</p>
-                <Button className="gradient-crimson">Browse Courses</Button>
+                <Button 
+                  className="gradient-crimson"
+                  onClick={() => window.location.href = '/dashboard'}
+                >
+                  Browse Courses
+                </Button>
               </div>
             )}
           </>
