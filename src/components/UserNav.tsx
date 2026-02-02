@@ -13,14 +13,14 @@ const UserNav = () => {
 
   // Admin menu items
   const adminNavItems = [
-    { path: "/dashboard", icon: Home, label: "Home" },
-    { path: "/admin", icon: BarChart, label: "My Dashboard" },
+    { path: "/dashboard", icon: Home, label: "Courses" },
+    { path: "/admin", icon: BarChart, label: "Admin Dashboard" },
     { path: "/profile", icon: User, label: "My Profile" },
   ];
 
   // Sub-admin menu items
   const subAdminNavItems = [
-    { path: "/dashboard", icon: Home, label: "Home" },
+    { path: "/dashboard", icon: Home, label: "Courses" },
     { path: "/subadmin", icon: BarChart, label: "My Dashboard" },
     { path: "/profile", icon: User, label: "My Profile" },
   ];

@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { User, Mail, Lock, Upload, Newspaper } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { User, Mail, Lock, Upload, Newspaper, Building2 } from "lucide-react";
 import UserNav from "@/components/UserNav";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,12 +18,18 @@ interface Category {
   description: string | null;
 }
 
+interface Department {
+  id: string;
+  name: string;
+}
+
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [profile, setProfile] = useState({
     full_name: "",
     avatar_url: "",
+    department_id: "",
   });
   const [passwordData, setPasswordData] = useState({
     newPassword: "",
@@ -33,11 +40,13 @@ const Profile = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [savingPreferences, setSavingPreferences] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
 
   useEffect(() => {
     fetchProfile();
     fetchCategories();
     fetchUserPreferences();
+    fetchDepartments();
   }, [user]);
 
   const fetchProfile = async () => {
@@ -54,12 +63,28 @@ const Profile = () => {
         setProfile({
           full_name: data.full_name || "",
           avatar_url: data.avatar_url || "",
+          department_id: data.department_id || "",
         });
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const { data } = await supabase
+        .from("departments")
+        .select("id, name")
+        .order("name");
+
+      if (data) {
+        setDepartments(data);
+      }
+    } catch (error) {
+      console.error("Error fetching departments:", error);
     }
   };
 
@@ -105,6 +130,7 @@ const Profile = () => {
         .update({
           full_name: profile.full_name,
           avatar_url: profile.avatar_url,
+          department_id: profile.department_id || null,
         })
         .eq("id", user.id);
 
@@ -275,6 +301,30 @@ const Profile = () => {
                       Email
                     </Label>
                     <Input id="email" value={user?.email || ""} disabled />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="department">
+                      <Building2 className="inline h-4 w-4 mr-2" />
+                      Department
+                    </Label>
+                    <Select
+                      value={profile.department_id}
+                      onValueChange={(value) =>
+                        setProfile({ ...profile, department_id: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
