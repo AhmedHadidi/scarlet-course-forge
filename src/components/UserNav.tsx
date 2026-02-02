@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Home, BookOpen, TrendingUp, Award, User, Bell, LogOut, GraduationCap, BarChart, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 
 const UserNav = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { signOut, userRole } = useAuth();
   const [featureSettings, setFeatureSettings] = useState<Record<string, boolean>>({});
 
@@ -91,16 +92,16 @@ const UserNav = () => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (
-                <Link key={item.path} to={item.path}>
-                  <Button
-                    variant={isActive ? "default" : "ghost"}
-                    size="sm"
-                    className={cn("gap-2", isActive && "gradient-crimson")}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Button>
-                </Link>
+                <Button
+                  key={item.path}
+                  variant={isActive ? "default" : "ghost"}
+                  size="sm"
+                  className={cn("gap-2", isActive && "gradient-crimson")}
+                  onClick={() => navigate(item.path)}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Button>
               );
             })}
           </nav>
@@ -117,16 +118,16 @@ const UserNav = () => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (
-              <Link key={item.path} to={item.path}>
-                <Button
-                  variant={isActive ? "default" : "ghost"}
-                  size="sm"
-                  className={cn("gap-2 whitespace-nowrap", isActive && "gradient-crimson")}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Button>
-              </Link>
+              <Button
+                key={item.path}
+                variant={isActive ? "default" : "ghost"}
+                size="sm"
+                className={cn("gap-2 whitespace-nowrap", isActive && "gradient-crimson")}
+                onClick={() => navigate(item.path)}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Button>
             );
           })}
         </nav>
