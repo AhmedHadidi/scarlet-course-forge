@@ -14,8 +14,13 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   const { isVerifiedAdmin, isVerifying: isVerifyingAdmin } = useVerifyAdmin();
   const { isVerifiedSubAdmin, isVerifying: isVerifyingSubAdmin } = useVerifySubAdmin();
 
-  // Show loading while auth or role verification is in progress
-  if (loading || (requiredRole === 'admin' && isVerifyingAdmin) || (requiredRole === 'sub_admin' && isVerifyingSubAdmin)) {
+  // Show loading while auth or role verification is in progress.
+  // NOTE: verification starts in an effect, so initial `null` must be treated as "pending"
+  // to avoid redirecting back to `/` before the verification call runs.
+  const isAdminVerificationPending = requiredRole === 'admin' && (isVerifyingAdmin || isVerifiedAdmin === null);
+  const isSubAdminVerificationPending = requiredRole === 'sub_admin' && (isVerifyingSubAdmin || isVerifiedSubAdmin === null);
+
+  if (loading || isAdminVerificationPending || isSubAdminVerificationPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
