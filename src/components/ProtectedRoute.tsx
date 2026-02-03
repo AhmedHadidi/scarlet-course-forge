@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { user, loading, userRole, approvalStatus } = useAuth();
   const { isVerifiedAdmin, isVerifying: isVerifyingAdmin } = useVerifyAdmin();
   const { isVerifiedSubAdmin, isVerifying: isVerifyingSubAdmin } = useVerifySubAdmin();
 
@@ -19,8 +19,9 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   // to avoid redirecting back to `/` before the verification call runs.
   const isAdminVerificationPending = requiredRole === 'admin' && (isVerifyingAdmin || isVerifiedAdmin === null);
   const isSubAdminVerificationPending = requiredRole === 'sub_admin' && (isVerifyingSubAdmin || isVerifiedSubAdmin === null);
+  const isApprovalPending = approvalStatus === null && user;
 
-  if (loading || isAdminVerificationPending || isSubAdminVerificationPending) {
+  if (loading || isAdminVerificationPending || isSubAdminVerificationPending || isApprovalPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -29,6 +30,16 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   }
 
   if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Check approval status - admins bypass approval check
+  const isAdmin = userRole === 'admin';
+  if (!isAdmin && approvalStatus === 'pending') {
+    return <Navigate to="/pending-approval" replace />;
+  }
+  
+  if (!isAdmin && approvalStatus === 'rejected') {
     return <Navigate to="/auth" replace />;
   }
 

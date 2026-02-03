@@ -18,6 +18,7 @@ import SubAdminDashboard from "./pages/SubAdminDashboard";
 import QuizTake from "./pages/QuizTake";
 import WeeklyBulletin from "./pages/WeeklyBulletin";
 import Bulletins from "./pages/Bulletins";
+import PendingApproval from "./pages/PendingApproval";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/pending-approval" element={<PendingApproval />} />
             <Route
               path="/dashboard"
               element={
