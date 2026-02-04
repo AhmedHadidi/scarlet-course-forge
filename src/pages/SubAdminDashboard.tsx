@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, Building2 } from "lucide-react";
+import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, Building2, UserCheck } from "lucide-react";
 import { SubAdminUserManagement } from "@/components/subadmin/SubAdminUserManagement";
 import { SubAdminAnalytics } from "@/components/subadmin/SubAdminAnalytics";
+import { SubAdminPendingRegistrations } from "@/components/subadmin/SubAdminPendingRegistrations";
 import { toast } from "sonner";
 
 interface Department {
@@ -160,6 +161,7 @@ const SubAdminDashboard = () => {
   const menuItems = [
     { id: "home", label: "Home", icon: Home, isExternal: true, path: "/" },
     { id: "overview", label: "Dashboard", icon: BarChart },
+    { id: "registrations", label: "Registrations", icon: UserCheck },
     { id: "users", label: "Department Users", icon: Users },
     { id: "analytics", label: "Analytics", icon: TrendingUp },
   ];
@@ -279,6 +281,7 @@ const SubAdminDashboard = () => {
             </h2>
             <p className="text-muted-foreground mt-1">
               {activeView === "overview" && `Manage ${department.name} department`}
+              {activeView === "registrations" && "Review and approve new user registrations"}
               {activeView === "users" && "View and manage users in your department"}
               {activeView === "analytics" && "View analytics for your department"}
             </p>
@@ -363,6 +366,9 @@ const SubAdminDashboard = () => {
               </div>
             </>
           )}
+
+          {/* Registrations View */}
+          {activeView === "registrations" && <SubAdminPendingRegistrations departmentId={department.id} />}
 
           {/* Users View */}
           {activeView === "users" && <SubAdminUserManagement departmentId={department.id} />}
