@@ -61,10 +61,17 @@ export const PendingRegistrations = () => {
 
       // Get emails via admin edge function
       const { data: { session } } = await supabase.auth.getSession();
-      const { data: usersData } = await supabase.functions.invoke('admin-operations', {
-        body: { operation: 'listUsers' },
-        headers: { Authorization: `Bearer ${session?.access_token}` }
+      const { data: usersData, error: usersError } = await supabase.functions.invoke('admin-operations', {
+        body: JSON.stringify({ operation: 'listUsers' }),
+        headers: { 
+          Authorization: `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json'
+        }
       });
+      
+      if (usersError) {
+        console.error("Error fetching users:", usersError);
+      }
 
       const emailMap = new Map<string, string>();
       usersData?.users?.forEach((u: any) => {
