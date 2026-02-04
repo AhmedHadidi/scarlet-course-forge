@@ -158,6 +158,7 @@ const SubAdminDashboard = () => {
     },
   ];
 
+  // Menu items for sub-admin navigation
   const menuItems = [
     { id: "home", label: "Home", icon: Home, isExternal: true, path: "/" },
     { id: "overview", label: "Dashboard", icon: BarChart },
