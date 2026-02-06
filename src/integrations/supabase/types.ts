@@ -650,6 +650,59 @@ export type Database = {
         }
         Relationships: []
       }
+      video_engagement: {
+        Row: {
+          ai_question: string | null
+          ai_user_answer: string | null
+          ai_verification_passed: boolean | null
+          created_at: string
+          engagement_score: number
+          id: string
+          tab_switches: number
+          total_duration_seconds: number
+          updated_at: string
+          user_id: string
+          video_id: string
+          watch_time_seconds: number
+        }
+        Insert: {
+          ai_question?: string | null
+          ai_user_answer?: string | null
+          ai_verification_passed?: boolean | null
+          created_at?: string
+          engagement_score?: number
+          id?: string
+          tab_switches?: number
+          total_duration_seconds?: number
+          updated_at?: string
+          user_id: string
+          video_id: string
+          watch_time_seconds?: number
+        }
+        Update: {
+          ai_question?: string | null
+          ai_user_answer?: string | null
+          ai_verification_passed?: boolean | null
+          created_at?: string
+          engagement_score?: number
+          id?: string
+          tab_switches?: number
+          total_duration_seconds?: number
+          updated_at?: string
+          user_id?: string
+          video_id?: string
+          watch_time_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_engagement_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "course_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_progress: {
         Row: {
           completed: boolean

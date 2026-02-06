@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Award, FileText } from "lucide-react";
+import { CheckCircle2, Award, FileText, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
+import { useVideoEngagement } from "@/hooks/useVideoEngagement";
+import { VideoVerificationDialog } from "@/components/VideoVerificationDialog";
 
 interface Video {
   id: string;
@@ -18,6 +20,12 @@ interface Video {
   duration_seconds: number | null;
   order_index: number;
   completed: boolean;
+}
+
+interface Course {
+  id: string;
+  title: string;
+  description: string;
 }
 
 interface Course {
@@ -38,6 +46,19 @@ const CoursePlayer = () => {
   const [quizId, setQuizId] = useState<string | null>(null);
   const [hasCompletedPreQuiz, setHasCompletedPreQuiz] = useState(false);
   const [hasCompletedPostQuiz, setHasCompletedPostQuiz] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+
+  // Video engagement tracking
+  const currentVideo = videos[currentVideoIndex];
+  const { engagement, resetEngagement, setManualDuration } = useVideoEngagement({
+    videoId: currentVideo?.id || "",
+    videoDuration: currentVideo?.duration_seconds || null,
+    onTabSwitch: () => {
+      toast.warning("Tab switch detected - please stay focused on the video", {
+        duration: 2000,
+      });
+    },
+  });
 
   useEffect(() => {
     if (user && courseId) {
@@ -222,7 +243,7 @@ const CoursePlayer = () => {
     );
   }
 
-  const currentVideo = videos[currentVideoIndex];
+  const activeVideo = videos[currentVideoIndex];
 
   // If there's a quiz and user hasn't completed pre-quiz, show pre-quiz screen
   if (quizId && !hasCompletedPreQuiz) {
@@ -262,12 +283,12 @@ const CoursePlayer = () => {
             <Card>
               <CardContent className="p-0">
                 <div className="aspect-video bg-black">
-                  {currentVideo.video_source === "youtube_single" ? (
+                  {activeVideo.video_source === "youtube_single" ? (
                     <iframe
                       width="100%"
                       height="100%"
-                      src={getYouTubeEmbedUrl(currentVideo.video_url)}
-                      title={currentVideo.title}
+                      src={getYouTubeEmbedUrl(activeVideo.video_url)}
+                      title={activeVideo.title}
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
@@ -277,7 +298,7 @@ const CoursePlayer = () => {
                       width="100%"
                       height="100%"
                       controls
-                      src={currentVideo.video_url}
+                      src={activeVideo.video_url}
                     >
                       Your browser does not support the video tag.
                     </video>
@@ -288,31 +309,51 @@ const CoursePlayer = () => {
 
             <Card>
               <CardContent className="p-6 space-y-4">
-                <h1 className="text-2xl font-bold">{currentVideo.title}</h1>
+                <h1 className="text-2xl font-bold">{activeVideo.title}</h1>
                 <p className="text-sm text-muted-foreground">
                   Video {currentVideoIndex + 1} of {videos.length} •{" "}
-                  {formatDuration(currentVideo.duration_seconds)}
+                  {formatDuration(activeVideo.duration_seconds)}
                 </p>
 
-                {currentVideo.description && (
+                {/* Engagement tracking display */}
+                <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-primary" />
+                      Watch Progress
+                    </span>
+                    <span className="font-medium">{Math.round(engagement.watchRatio * 100)}%</span>
+                  </div>
+                  <Progress value={engagement.watchRatio * 100} className="h-2" />
+                  <p className="text-xs text-muted-foreground">
+                    {Math.floor(engagement.watchTimeSeconds / 60)}m {engagement.watchTimeSeconds % 60}s watched
+                    {engagement.tabSwitches > 0 && (
+                      <span className="text-destructive/70 ml-2">
+                        • {engagement.tabSwitches} tab switch{engagement.tabSwitches > 1 ? "es" : ""}
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                {activeVideo.description && (
                   <p className="text-muted-foreground">
-                    {currentVideo.description}
+                    {activeVideo.description}
                   </p>
                 )}
 
-                <div className="flex gap-4">
-                  {!currentVideo.completed && (
+                <div className="flex flex-wrap gap-4">
+                  {!activeVideo.completed && (
                     <Button
-                      onClick={() => markVideoCompleted(currentVideo.id)}
+                      onClick={() => setShowVerificationDialog(true)}
                       variant="default"
                     >
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Mark as Completed
+                      <Brain className="mr-2 h-4 w-4" />
+                      Verify & Complete
                     </Button>
                   )}
 
-                  {currentVideo.completed && (
-                    <div className="flex items-center text-green-600">
+                  {activeVideo.completed && (
+                    <div className="flex items-center text-primary">
                       <CheckCircle2 className="mr-2 h-4 w-4" />
                       Completed
                     </div>
@@ -401,7 +442,7 @@ const CoursePlayer = () => {
                     >
                       <div className="flex items-start gap-3">
                         {video.completed ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                         ) : (
                           <div className="h-5 w-5 rounded-full border-2 border-border flex-shrink-0 mt-0.5" />
                         )}
@@ -409,7 +450,7 @@ const CoursePlayer = () => {
                           <p
                             className={`font-medium text-sm line-clamp-2 ${
                               video.completed
-                                ? "text-green-600"
+                                ? "text-primary"
                                 : currentVideoIndex === index
                                 ? "text-primary"
                                 : "text-foreground"
@@ -430,6 +471,26 @@ const CoursePlayer = () => {
           </div>
         </div>
       </div>
+
+      {/* Verification Dialog */}
+      <VideoVerificationDialog
+        open={showVerificationDialog}
+        onOpenChange={setShowVerificationDialog}
+        videoId={activeVideo.id}
+        videoTitle={activeVideo.title}
+        videoDescription={activeVideo.description}
+        courseTitle={course.title}
+        watchTimeSeconds={engagement.watchTimeSeconds}
+        totalDurationSeconds={engagement.totalDurationSeconds || activeVideo.duration_seconds || 300}
+        tabSwitches={engagement.tabSwitches}
+        onVerified={() => {
+          markVideoCompleted(activeVideo.id);
+          resetEngagement();
+        }}
+        onFailed={() => {
+          toast.info("Please continue watching the video");
+        }}
+      />
     </div>
   );
 };
