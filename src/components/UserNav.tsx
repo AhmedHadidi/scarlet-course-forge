@@ -15,6 +15,7 @@ const UserNav = () => {
   // Admin menu items
   const adminNavItems = [
     { path: "/dashboard", icon: Home, label: "Courses" },
+    { path: "/progress", icon: TrendingUp, label: "My Progress" },
     { path: "/admin", icon: BarChart, label: "Admin Dashboard" },
     { path: "/profile", icon: User, label: "My Profile" },
   ];
@@ -22,6 +23,7 @@ const UserNav = () => {
   // Sub-admin menu items
   const subAdminNavItems = [
     { path: "/dashboard", icon: Home, label: "Courses" },
+    { path: "/progress", icon: TrendingUp, label: "My Progress" },
     { path: "/subadmin", icon: BarChart, label: "My Dashboard" },
     { path: "/profile", icon: User, label: "My Profile" },
   ];
