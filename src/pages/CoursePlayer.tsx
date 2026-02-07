@@ -78,7 +78,7 @@ const CoursePlayer = () => {
 
       if (enrollmentError || !enrollment) {
         toast.error("You are not enrolled in this course");
-        navigate("/courses");
+        navigate("/dashboard");
         return;
       }
 

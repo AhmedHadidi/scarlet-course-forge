@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -184,9 +184,11 @@ export function VideoVerificationDialog({
   };
 
   // Generate question when dialog opens
-  if (open && state === "loading" && !questionData) {
-    generateQuestion();
-  }
+  useEffect(() => {
+    if (open && state === "loading" && !questionData) {
+      generateQuestion();
+    }
+  }, [open]);
 
   const watchRatio = totalDurationSeconds > 0 
     ? Math.round((watchTimeSeconds / totalDurationSeconds) * 100) 
