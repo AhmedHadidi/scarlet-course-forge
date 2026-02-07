@@ -6,10 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Calendar as CalendarIcon, Users, BookOpen, Award, TrendingUp, Video, CheckCircle, Eye } from "lucide-react";
+import { Download, Calendar as CalendarIcon, Users, BookOpen, Award, TrendingUp, Video, CheckCircle, Eye, Brain } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { VideoEngagementAnalytics } from "./VideoEngagementAnalytics";
 
 interface AnalyticsStats {
   totalUsers: number;
@@ -762,6 +763,19 @@ export const AnalyticsDashboard = () => {
               </TableBody>
             </Table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Video Engagement Analytics */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            Video Engagement & Watch Behavior
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <VideoEngagementAnalytics />
         </CardContent>
       </Card>
     </div>
