@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, TrendingUp, Award, BookOpen } from "lucide-react";
+import { BarChart, TrendingUp, Award, BookOpen, Brain } from "lucide-react";
+import { SubAdminVideoEngagement } from "@/components/subadmin/SubAdminVideoEngagement";
 
 interface SubAdminAnalyticsProps {
   departmentId: string;
@@ -232,10 +233,14 @@ export const SubAdminAnalytics = ({ departmentId }: SubAdminAnalyticsProps) => {
 
       {/* Detailed Tabs */}
       <Tabs defaultValue="progress" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="progress">Course Progress</TabsTrigger>
           <TabsTrigger value="quizzes">Quiz Performance</TabsTrigger>
           <TabsTrigger value="certificates">Certificates</TabsTrigger>
+          <TabsTrigger value="engagement">
+            <Brain className="mr-1 h-4 w-4" />
+            Video Engagement
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="progress">
@@ -409,6 +414,10 @@ export const SubAdminAnalytics = ({ departmentId }: SubAdminAnalyticsProps) => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="engagement">
+          <SubAdminVideoEngagement departmentId={departmentId} />
         </TabsContent>
       </Tabs>
     </div>
