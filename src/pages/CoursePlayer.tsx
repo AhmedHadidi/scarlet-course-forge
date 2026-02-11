@@ -4,12 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Award, FileText, Brain } from "lucide-react";
+import { CheckCircle2, Award, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
-import { useVideoEngagement } from "@/hooks/useVideoEngagement";
-import { VideoVerificationDialog } from "@/components/VideoVerificationDialog";
 
 interface Video {
   id: string;
@@ -46,19 +44,8 @@ const CoursePlayer = () => {
   const [quizId, setQuizId] = useState<string | null>(null);
   const [hasCompletedPreQuiz, setHasCompletedPreQuiz] = useState(false);
   const [hasCompletedPostQuiz, setHasCompletedPostQuiz] = useState(false);
-  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
 
-  // Video engagement tracking
-  const currentVideo = videos[currentVideoIndex];
-  const { engagement, resetEngagement, setManualDuration } = useVideoEngagement({
-    videoId: currentVideo?.id || "",
-    videoDuration: currentVideo?.duration_seconds || null,
-    onTabSwitch: () => {
-      toast.warning("Tab switch detected - please stay focused on the video", {
-        duration: 2000,
-      });
-    },
-  });
+
 
   useEffect(() => {
     if (user && courseId) {
@@ -315,25 +302,6 @@ const CoursePlayer = () => {
                   {formatDuration(activeVideo.duration_seconds)}
                 </p>
 
-                {/* Engagement tracking display */}
-                <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2">
-                      <Brain className="h-4 w-4 text-primary" />
-                      Watch Progress
-                    </span>
-                    <span className="font-medium">{Math.round(engagement.watchRatio * 100)}%</span>
-                  </div>
-                  <Progress value={engagement.watchRatio * 100} className="h-2" />
-                  <p className="text-xs text-muted-foreground">
-                    {Math.floor(engagement.watchTimeSeconds / 60)}m {engagement.watchTimeSeconds % 60}s watched
-                    {engagement.tabSwitches > 0 && (
-                      <span className="text-destructive/70 ml-2">
-                        • {engagement.tabSwitches} tab switch{engagement.tabSwitches > 1 ? "es" : ""}
-                      </span>
-                    )}
-                  </p>
-                </div>
 
                 {activeVideo.description && (
                   <p className="text-muted-foreground">
@@ -344,11 +312,11 @@ const CoursePlayer = () => {
                 <div className="flex flex-wrap gap-4">
                   {!activeVideo.completed && (
                     <Button
-                      onClick={() => setShowVerificationDialog(true)}
+                      onClick={() => markVideoCompleted(activeVideo.id)}
                       variant="default"
                     >
-                      <Brain className="mr-2 h-4 w-4" />
-                      Verify & Complete
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Mark as Completed
                     </Button>
                   )}
 
@@ -472,25 +440,6 @@ const CoursePlayer = () => {
         </div>
       </div>
 
-      {/* Verification Dialog */}
-      <VideoVerificationDialog
-        open={showVerificationDialog}
-        onOpenChange={setShowVerificationDialog}
-        videoId={activeVideo.id}
-        videoTitle={activeVideo.title}
-        videoDescription={activeVideo.description}
-        courseTitle={course.title}
-        watchTimeSeconds={engagement.watchTimeSeconds}
-        totalDurationSeconds={engagement.totalDurationSeconds || activeVideo.duration_seconds || 300}
-        tabSwitches={engagement.tabSwitches}
-        onVerified={() => {
-          markVideoCompleted(activeVideo.id);
-          resetEngagement();
-        }}
-        onFailed={() => {
-          toast.info("Please continue watching the video");
-        }}
-      />
     </div>
   );
 };
