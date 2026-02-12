@@ -8,6 +8,7 @@ import { CheckCircle2, Award, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
+import { useVideoEngagement } from "@/hooks/useVideoEngagement";
 
 interface Video {
   id: string;
@@ -45,7 +46,12 @@ const CoursePlayer = () => {
   const [hasCompletedPreQuiz, setHasCompletedPreQuiz] = useState(false);
   const [hasCompletedPostQuiz, setHasCompletedPostQuiz] = useState(false);
 
-
+  // Silent engagement tracking (data only visible to admins/sub-admins)
+  const activeVideo = videos[currentVideoIndex];
+  const { engagement, resetEngagement } = useVideoEngagement({
+    videoId: activeVideo?.id || "",
+    videoDuration: activeVideo?.duration_seconds || null,
+  });
 
   useEffect(() => {
     if (user && courseId) {
@@ -165,6 +171,25 @@ const CoursePlayer = () => {
 
       if (error) throw error;
 
+      // Save engagement data silently for admin analytics
+      const engagementScore = engagement.totalDurationSeconds > 0
+        ? Math.min(1, engagement.watchTimeSeconds / engagement.totalDurationSeconds) * 100
+        : 0;
+
+      await supabase.from("video_engagement").upsert(
+        {
+          user_id: user?.id!,
+          video_id: videoId,
+          watch_time_seconds: engagement.watchTimeSeconds,
+          total_duration_seconds: engagement.totalDurationSeconds,
+          tab_switches: engagement.tabSwitches,
+          engagement_score: Math.round(engagementScore),
+        },
+        { onConflict: "user_id,video_id" }
+      );
+
+      resetEngagement();
+
       // Update local state
       const updatedVideos = videos.map((v) =>
         v.id === videoId ? { ...v, completed: true } : v
@@ -230,7 +255,7 @@ const CoursePlayer = () => {
     );
   }
 
-  const activeVideo = videos[currentVideoIndex];
+  // activeVideo already declared above with engagement tracking
 
   // If there's a quiz and user hasn't completed pre-quiz, show pre-quiz screen
   if (quizId && !hasCompletedPreQuiz) {
