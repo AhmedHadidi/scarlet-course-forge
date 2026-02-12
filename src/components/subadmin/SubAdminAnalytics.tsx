@@ -52,6 +52,10 @@ export const SubAdminAnalytics = ({ departmentId }: SubAdminAnalyticsProps) => {
   const [progressSearchQuery, setProgressSearchQuery] = useState("");
   const [quizPerformance, setQuizPerformance] = useState<QuizPerformance[]>([]);
   const [certificateDetails, setCertificateDetails] = useState<CertificateDetail[]>([]);
+  const [expandedQuizUsers, setExpandedQuizUsers] = useState<Set<string>>(new Set());
+  const [quizSearchQuery, setQuizSearchQuery] = useState("");
+  const [expandedCertUsers, setExpandedCertUsers] = useState<Set<string>>(new Set());
+  const [certSearchQuery, setCertSearchQuery] = useState("");
 
   useEffect(() => {
     fetchAnalytics();
@@ -360,68 +364,95 @@ export const SubAdminAnalytics = ({ departmentId }: SubAdminAnalyticsProps) => {
                 <TrendingUp className="h-5 w-5" />
                 Quiz Performance
               </CardTitle>
-              <CardDescription>Pre and post quiz scores with improvement tracking</CardDescription>
+              <CardDescription>Pre and post quiz scores grouped by user</CardDescription>
             </CardHeader>
-            <CardContent>
-              {quizPerformance.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground">
-                  No quiz attempts yet
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Course</TableHead>
-                      <TableHead>Quiz</TableHead>
-                      <TableHead className="text-center">Pre-Score</TableHead>
-                      <TableHead className="text-center">Post-Score</TableHead>
-                      <TableHead className="text-center">Improvement</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {quizPerformance.map((perf, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{perf.userName}</TableCell>
-                        <TableCell>{perf.courseName}</TableCell>
-                        <TableCell>{perf.quizTitle}</TableCell>
-                        <TableCell className="text-center">
-                          {perf.preScore !== null ? (
-                            <Badge variant="secondary">{perf.preScore}%</Badge>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
+            <CardContent className="space-y-4">
+              <div className="relative max-w-md">
+                <Input placeholder="Search by user, course, or quiz..." value={quizSearchQuery} onChange={e => setQuizSearchQuery(e.target.value)} />
+              </div>
+              {(() => {
+                const quizByUser = new Map<string, { userName: string; quizzes: QuizPerformance[] }>();
+                quizPerformance.forEach(perf => {
+                  if (!quizByUser.has(perf.userId)) {
+                    quizByUser.set(perf.userId, { userName: perf.userName, quizzes: [] });
+                  }
+                  quizByUser.get(perf.userId)!.quizzes.push(perf);
+                });
+                const groupedQuizUsers = Array.from(quizByUser.entries())
+                  .map(([userId, data]) => ({ userId, ...data }))
+                  .filter(u => {
+                    if (!quizSearchQuery) return true;
+                    const q = quizSearchQuery.toLowerCase();
+                    return u.userName.toLowerCase().includes(q) || u.quizzes.some(qz => qz.courseName.toLowerCase().includes(q) || qz.quizTitle.toLowerCase().includes(q));
+                  })
+                  .sort((a, b) => a.userName.localeCompare(b.userName));
+
+                if (groupedQuizUsers.length === 0) {
+                  return <div className="text-center py-10 text-muted-foreground">No quiz attempts yet</div>;
+                }
+
+                return (
+                  <div className="max-h-[600px] overflow-y-auto space-y-2">
+                    {groupedQuizUsers.map(user => {
+                      const isExpanded = expandedQuizUsers.has(user.userId);
+                      return (
+                        <div key={user.userId} className="border rounded-lg border-border">
+                          <button
+                            onClick={() => setExpandedQuizUsers(prev => { const n = new Set(prev); n.has(user.userId) ? n.delete(user.userId) : n.add(user.userId); return n; })}
+                            className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors rounded-lg text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                              <Users className="h-4 w-4 text-primary" />
+                              <span className="font-semibold">{user.userName}</span>
+                              <span className="text-xs text-muted-foreground ml-2">{user.quizzes.length} quiz{user.quizzes.length !== 1 ? "zes" : ""}</span>
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="px-4 pb-4">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Course</TableHead>
+                                    <TableHead>Quiz</TableHead>
+                                    <TableHead className="text-center">Pre-Score</TableHead>
+                                    <TableHead className="text-center">Post-Score</TableHead>
+                                    <TableHead className="text-center">Improvement</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {user.quizzes.map((perf, idx) => (
+                                    <TableRow key={idx}>
+                                      <TableCell>{perf.courseName}</TableCell>
+                                      <TableCell>{perf.quizTitle}</TableCell>
+                                      <TableCell className="text-center">
+                                        {perf.preScore !== null ? <Badge variant="secondary">{perf.preScore}%</Badge> : <span className="text-muted-foreground">-</span>}
+                                      </TableCell>
+                                      <TableCell className="text-center">
+                                        {perf.postScore !== null ? <Badge variant="secondary">{perf.postScore}%</Badge> : <span className="text-muted-foreground">-</span>}
+                                      </TableCell>
+                                      <TableCell className="text-center">
+                                        {perf.improvement !== null ? (
+                                          <Badge
+                                            className={perf.improvement > 0 ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : perf.improvement < 0 ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" : ""}
+                                            variant={perf.improvement === 0 ? "secondary" : "default"}
+                                          >
+                                            {perf.improvement > 0 ? "+" : ""}{perf.improvement}%
+                                          </Badge>
+                                        ) : <span className="text-muted-foreground">-</span>}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
                           )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {perf.postScore !== null ? (
-                            <Badge variant="secondary">{perf.postScore}%</Badge>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {perf.improvement !== null ? (
-                            <Badge 
-                              className={
-                                perf.improvement > 0 
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                  : perf.improvement < 0
-                                  ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                                  : ""
-                              }
-                              variant={perf.improvement === 0 ? "secondary" : "default"}
-                            >
-                              {perf.improvement > 0 ? "+" : ""}{perf.improvement}%
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
@@ -433,41 +464,78 @@ export const SubAdminAnalytics = ({ departmentId }: SubAdminAnalyticsProps) => {
                 <Award className="h-5 w-5" />
                 Certificate Details
               </CardTitle>
-              <CardDescription>Certificates earned by department users</CardDescription>
+              <CardDescription>Certificates earned grouped by user</CardDescription>
             </CardHeader>
-            <CardContent>
-              {certificateDetails.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground">
-                  No certificates issued yet
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Course</TableHead>
-                      <TableHead>Certificate ID</TableHead>
-                      <TableHead>Issued Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {certificateDetails.map((cert, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{cert.userName}</TableCell>
-                        <TableCell>{cert.courseName}</TableCell>
-                        <TableCell>
-                          <code className="px-2 py-1 bg-muted rounded text-sm">
-                            {cert.certificateId}
-                          </code>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {new Date(cert.issuedAt).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+            <CardContent className="space-y-4">
+              <div className="relative max-w-md">
+                <Input placeholder="Search by user or course..." value={certSearchQuery} onChange={e => setCertSearchQuery(e.target.value)} />
+              </div>
+              {(() => {
+                const certByUser = new Map<string, { userName: string; certs: CertificateDetail[] }>();
+                certificateDetails.forEach(cert => {
+                  if (!certByUser.has(cert.userId)) {
+                    certByUser.set(cert.userId, { userName: cert.userName, certs: [] });
+                  }
+                  certByUser.get(cert.userId)!.certs.push(cert);
+                });
+                const groupedCertUsers = Array.from(certByUser.entries())
+                  .map(([userId, data]) => ({ userId, ...data }))
+                  .filter(u => {
+                    if (!certSearchQuery) return true;
+                    const q = certSearchQuery.toLowerCase();
+                    return u.userName.toLowerCase().includes(q) || u.certs.some(c => c.courseName.toLowerCase().includes(q));
+                  })
+                  .sort((a, b) => a.userName.localeCompare(b.userName));
+
+                if (groupedCertUsers.length === 0) {
+                  return <div className="text-center py-10 text-muted-foreground">No certificates issued yet</div>;
+                }
+
+                return (
+                  <div className="max-h-[600px] overflow-y-auto space-y-2">
+                    {groupedCertUsers.map(user => {
+                      const isExpanded = expandedCertUsers.has(user.userId);
+                      return (
+                        <div key={user.userId} className="border rounded-lg border-border">
+                          <button
+                            onClick={() => setExpandedCertUsers(prev => { const n = new Set(prev); n.has(user.userId) ? n.delete(user.userId) : n.add(user.userId); return n; })}
+                            className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors rounded-lg text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                              <Users className="h-4 w-4 text-primary" />
+                              <span className="font-semibold">{user.userName}</span>
+                              <span className="text-xs text-muted-foreground ml-2">{user.certs.length} certificate{user.certs.length !== 1 ? "s" : ""}</span>
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="px-4 pb-4">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Course</TableHead>
+                                    <TableHead>Certificate ID</TableHead>
+                                    <TableHead>Issued Date</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {user.certs.map((cert, idx) => (
+                                    <TableRow key={idx}>
+                                      <TableCell>{cert.courseName}</TableCell>
+                                      <TableCell><code className="px-2 py-1 bg-muted rounded text-sm">{cert.certificateId}</code></TableCell>
+                                      <TableCell className="text-muted-foreground">{new Date(cert.issuedAt).toLocaleDateString()}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
