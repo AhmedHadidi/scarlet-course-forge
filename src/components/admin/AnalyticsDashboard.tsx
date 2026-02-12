@@ -99,6 +99,10 @@ export const AnalyticsDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [expandedProgressUsers, setExpandedProgressUsers] = useState<Set<string>>(new Set());
   const [progressSearchQuery, setProgressSearchQuery] = useState("");
+  const [expandedQuizUsers, setExpandedQuizUsers] = useState<Set<string>>(new Set());
+  const [quizSearchQuery, setQuizSearchQuery] = useState("");
+  const [expandedCertUsers, setExpandedCertUsers] = useState<Set<string>>(new Set());
+  const [certSearchQuery, setCertSearchQuery] = useState("");
 
   useEffect(() => {
     fetchAnalytics();
@@ -706,87 +710,113 @@ export const AnalyticsDashboard = () => {
 
 
 
-      {/* User Quiz Performance */}
+      {/* User Quiz Performance - Grouped by User */}
       <Card>
         <CardHeader>
-          <CardTitle>User Quiz Performance (Pre vs Post)</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            User Quiz Performance (Pre vs Post)
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="max-h-[500px] overflow-y-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User Name</TableHead>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Quiz</TableHead>
-                  <TableHead>Pre-Quiz Score</TableHead>
-                  <TableHead>Post-Quiz Score</TableHead>
-                  <TableHead>Improvement</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {userQuizPerformance.map((performance, index) => {
-                  const improvement = performance.pre_score !== null && performance.post_score !== null
-                    ? performance.post_score - performance.pre_score
-                    : null;
+        <CardContent className="space-y-4">
+          <div className="relative max-w-md">
+            <Input placeholder="Search by user, course, or quiz..." value={quizSearchQuery} onChange={e => setQuizSearchQuery(e.target.value)} className="pl-3" />
+          </div>
+          {(() => {
+            // Group quiz performance by user
+            const quizByUser = new Map<string, { userName: string; quizzes: UserQuizPerformance[] }>();
+            userQuizPerformance.forEach(perf => {
+              const key = perf.user_name;
+              if (!quizByUser.has(key)) {
+                quizByUser.set(key, { userName: perf.user_name, quizzes: [] });
+              }
+              quizByUser.get(key)!.quizzes.push(perf);
+            });
+            const groupedQuizUsers = Array.from(quizByUser.entries())
+              .map(([key, data]) => ({ key, ...data }))
+              .filter(u => {
+                if (!quizSearchQuery) return true;
+                const q = quizSearchQuery.toLowerCase();
+                return u.userName.toLowerCase().includes(q) || u.quizzes.some(qz => qz.course_title.toLowerCase().includes(q) || qz.quiz_title.toLowerCase().includes(q));
+              })
+              .sort((a, b) => a.userName.localeCompare(b.userName));
+
+            if (groupedQuizUsers.length === 0) {
+              return <div className="text-center py-10 text-muted-foreground">No quiz attempts yet</div>;
+            }
+
+            return (
+              <div className="max-h-[600px] overflow-y-auto space-y-2">
+                {groupedQuizUsers.map(user => {
+                  const isExpanded = expandedQuizUsers.has(user.key);
+                  const passedCount = user.quizzes.filter(q => q.passed === true).length;
                   return (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{performance.user_name}</TableCell>
-                      <TableCell>{performance.course_title}</TableCell>
-                      <TableCell>{performance.quiz_title}</TableCell>
-                      <TableCell>
-                        {performance.pre_score !== null ? (
-                          <span className="text-muted-foreground">{performance.pre_score}%</span>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">Not taken</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {performance.post_score !== null ? (
-                          <span className={performance.passed ? "text-green-600 font-semibold" : "text-red-600"}>
-                            {performance.post_score}%
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">Not taken</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {improvement !== null ? (
-                          <span className={improvement >= 0 ? "text-green-600 font-semibold" : "text-red-600"}>
-                            {improvement >= 0 ? "+" : ""}{improvement}%
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {performance.passed !== null ? (
-                          performance.passed ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Passed
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                              Failed
-                            </span>
-                          )
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                            In Progress
-                          </span>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                    <div key={user.key} className="border rounded-lg border-border">
+                      <button
+                        onClick={() => setExpandedQuizUsers(prev => { const n = new Set(prev); n.has(user.key) ? n.delete(user.key) : n.add(user.key); return n; })}
+                        className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors rounded-lg text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                          <Users className="h-4 w-4 text-primary" />
+                          <span className="font-semibold">{user.userName}</span>
+                          <span className="text-xs text-muted-foreground ml-2">{user.quizzes.length} quiz{user.quizzes.length !== 1 ? "zes" : ""}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>{passedCount}/{user.quizzes.length} passed</span>
+                        </div>
+                      </button>
+                      {isExpanded && (
+                        <div className="px-4 pb-4">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Course</TableHead>
+                                <TableHead>Quiz</TableHead>
+                                <TableHead>Pre-Score</TableHead>
+                                <TableHead>Post-Score</TableHead>
+                                <TableHead>Improvement</TableHead>
+                                <TableHead>Status</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {user.quizzes.map((perf, idx) => {
+                                const improvement = perf.pre_score !== null && perf.post_score !== null ? perf.post_score - perf.pre_score : null;
+                                return (
+                                  <TableRow key={idx}>
+                                    <TableCell>{perf.course_title}</TableCell>
+                                    <TableCell>{perf.quiz_title}</TableCell>
+                                    <TableCell>{perf.pre_score !== null ? <span className="text-muted-foreground">{perf.pre_score}%</span> : <span className="text-muted-foreground text-xs">Not taken</span>}</TableCell>
+                                    <TableCell>{perf.post_score !== null ? <span className={perf.passed ? "text-green-600 font-semibold" : "text-red-600"}>{perf.post_score}%</span> : <span className="text-muted-foreground text-xs">Not taken</span>}</TableCell>
+                                    <TableCell>{improvement !== null ? <span className={improvement >= 0 ? "text-green-600 font-semibold" : "text-red-600"}>{improvement >= 0 ? "+" : ""}{improvement}%</span> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
+                                    <TableCell>
+                                      {perf.passed !== null ? (
+                                        perf.passed ? (
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Passed</span>
+                                        ) : (
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Failed</span>
+                                        )
+                                      ) : (
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">In Progress</span>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
-              </TableBody>
-            </Table>
-          </div>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
-      {/* Certificate Details */}
+      {/* Certificate Details - Grouped by User */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -794,37 +824,78 @@ export const AnalyticsDashboard = () => {
             Certificate Details
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="max-h-[500px] overflow-y-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Certificate ID</TableHead>
-                  <TableHead>User Name</TableHead>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Issued At</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {certificateDetails.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                      No certificates issued yet
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  certificateDetails.map((cert, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-mono text-xs">{cert.certificate_id}</TableCell>
-                      <TableCell className="font-medium">{cert.user_name}</TableCell>
-                      <TableCell>{cert.course_title}</TableCell>
-                      <TableCell>{cert.issued_at}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+        <CardContent className="space-y-4">
+          <div className="relative max-w-md">
+            <Input placeholder="Search by user or course..." value={certSearchQuery} onChange={e => setCertSearchQuery(e.target.value)} className="pl-3" />
           </div>
+          {(() => {
+            // Group certificates by user
+            const certByUser = new Map<string, { userName: string; certs: CertificateDetail[] }>();
+            certificateDetails.forEach(cert => {
+              const key = cert.user_name;
+              if (!certByUser.has(key)) {
+                certByUser.set(key, { userName: cert.user_name, certs: [] });
+              }
+              certByUser.get(key)!.certs.push(cert);
+            });
+            const groupedCertUsers = Array.from(certByUser.entries())
+              .map(([key, data]) => ({ key, ...data }))
+              .filter(u => {
+                if (!certSearchQuery) return true;
+                const q = certSearchQuery.toLowerCase();
+                return u.userName.toLowerCase().includes(q) || u.certs.some(c => c.course_title.toLowerCase().includes(q));
+              })
+              .sort((a, b) => a.userName.localeCompare(b.userName));
+
+            if (groupedCertUsers.length === 0) {
+              return <div className="text-center py-10 text-muted-foreground">No certificates issued yet</div>;
+            }
+
+            return (
+              <div className="max-h-[600px] overflow-y-auto space-y-2">
+                {groupedCertUsers.map(user => {
+                  const isExpanded = expandedCertUsers.has(user.key);
+                  return (
+                    <div key={user.key} className="border rounded-lg border-border">
+                      <button
+                        onClick={() => setExpandedCertUsers(prev => { const n = new Set(prev); n.has(user.key) ? n.delete(user.key) : n.add(user.key); return n; })}
+                        className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors rounded-lg text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                          <Users className="h-4 w-4 text-primary" />
+                          <span className="font-semibold">{user.userName}</span>
+                          <span className="text-xs text-muted-foreground ml-2">{user.certs.length} certificate{user.certs.length !== 1 ? "s" : ""}</span>
+                        </div>
+                      </button>
+                      {isExpanded && (
+                        <div className="px-4 pb-4">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Certificate ID</TableHead>
+                                <TableHead>Course</TableHead>
+                                <TableHead>Issued At</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {user.certs.map((cert, idx) => (
+                                <TableRow key={idx}>
+                                  <TableCell className="font-mono text-xs">{cert.certificate_id}</TableCell>
+                                  <TableCell>{cert.course_title}</TableCell>
+                                  <TableCell>{cert.issued_at}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
