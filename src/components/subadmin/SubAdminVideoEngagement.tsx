@@ -97,7 +97,7 @@ export const SubAdminVideoEngagement = ({ departmentId }: SubAdminVideoEngagemen
         const rec: VideoRecord = {
           videoTitle: video?.title || "Unknown",
           watchTimeSeconds: e.watch_time_seconds,
-          totalDurationSeconds: e.total_duration_seconds,
+          totalDurationSeconds: effectiveDuration,
           watchPercentage: watchPct,
           tabSwitches: e.tab_switches,
           engagementScore: Number(e.engagement_score),
