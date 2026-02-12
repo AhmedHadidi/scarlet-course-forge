@@ -3,21 +3,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, TrendingUp, Award, BookOpen, Brain } from "lucide-react";
+import { BarChart, TrendingUp, Award, BookOpen, Brain, Users, ChevronDown, ChevronRight } from "lucide-react";
 import { SubAdminVideoEngagement } from "@/components/subadmin/SubAdminVideoEngagement";
 
 interface SubAdminAnalyticsProps {
   departmentId: string;
 }
 
-interface UserProgress {
-  userId: string;
-  userName: string;
+interface UserProgressCourse {
   courseName: string;
   videoProgress: string;
   enrolledAt: string;
   completedAt: string | null;
+}
+
+interface UserProgressGrouped {
+  userId: string;
+  userName: string;
+  courses: UserProgressCourse[];
+  totalCourses: number;
+  completedCourses: number;
 }
 
 interface QuizPerformance {
@@ -40,7 +47,9 @@ interface CertificateDetail {
 
 export const SubAdminAnalytics = ({ departmentId }: SubAdminAnalyticsProps) => {
   const [loading, setLoading] = useState(true);
-  const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
+  const [userProgress, setUserProgress] = useState<UserProgressGrouped[]>([]);
+  const [expandedProgressUsers, setExpandedProgressUsers] = useState<Set<string>>(new Set());
+  const [progressSearchQuery, setProgressSearchQuery] = useState("");
   const [quizPerformance, setQuizPerformance] = useState<QuizPerformance[]>([]);
   const [certificateDetails, setCertificateDetails] = useState<CertificateDetail[]>([]);
 
@@ -90,24 +99,37 @@ export const SubAdminAnalytics = ({ departmentId }: SubAdminAnalyticsProps) => {
       const courseMap = new Map(courses.map(c => [c.id, c.title]));
       const quizMap = new Map(quizzes.map(q => [q.id, { title: q.title, courseId: q.course_id }]));
 
-      // Build User Progress data
-      const progressData: UserProgress[] = enrollments.map(enrollment => {
+      // Build User Progress data grouped by user
+      const progressByUser = new Map<string, { userName: string; courses: UserProgressCourse[] }>();
+      enrollments.forEach(enrollment => {
+        const userId = enrollment.user_id;
         const courseVideos = videos.filter(v => v.course_id === enrollment.course_id);
-        const userVideoProgress = videoProgress.filter(
-          vp => vp.user_id === enrollment.user_id && courseVideos.some(cv => cv.id === vp.video_id)
+        const userVidProgress = videoProgress.filter(
+          vp => vp.user_id === userId && courseVideos.some(cv => cv.id === vp.video_id)
         );
-        const completedVideos = userVideoProgress.filter(vp => vp.completed).length;
+        const completedVideos = userVidProgress.filter(vp => vp.completed).length;
         const totalVideos = courseVideos.length;
 
-        return {
-          userId: enrollment.user_id,
-          userName: userMap.get(enrollment.user_id) || "Unknown",
+        if (!progressByUser.has(userId)) {
+          progressByUser.set(userId, { userName: userMap.get(userId) || "Unknown", courses: [] });
+        }
+        progressByUser.get(userId)!.courses.push({
           courseName: courseMap.get(enrollment.course_id) || "Unknown Course",
           videoProgress: totalVideos > 0 ? `${completedVideos}/${totalVideos}` : "0/0",
           enrolledAt: enrollment.enrolled_at,
           completedAt: enrollment.completed_at,
-        };
+        });
       });
+
+      const progressData: UserProgressGrouped[] = Array.from(progressByUser.entries())
+        .map(([userId, data]) => ({
+          userId,
+          userName: data.userName,
+          courses: data.courses,
+          totalCourses: data.courses.length,
+          completedCourses: data.courses.filter(c => c.completedAt !== null).length,
+        }))
+        .sort((a, b) => a.userName.localeCompare(b.userName));
 
       // Build Quiz Performance data using nested Map to avoid UUID split issues
       const quizPerformanceData: QuizPerformance[] = [];
@@ -252,46 +274,80 @@ export const SubAdminAnalytics = ({ departmentId }: SubAdminAnalyticsProps) => {
               </CardTitle>
               <CardDescription>Video completion tracking for department users</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <div className="relative max-w-md">
+                <Input placeholder="Search by user or course..." value={progressSearchQuery} onChange={e => setProgressSearchQuery(e.target.value)} />
+              </div>
               {userProgress.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground">
                   No course enrollments yet
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Course</TableHead>
-                      <TableHead className="text-center">Videos Completed</TableHead>
-                      <TableHead>Enrolled</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {userProgress.map((progress, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{progress.userName}</TableCell>
-                        <TableCell>{progress.courseName}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="secondary">{progress.videoProgress}</Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {new Date(progress.enrolledAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          {progress.completedAt ? (
-                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                              Completed
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline">In Progress</Badge>
+                <div className="max-h-[600px] overflow-y-auto space-y-2">
+                  {userProgress
+                    .filter(u => {
+                      if (!progressSearchQuery) return true;
+                      const q = progressSearchQuery.toLowerCase();
+                      return u.userName.toLowerCase().includes(q) || u.courses.some(c => c.courseName.toLowerCase().includes(q));
+                    })
+                    .map(user => {
+                      const isExpanded = expandedProgressUsers.has(user.userId);
+                      return (
+                        <div key={user.userId} className="border rounded-lg border-border">
+                          <button
+                            onClick={() => setExpandedProgressUsers(prev => { const n = new Set(prev); n.has(user.userId) ? n.delete(user.userId) : n.add(user.userId); return n; })}
+                            className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors rounded-lg text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                              <Users className="h-4 w-4 text-primary" />
+                              <span className="font-semibold">{user.userName}</span>
+                              <span className="text-xs text-muted-foreground ml-2">{user.totalCourses} course{user.totalCourses !== 1 ? "s" : ""}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>{user.completedCourses}/{user.totalCourses} completed</span>
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="px-4 pb-4">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Course</TableHead>
+                                    <TableHead className="text-center">Videos Completed</TableHead>
+                                    <TableHead>Enrolled</TableHead>
+                                    <TableHead>Status</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {user.courses.map((course, cIdx) => (
+                                    <TableRow key={cIdx}>
+                                      <TableCell className="font-medium">{course.courseName}</TableCell>
+                                      <TableCell className="text-center">
+                                        <Badge variant="secondary">{course.videoProgress}</Badge>
+                                      </TableCell>
+                                      <TableCell className="text-muted-foreground">
+                                        {new Date(course.enrolledAt).toLocaleDateString()}
+                                      </TableCell>
+                                      <TableCell>
+                                        {course.completedAt ? (
+                                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                            Completed
+                                          </Badge>
+                                        ) : (
+                                          <Badge variant="outline">In Progress</Badge>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
                           )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </div>
+                      );
+                    })}
+                </div>
               )}
             </CardContent>
           </Card>
