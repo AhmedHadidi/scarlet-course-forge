@@ -85,12 +85,12 @@ export const VideoEngagementAnalytics = () => {
 
       const [profilesResult, videosResult] = await Promise.all([
         userIds.length > 0 ? supabase.from("profiles").select("id, full_name").in("id", userIds) : { data: [] as any[] },
-        videoIds.length > 0 ? supabase.from("course_videos").select("id, title, course_id, courses(title)").in("id", videoIds) : { data: [] as any[] },
+        videoIds.length > 0 ? supabase.from("course_videos").select("id, title, course_id, duration_seconds, courses(title)").in("id", videoIds) : { data: [] as any[] },
       ]);
 
       const profilesMap = new Map<string, string>((profilesResult.data || []).map(p => [p.id, p.full_name]));
-      const videosMap = new Map<string, { title: string; courseTitle: string; courseId: string }>(
-        (videosResult.data || []).map((v: any) => [v.id, { title: v.title, courseTitle: v.courses?.title || "Unknown", courseId: v.course_id }])
+      const videosMap = new Map<string, { title: string; courseTitle: string; courseId: string; durationSeconds: number | null }>(
+        (videosResult.data || []).map((v: any) => [v.id, { title: v.title, courseTitle: v.courses?.title || "Unknown", courseId: v.course_id, durationSeconds: v.duration_seconds }])
       );
 
       // Group: user -> course -> videos
@@ -98,7 +98,11 @@ export const VideoEngagementAnalytics = () => {
       const flatRecords: VideoEngagementRecord[] = [];
 
       engagementData.forEach(e => {
-        const watchPct = e.total_duration_seconds > 0 ? Math.round((e.watch_time_seconds / e.total_duration_seconds) * 100) : 0;
+        // Use video's actual duration from course_videos if engagement record has 0
+        const effectiveDuration = e.total_duration_seconds > 0 
+          ? e.total_duration_seconds 
+          : (videosMap.get(e.video_id)?.durationSeconds || 0);
+        const watchPct = effectiveDuration > 0 ? Math.min(100, Math.round((e.watch_time_seconds / effectiveDuration) * 100)) : (e.watch_time_seconds > 0 ? 100 : 0);
         const video = videosMap.get(e.video_id);
         const userName = profilesMap.get(e.user_id) || "Unknown";
         const courseId = video?.courseId || "unknown";

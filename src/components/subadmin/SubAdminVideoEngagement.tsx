@@ -77,17 +77,20 @@ export const SubAdminVideoEngagement = ({ departmentId }: SubAdminVideoEngagemen
 
       const videoIds = [...new Set(engagementData.map(e => e.video_id))];
       const { data: videosData } = videoIds.length > 0
-        ? await supabase.from("course_videos").select("id, title, course_id, courses(title)").in("id", videoIds)
+        ? await supabase.from("course_videos").select("id, title, course_id, duration_seconds, courses(title)").in("id", videoIds)
         : { data: [] as any[] };
 
-      const videosMap = new Map<string, { title: string; courseTitle: string; courseId: string }>(
-        (videosData || []).map((v: any) => [v.id, { title: v.title, courseTitle: v.courses?.title || "Unknown", courseId: v.course_id }])
+      const videosMap = new Map<string, { title: string; courseTitle: string; courseId: string; durationSeconds: number | null }>(
+        (videosData || []).map((v: any) => [v.id, { title: v.title, courseTitle: v.courses?.title || "Unknown", courseId: v.course_id, durationSeconds: v.duration_seconds }])
       );
 
       const userMap = new Map<string, Map<string, { courseTitle: string; videos: VideoRecord[] }>>();
 
       engagementData.forEach(e => {
-        const watchPct = e.total_duration_seconds > 0 ? Math.round((e.watch_time_seconds / e.total_duration_seconds) * 100) : 0;
+        const effectiveDuration = e.total_duration_seconds > 0 
+          ? e.total_duration_seconds 
+          : (videosMap.get(e.video_id)?.durationSeconds || 0);
+        const watchPct = effectiveDuration > 0 ? Math.min(100, Math.round((e.watch_time_seconds / effectiveDuration) * 100)) : (e.watch_time_seconds > 0 ? 100 : 0);
         const video = videosMap.get(e.video_id);
         const courseId = video?.courseId || "unknown";
 

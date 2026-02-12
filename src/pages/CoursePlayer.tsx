@@ -172,8 +172,12 @@ const CoursePlayer = () => {
       if (error) throw error;
 
       // Save engagement data silently for admin analytics
-      const engagementScore = engagement.totalDurationSeconds > 0
-        ? Math.min(1, engagement.watchTimeSeconds / engagement.totalDurationSeconds) * 100
+      // Use video's duration_seconds as fallback if engagement didn't capture duration
+      const effectiveDuration = engagement.totalDurationSeconds > 0 
+        ? engagement.totalDurationSeconds 
+        : (activeVideo.duration_seconds || engagement.watchTimeSeconds);
+      const engagementScore = effectiveDuration > 0
+        ? Math.min(100, Math.round((engagement.watchTimeSeconds / effectiveDuration) * 100))
         : 0;
 
       await supabase.from("video_engagement").upsert(
@@ -181,7 +185,7 @@ const CoursePlayer = () => {
           user_id: user?.id!,
           video_id: videoId,
           watch_time_seconds: engagement.watchTimeSeconds,
-          total_duration_seconds: engagement.totalDurationSeconds,
+          total_duration_seconds: effectiveDuration,
           tab_switches: engagement.tabSwitches,
           engagement_score: Math.round(engagementScore),
         },
