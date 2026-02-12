@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Calendar as CalendarIcon, Users, BookOpen, Award, TrendingUp, Video, CheckCircle, Eye, Brain } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Download, Calendar as CalendarIcon, Users, BookOpen, Award, TrendingUp, Video, CheckCircle, Eye, Brain, ChevronDown, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -41,11 +42,18 @@ interface TopVideo {
   views: number;
 }
 
-interface UserProgress {
-  user_name: string;
+interface UserProgressCourse {
   course_title: string;
   progress_percentage: number;
   enrolled_at: string;
+}
+
+interface UserProgressGrouped {
+  user_name: string;
+  userId: string;
+  courses: UserProgressCourse[];
+  avgProgress: number;
+  totalCourses: number;
 }
 
 interface UserQuizPerformance {
@@ -80,7 +88,7 @@ export const AnalyticsDashboard = () => {
   const [topCourses, setTopCourses] = useState<TopCourse[]>([]);
   const [topUsers, setTopUsers] = useState<TopUser[]>([]);
   const [topVideos, setTopVideos] = useState<TopVideo[]>([]);
-  const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
+  const [userProgress, setUserProgress] = useState<UserProgressGrouped[]>([]);
   const [userQuizPerformance, setUserQuizPerformance] = useState<UserQuizPerformance[]>([]);
   const [certificateDetails, setCertificateDetails] = useState<CertificateDetail[]>([]);
   const [enrollmentTrend, setEnrollmentTrend] = useState<any[]>([]);
@@ -89,6 +97,8 @@ export const AnalyticsDashboard = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedProgressUsers, setExpandedProgressUsers] = useState<Set<string>>(new Set());
+  const [progressSearchQuery, setProgressSearchQuery] = useState("");
 
   useEffect(() => {
     fetchAnalytics();
@@ -155,7 +165,7 @@ export const AnalyticsDashboard = () => {
         // Enrollment trend data
         supabase.from("enrollments").select("enrolled_at"),
         // User progress detail
-        supabase.from("enrollments").select("user_id, course_id, progress_percentage, enrolled_at").order('enrolled_at', { ascending: false }).limit(50),
+        supabase.from("enrollments").select("user_id, course_id, progress_percentage, enrolled_at").order('enrolled_at', { ascending: false }),
         // Quiz attempts detail
         supabase.from("quiz_attempts").select("user_id, quiz_id, score, passed, attempted_at, attempt_type").order('attempted_at', { ascending: false }).limit(100),
         // Certificate details
@@ -293,12 +303,27 @@ export const AnalyticsDashboard = () => {
       const profilesMap = new Map<string, string>((profilesResult.data || []).map(p => [p.id, p.full_name]));
       const coursesMap = new Map<string, string>((coursesForProgressResult.data || []).map(c => [c.id, c.title]));
 
-      setUserProgress(enrollmentsData.map((enrollment: any) => ({
-        user_name: profilesMap.get(enrollment.user_id) || "Unknown",
-        course_title: coursesMap.get(enrollment.course_id) || "Unknown",
-        progress_percentage: enrollment.progress_percentage,
-        enrolled_at: format(new Date(enrollment.enrolled_at), "MMM dd, yyyy")
-      })));
+      // Group progress by user
+      const progressByUser = new Map<string, { userName: string; courses: UserProgressCourse[] }>();
+      enrollmentsData.forEach((enrollment: any) => {
+        const userId = enrollment.user_id;
+        if (!progressByUser.has(userId)) {
+          progressByUser.set(userId, { userName: profilesMap.get(userId) || "Unknown", courses: [] });
+        }
+        progressByUser.get(userId)!.courses.push({
+          course_title: coursesMap.get(enrollment.course_id) || "Unknown",
+          progress_percentage: enrollment.progress_percentage,
+          enrolled_at: format(new Date(enrollment.enrolled_at), "MMM dd, yyyy"),
+        });
+      });
+
+      setUserProgress(Array.from(progressByUser.entries()).map(([userId, data]) => ({
+        user_name: data.userName,
+        userId,
+        courses: data.courses,
+        avgProgress: Math.round(data.courses.reduce((s, c) => s + c.progress_percentage, 0) / data.courses.length),
+        totalCourses: data.courses.length,
+      })).sort((a, b) => a.user_name.localeCompare(b.user_name)));
 
       // Quiz performance - fetch related data in parallel
       const quizAttemptsData = quizAttemptsDetailResult.data || [];
@@ -603,46 +628,83 @@ export const AnalyticsDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* User Course Progress */}
+      {/* User Course Progress - Grouped by User */}
       <Card>
         <CardHeader>
-          <CardTitle>User Course Progress</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            User Course Progress ({userProgress.length} users)
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="max-h-[500px] overflow-y-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User Name</TableHead>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Progress</TableHead>
-                  <TableHead>Enrolled Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {userProgress.map((progress, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{progress.user_name}</TableCell>
-                    <TableCell>{progress.course_title}</TableCell>
-                    <TableCell>
+        <CardContent className="space-y-4">
+          <div className="relative max-w-md">
+            <Input placeholder="Search by user or course..." value={progressSearchQuery} onChange={e => setProgressSearchQuery(e.target.value)} className="pl-3" />
+          </div>
+          <div className="max-h-[600px] overflow-y-auto space-y-2">
+            {userProgress
+              .filter(u => {
+                if (!progressSearchQuery) return true;
+                const q = progressSearchQuery.toLowerCase();
+                return u.user_name.toLowerCase().includes(q) || u.courses.some(c => c.course_title.toLowerCase().includes(q));
+              })
+              .map(user => {
+                const isExpanded = expandedProgressUsers.has(user.userId);
+                return (
+                  <div key={user.userId} className="border rounded-lg border-border">
+                    <button
+                      onClick={() => setExpandedProgressUsers(prev => { const n = new Set(prev); n.has(user.userId) ? n.delete(user.userId) : n.add(user.userId); return n; })}
+                      className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors rounded-lg text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                        <Users className="h-4 w-4 text-primary" />
+                        <span className="font-semibold">{user.user_name}</span>
+                        <span className="text-xs text-muted-foreground ml-2">{user.totalCourses} course{user.totalCourses !== 1 ? "s" : ""}</span>
+                      </div>
                       <div className="flex items-center gap-2">
                         <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary transition-all" 
-                            style={{ width: `${progress.progress_percentage}%` }}
-                          />
+                          <div className="h-full bg-primary transition-all" style={{ width: `${user.avgProgress}%` }} />
                         </div>
-                        <span className="text-sm">{progress.progress_percentage}%</span>
+                        <span className="text-sm font-medium w-10 text-right">{user.avgProgress}%</span>
                       </div>
-                    </TableCell>
-                    <TableCell>{progress.enrolled_at}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </button>
+                    {isExpanded && (
+                      <div className="px-4 pb-4">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Course</TableHead>
+                              <TableHead>Progress</TableHead>
+                              <TableHead>Enrolled Date</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {user.courses.map((course, cIdx) => (
+                              <TableRow key={cIdx}>
+                                <TableCell className="font-medium">{course.course_title}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                      <div className="h-full bg-primary transition-all" style={{ width: `${course.progress_percentage}%` }} />
+                                    </div>
+                                    <span className="text-sm">{course.progress_percentage}%</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>{course.enrolled_at}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
           </div>
         </CardContent>
       </Card>
+
+
 
       {/* User Quiz Performance */}
       <Card>
