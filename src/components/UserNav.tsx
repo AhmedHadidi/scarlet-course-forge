@@ -80,7 +80,7 @@ const UserNav = () => {
     <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full gradient-crimson flex items-center justify-center">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
