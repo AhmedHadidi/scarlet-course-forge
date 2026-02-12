@@ -60,11 +60,8 @@ const Auth = () => {
   // Fetch departments on mount
   useEffect(() => {
     const fetchDepartments = async () => {
-      const { data, error } = await supabase
-        .from("departments")
-        .select("id, name")
-        .order("name");
-      
+      const { data, error } = await supabase.from("departments").select("id, name").order("name");
+
       if (!error && data) {
         setDepartments(data);
       }
@@ -89,7 +86,9 @@ const Auth = () => {
       const isCallback = searchParams.get("callback");
       if (!isCallback) return;
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user) {
         const { data: roleData } = await supabase
           .from("user_roles")
@@ -99,7 +98,7 @@ const Auth = () => {
           .maybeSingle();
 
         if (roleData) {
-          window.location.href = 'https://scarlet-course-forge.lovable.app/admin';
+          window.location.href = "https://scarlet-course-forge.lovable.app/admin";
         } else {
           navigate("/dashboard", { replace: true });
         }
@@ -161,9 +160,9 @@ const Auth = () => {
 
       const userName = profileData?.full_name || "User";
       toast.success(`Welcome ${userName}!`);
-      
+
       if (roleData) {
-        window.location.href = 'https://scarlet-course-forge.lovable.app/admin';
+        window.location.href = "https://scarlet-course-forge.lovable.app/admin";
       } else {
         navigate("/dashboard");
       }
@@ -210,10 +209,7 @@ const Auth = () => {
 
       if (data.user) {
         // Update profile with department_id
-        await supabase
-          .from("profiles")
-          .update({ department_id: selectedDepartment })
-          .eq("id", data.user.id);
+        await supabase.from("profiles").update({ department_id: selectedDepartment }).eq("id", data.user.id);
 
         const userName = validated.fullName || "User";
         toast.success(`Welcome ${userName}! Let's set up your preferences.`);
@@ -244,7 +240,7 @@ const Auth = () => {
         .maybeSingle();
 
       if (roleData) {
-        window.location.href = 'https://scarlet-course-forge.lovable.app/admin';
+        window.location.href = "https://scarlet-course-forge.lovable.app/admin";
       } else {
         navigate("/dashboard");
       }
@@ -281,133 +277,129 @@ const Auth = () => {
               onSkip={handlePreferencesSkip}
             />
           ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="login">Sign In</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="login">
-              <form onSubmit={handleEmailSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    name="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <Input
-                    id="login-password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    "Sign In"
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
+              <TabsContent value="login">
+                <form onSubmit={handleEmailSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email</Label>
+                    <Input
+                      id="login-email"
+                      name="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Password</Label>
+                    <Input
+                      id="login-password"
+                      name="password"
+                      type="password"
+                      placeholder="••••••••"
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      "Sign In"
+                    )}
+                  </Button>
+                </form>
+              </TabsContent>
 
-            <TabsContent value="signup">
-              <form onSubmit={handleEmailSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-fullName">Full Name</Label>
-                  <Input
-                    id="signup-fullName"
-                    name="fullName"
-                    type="text"
-                    placeholder="John Doe"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-department">Department *</Label>
-                  <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>
-                          {dept.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    name="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    disabled={loading}
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                  />
-                  {signupPassword && (
-                    <div className="mt-2 space-y-1">
-                      {passwordStrength.map((req, index) => (
-                        <div
-                          key={index}
-                          className={`flex items-center gap-2 text-xs ${
-                            req.met ? "text-green-600" : "text-muted-foreground"
-                          }`}
-                        >
-                          {req.met ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            <X className="h-3 w-3" />
-                          )}
-                          {req.label}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <Button type="submit" className="w-full" disabled={loading || !allRequirementsMet}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    "Create Account"
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="signup">
+                <form onSubmit={handleEmailSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-fullName">Full Name</Label>
+                    <Input
+                      id="signup-fullName"
+                      name="fullName"
+                      type="text"
+                      placeholder=""
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-department">Department *</Label>
+                    <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      name="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      name="password"
+                      type="password"
+                      placeholder="••••••••"
+                      required
+                      disabled={loading}
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                    />
+                    {signupPassword && (
+                      <div className="mt-2 space-y-1">
+                        {passwordStrength.map((req, index) => (
+                          <div
+                            key={index}
+                            className={`flex items-center gap-2 text-xs ${
+                              req.met ? "text-green-600" : "text-muted-foreground"
+                            }`}
+                          >
+                            {req.met ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                            {req.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading || !allRequirementsMet}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>
