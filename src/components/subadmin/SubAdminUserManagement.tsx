@@ -1,104 +1,222 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Search, Users } from "lucide-react";
+import { Plus, Edit, Trash2, Users as UsersIcon, Search, ShieldCheck, ShieldOff } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { toast as sonnerToast } from "sonner";
+
+const userSchema = z.object({
+  email: z.string().trim().email("Invalid email address").max(255),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .max(100)
+    .regex(/[A-Z]/, "Must contain uppercase letter")
+    .regex(/[a-z]/, "Must contain lowercase letter")
+    .regex(/[0-9]/, "Must contain a number")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Must contain a special character"),
+  full_name: z.string().trim().min(1, "Name is required").max(100),
+});
+
+type UserFormData = z.infer<typeof userSchema>;
 
 interface SubAdminUserManagementProps {
   departmentId: string;
 }
 
-interface UserProfile {
+interface User {
   id: string;
+  email: string;
   full_name: string;
-  avatar_url: string | null;
   created_at: string;
-  email?: string;
-  enrollments_count?: number;
-  certificates_count?: number;
-  completed_courses?: number;
+  roles: { role: string }[];
 }
 
 export const SubAdminUserManagement = ({ departmentId }: SubAdminUserManagementProps) => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const { toast } = useToast();
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [resetPasswordUserId, setResetPasswordUserId] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [formData, setFormData] = useState<Partial<UserFormData>>({
+    email: "",
+    password: "",
+    full_name: "",
+  });
+  const [errors, setErrors] = useState<Partial<Record<keyof UserFormData, string>>>({});
 
   useEffect(() => {
-    fetchDepartmentUsers();
+    fetchUsers();
   }, [departmentId]);
 
-  const fetchDepartmentUsers = async () => {
+  const fetchUsers = async () => {
     try {
       setLoading(true);
-      
-      // Fetch profiles in this department
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("department_id", departmentId)
-        .order("full_name", { ascending: true });
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (profilesError) throw profilesError;
-
-      if (!profiles || profiles.length === 0) {
-        setUsers([]);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch additional data for each user
-      const userIds = profiles.map(p => p.id);
-
-      // Get enrollments count for each user
-      const { data: enrollments } = await supabase
-        .from("enrollments")
-        .select("user_id, completed_at")
-        .in("user_id", userIds);
-
-      // Get certificates count for each user
-      const { data: certificates } = await supabase
-        .from("certificates")
-        .select("user_id")
-        .in("user_id", userIds);
-
-      // Build user data with stats
-      const usersWithStats = profiles.map(profile => {
-        const userEnrollments = enrollments?.filter(e => e.user_id === profile.id) || [];
-        const userCertificates = certificates?.filter(c => c.user_id === profile.id) || [];
-        const completedCourses = userEnrollments.filter(e => e.completed_at).length;
-
-        return {
-          ...profile,
-          enrollments_count: userEnrollments.length,
-          certificates_count: userCertificates.length,
-          completed_courses: completedCourses,
-        };
+      const { data, error } = await supabase.functions.invoke('subadmin-operations', {
+        body: { operation: 'listUsers' },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
       });
 
-      setUsers(usersWithStats);
+      if (error) throw error;
+      setUsers(data.users || []);
     } catch (error) {
-      console.error("Error fetching department users:", error);
+      console.error("Error fetching users:", error);
+      toast({ title: "Error", description: "Failed to load users", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map(n => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const validateForm = (): boolean => {
+    try {
+      if (editingUser) {
+        const editSchema = z.object({ full_name: z.string().trim().min(1).max(100) });
+        editSchema.parse({ full_name: formData.full_name });
+      } else {
+        userSchema.parse(formData);
+      }
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Partial<Record<keyof UserFormData, string>> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) newErrors[err.path[0] as keyof UserFormData] = err.message;
+        });
+        setErrors(newErrors);
+      }
+      return false;
+    }
   };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers = { Authorization: `Bearer ${session?.access_token}` };
+
+      if (editingUser) {
+        const { error } = await supabase.functions.invoke('subadmin-operations', {
+          body: {
+            operation: 'updateUser',
+            data: { userId: editingUser.id, full_name: formData.full_name },
+          },
+          headers,
+        });
+        if (error) throw error;
+        toast({ title: "Success", description: "User updated successfully" });
+      } else {
+        const { error } = await supabase.functions.invoke('subadmin-operations', {
+          body: {
+            operation: 'createUser',
+            data: {
+              email: formData.email!,
+              password: formData.password!,
+              full_name: formData.full_name,
+            },
+          },
+          headers,
+        });
+        if (error) throw error;
+        sonnerToast.success("User created successfully");
+      }
+
+      resetForm();
+      setIsDialogOpen(false);
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Error saving user:", error);
+      toast({ title: "Error", description: error.message || "Failed to save user", variant: "destructive" });
+    }
+  };
+
+  const handleDelete = async (userId: string) => {
+    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { error } = await supabase.functions.invoke('subadmin-operations', {
+        body: { operation: 'deleteUser', data: { userId } },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw error;
+      toast({ title: "Success", description: "User deleted successfully" });
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      toast({ title: "Error", description: error.message || "Failed to delete user", variant: "destructive" });
+    }
+  };
+
+  const handleResetPassword = (userId: string) => {
+    setResetPasswordUserId(userId);
+    setNewPassword("");
+    setIsResetPasswordDialogOpen(true);
+  };
+
+  const confirmResetPassword = async () => {
+    if (!newPassword || newPassword.length < 8) {
+      sonnerToast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { error } = await supabase.functions.invoke('subadmin-operations', {
+        body: { operation: 'resetPassword', data: { userId: resetPasswordUserId, newPassword } },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw error;
+      sonnerToast.success("Password reset successfully");
+      setIsResetPasswordDialogOpen(false);
+      setNewPassword("");
+    } catch (error: any) {
+      console.error("Error resetting password:", error);
+      sonnerToast.error(error.message || "Failed to reset password");
+    }
+  };
+
+  const handleEdit = (user: User) => {
+    setEditingUser(user);
+    setFormData({ email: user.email, password: "", full_name: user.full_name });
+    setErrors({});
+    setIsDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setFormData({ email: "", password: "", full_name: "" });
+    setEditingUser(null);
+    setErrors({});
+  };
+
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case "admin":
+        return <Badge variant="default" className="capitalize"><ShieldCheck className="mr-1 h-3 w-3" />Admin</Badge>;
+      case "sub_admin":
+        return <Badge variant="outline" className="capitalize border-primary text-primary"><ShieldCheck className="mr-1 h-3 w-3" />Sub-Admin</Badge>;
+      default:
+        return <Badge variant="secondary" className="capitalize"><ShieldOff className="mr-1 h-3 w-3" />User</Badge>;
+    }
+  };
+
+  const filteredUsers = users.filter(user =>
+    user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -113,101 +231,178 @@ export const SubAdminUserManagement = ({ departmentId }: SubAdminUserManagementP
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Department Users
-            </CardTitle>
-            <CardDescription>
-              {users.length} user{users.length !== 1 ? "s" : ""} in your department
-            </CardDescription>
-          </div>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-semibold">Department Users</h3>
+          <p className="text-sm text-muted-foreground">{users.length} user{users.length !== 1 ? "s" : ""} in your department</p>
         </div>
-        <div className="relative mt-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search users by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
-        {filteredUsers.length === 0 ? (
-          <div className="text-center py-10 text-muted-foreground">
-            {searchQuery ? "No users found matching your search" : "No users in this department yet"}
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead className="text-center">Enrollments</TableHead>
-                <TableHead className="text-center">Completed</TableHead>
-                <TableHead className="text-center">Certificates</TableHead>
-                <TableHead className="text-center">Progress</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => {
-                const progressPercent = user.enrollments_count && user.enrollments_count > 0
-                  ? Math.round(((user.completed_courses || 0) / user.enrollments_count) * 100)
-                  : 0;
+        <Button
+          className="gradient-crimson"
+          onClick={() => { resetForm(); setIsDialogOpen(true); }}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add User
+        </Button>
+      </div>
 
-                return (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.avatar_url || undefined} />
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {getInitials(user.full_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{user.full_name}</p>
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) resetForm();
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingUser ? "Edit User" : "Create New User"}</DialogTitle>
+            <DialogDescription>
+              {editingUser ? "Update user details" : "Add a new user to your department"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {!editingUser && (
+              <div className="space-y-2">
+                <Label htmlFor="sa-email">Email *</Label>
+                <Input
+                  id="sa-email"
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="email@example.com"
+                />
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="sa-full_name">Full Name *</Label>
+              <Input
+                id="sa-full_name"
+                value={formData.full_name || ""}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                placeholder="John Doe"
+              />
+              {errors.full_name && <p className="text-sm text-destructive">{errors.full_name}</p>}
+            </div>
+            {!editingUser && (
+              <div className="space-y-2">
+                <Label htmlFor="sa-password">Password *</Label>
+                <Input
+                  id="sa-password"
+                  type="password"
+                  value={formData.password || ""}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••"
+                />
+                {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                <p className="text-xs text-muted-foreground">
+                  Min 8 chars, uppercase, lowercase, number, and special character
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button className="gradient-crimson" onClick={handleSubmit}>
+              {editingUser ? "Update" : "Create"} User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Users Table */}
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle>Department Users</CardTitle>
+          <CardDescription>{filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""} found</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {filteredUsers.length === 0 ? (
+            <div className="text-center py-8">
+              <UsersIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                {searchQuery ? "No users found matching your search" : "No users in this department yet"}
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.map((user) => {
+                  const role = user.roles[0]?.role || "user";
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.full_name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{getRoleBadge(role)}</TableCell>
+                      <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(user)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleResetPassword(user.id)}>
+                            Reset Password
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDelete(user.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="secondary">{user.enrollments_count || 0}</Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className="text-green-600 border-green-600">
-                        {user.completed_courses || 0}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className="text-primary border-primary">
-                        {user.certificates_count || 0}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary rounded-full transition-all"
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
-                        <span className="text-sm text-muted-foreground">{progressPercent}%</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>Enter a new password for this user</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="sa-newPassword">New Password</Label>
+              <Input
+                id="sa-newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+              <p className="text-xs text-muted-foreground">
+                Min 8 chars, uppercase, lowercase, number, and special character
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsResetPasswordDialogOpen(false)}>Cancel</Button>
+            <Button className="gradient-crimson" onClick={confirmResetPassword}>Reset Password</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
