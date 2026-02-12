@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Mail, Lock, Upload, Newspaper, Building2 } from "lucide-react";
+import { User, Mail, Lock, Newspaper, Building2 } from "lucide-react";
 import UserNav from "@/components/UserNav";
 import { useToast } from "@/hooks/use-toast";
 
@@ -273,10 +273,6 @@ const Profile = () => {
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
-                  <Button variant="outline" size="sm">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Photo
-                  </Button>
                 </div>
 
                 <div className="space-y-4">
