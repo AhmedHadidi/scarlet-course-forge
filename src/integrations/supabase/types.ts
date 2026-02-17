@@ -423,6 +423,7 @@ export type Database = {
           department_id: string | null
           full_name: string
           id: string
+          tracking_opt_in: boolean
           updated_at: string
         }
         Insert: {
@@ -434,6 +435,7 @@ export type Database = {
           department_id?: string | null
           full_name: string
           id: string
+          tracking_opt_in?: boolean
           updated_at?: string
         }
         Update: {
@@ -445,6 +447,7 @@ export type Database = {
           department_id?: string | null
           full_name?: string
           id?: string
+          tracking_opt_in?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -655,9 +658,17 @@ export type Database = {
           ai_question: string | null
           ai_user_answer: string | null
           ai_verification_passed: boolean | null
+          completion_rate: number
           created_at: string
+          drop_off_point: number | null
           engagement_score: number
           id: string
+          max_playback_rate: number
+          pause_count: number
+          repeated_segments: Json | null
+          rewind_count: number
+          session_id: string | null
+          skip_count: number
           tab_switches: number
           total_duration_seconds: number
           updated_at: string
@@ -669,9 +680,17 @@ export type Database = {
           ai_question?: string | null
           ai_user_answer?: string | null
           ai_verification_passed?: boolean | null
+          completion_rate?: number
           created_at?: string
+          drop_off_point?: number | null
           engagement_score?: number
           id?: string
+          max_playback_rate?: number
+          pause_count?: number
+          repeated_segments?: Json | null
+          rewind_count?: number
+          session_id?: string | null
+          skip_count?: number
           tab_switches?: number
           total_duration_seconds?: number
           updated_at?: string
@@ -683,9 +702,17 @@ export type Database = {
           ai_question?: string | null
           ai_user_answer?: string | null
           ai_verification_passed?: boolean | null
+          completion_rate?: number
           created_at?: string
+          drop_off_point?: number | null
           engagement_score?: number
           id?: string
+          max_playback_rate?: number
+          pause_count?: number
+          repeated_segments?: Json | null
+          rewind_count?: number
+          session_id?: string | null
+          skip_count?: number
           tab_switches?: number
           total_duration_seconds?: number
           updated_at?: string
@@ -696,6 +723,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "video_engagement_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "course_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          percentage_watched: number
+          playback_rate: number
+          session_id: string
+          total_duration: number
+          user_id: string
+          video_id: string
+          video_time: number
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          percentage_watched?: number
+          playback_rate?: number
+          session_id: string
+          total_duration?: number
+          user_id: string
+          video_id: string
+          video_time?: number
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          percentage_watched?: number
+          playback_rate?: number
+          session_id?: string
+          total_duration?: number
+          user_id?: string
+          video_id?: string
+          video_time?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_events_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
             referencedRelation: "course_videos"

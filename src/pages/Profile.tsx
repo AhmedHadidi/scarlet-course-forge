@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Mail, Lock, Newspaper, Building2 } from "lucide-react";
+import { User, Mail, Lock, Newspaper, Building2, Eye } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import UserNav from "@/components/UserNav";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,12 +42,15 @@ const Profile = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [trackingOptIn, setTrackingOptIn] = useState(true);
+  const [savingTracking, setSavingTracking] = useState(false);
 
   useEffect(() => {
     fetchProfile();
     fetchCategories();
     fetchUserPreferences();
     fetchDepartments();
+    fetchTrackingPreference();
   }, [user]);
 
   const fetchProfile = async () => {
@@ -65,6 +69,7 @@ const Profile = () => {
           avatar_url: data.avatar_url || "",
           department_id: data.department_id || "",
         });
+        setTrackingOptIn(data.tracking_opt_in ?? true);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -231,6 +236,42 @@ const Profile = () => {
     }
   };
 
+  const fetchTrackingPreference = async () => {
+    // Already fetched in fetchProfile
+  };
+
+  const handleToggleTracking = async (checked: boolean) => {
+    if (!user) return;
+    setSavingTracking(true);
+    setTrackingOptIn(checked);
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ tracking_opt_in: checked })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: checked ? "Tracking Enabled" : "Tracking Disabled",
+        description: checked
+          ? "Video engagement data will be collected to improve your experience."
+          : "Video engagement tracking has been disabled.",
+      });
+    } catch (error) {
+      console.error("Error updating tracking preference:", error);
+      setTrackingOptIn(!checked);
+      toast({
+        title: "Update Failed",
+        description: "Could not update tracking preference.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingTracking(false);
+    }
+  };
+
   const getInitials = () => {
     if (profile.full_name) {
       return profile.full_name
@@ -387,6 +428,34 @@ const Profile = () => {
                 >
                   {savingPreferences ? "Saving..." : "Save Preferences"}
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Privacy & Tracking */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  Privacy & Tracking
+                </CardTitle>
+                <CardDescription>
+                  Control how your video watching behavior is tracked
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+                  <div className="space-y-1">
+                    <Label className="font-medium">Video Engagement Tracking</Label>
+                    <p className="text-sm text-muted-foreground">
+                      When enabled, your video interactions (play, pause, seek, etc.) are tracked to improve content recommendations and learning analytics. Only your user ID is stored — no personal information.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={trackingOptIn}
+                    onCheckedChange={handleToggleTracking}
+                    disabled={savingTracking}
+                  />
+                </div>
               </CardContent>
             </Card>
 
