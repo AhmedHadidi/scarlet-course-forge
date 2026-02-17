@@ -115,7 +115,7 @@ const CoursePlayer = () => {
     containerId,
     videoUrl: activeVideo?.video_url || "",
     onEvent: handlePlayerEvent,
-    enabled: isYouTube && trackingOptIn && !!activeVideo,
+    enabled: isYouTube && !!activeVideo,
   });
 
   // Fetch tracking preference
