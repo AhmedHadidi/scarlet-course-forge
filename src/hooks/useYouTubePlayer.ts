@@ -144,7 +144,6 @@ export function useYouTubePlayer({
         videoId,
         playerVars: {
           enablejsapi: 1,
-          origin: window.location.origin,
           rel: 0,
           modestbranding: 1,
         },
