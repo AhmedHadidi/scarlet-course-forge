@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -66,31 +66,45 @@ const CoursePlayer = () => {
     trackingEnabled: trackingOptIn,
   });
 
+  // Track whether we've already captured the duration for the current video
+  const durationCapturedRef = useRef<string | null>(null);
+
   // Wrap trackEvent to capture YouTube duration for engagement calculations
   const handlePlayerEvent = useCallback(
     (event: Parameters<typeof trackEvent>[0]) => {
-      // Capture actual duration from YouTube player on any event
-      if (event.totalDuration > 0 && activeVideo) {
-        setManualDuration(event.totalDuration);
-        // Also update course_videos if duration_seconds is missing
-        if (!activeVideo.duration_seconds) {
-          supabase
-            .from("course_videos")
-            .update({ duration_seconds: Math.round(event.totalDuration) })
-            .eq("id", activeVideo.id)
-            .then(() => {
-              // Update local state so we don't keep updating
-              setVideos((prev) =>
-                prev.map((v) =>
-                  v.id === activeVideo.id
-                    ? { ...v, duration_seconds: Math.round(event.totalDuration) }
-                    : v
-                )
-              );
-            });
+      try {
+        // Capture actual duration from YouTube player — only once per video
+        if (
+          event.totalDuration > 0 &&
+          activeVideo &&
+          durationCapturedRef.current !== activeVideo.id
+        ) {
+          durationCapturedRef.current = activeVideo.id;
+          setManualDuration(event.totalDuration);
+
+          // Update course_videos if duration_seconds is missing (best-effort, may fail for non-admins)
+          if (!activeVideo.duration_seconds) {
+            const videoId = activeVideo.id;
+            const rounded = Math.round(event.totalDuration);
+            supabase
+              .from("course_videos")
+              .update({ duration_seconds: rounded })
+              .eq("id", videoId)
+              .then(({ error: updateError }) => {
+                if (!updateError) {
+                  setVideos((prev) =>
+                    prev.map((v) =>
+                      v.id === videoId ? { ...v, duration_seconds: rounded } : v
+                    )
+                  );
+                }
+              });
+          }
         }
+        trackEvent(event);
+      } catch (err) {
+        console.error("Error in handlePlayerEvent:", err);
       }
-      trackEvent(event);
     },
     [trackEvent, activeVideo, setManualDuration]
   );
@@ -298,6 +312,7 @@ const CoursePlayer = () => {
 
   const handleNextVideo = () => {
     if (currentVideoIndex < videos.length - 1) {
+      durationCapturedRef.current = null;
       setCurrentVideoIndex(currentVideoIndex + 1);
     }
   };
@@ -488,7 +503,7 @@ const CoursePlayer = () => {
                   {videos.map((video, index) => (
                     <button
                       key={video.id}
-                      onClick={() => setCurrentVideoIndex(index)}
+                      onClick={() => { durationCapturedRef.current = null; setCurrentVideoIndex(index); }}
                       className={`w-full text-left p-3 rounded-lg border transition-colors ${
                         currentVideoIndex === index
                           ? "bg-primary/10 border-primary"
