@@ -53,7 +53,7 @@ const CoursePlayer = () => {
   const isYouTube = activeVideo?.video_source === "youtube_single";
 
   // Silent engagement tracking (data only visible to admins/sub-admins)
-  const { engagement, resetEngagement } = useVideoEngagement({
+  const { engagement, resetEngagement, setManualDuration } = useVideoEngagement({
     videoId: activeVideo?.id || "",
     videoDuration: activeVideo?.duration_seconds || null,
   });
@@ -66,12 +66,41 @@ const CoursePlayer = () => {
     trackingEnabled: trackingOptIn,
   });
 
+  // Wrap trackEvent to capture YouTube duration for engagement calculations
+  const handlePlayerEvent = useCallback(
+    (event: Parameters<typeof trackEvent>[0]) => {
+      // Capture actual duration from YouTube player on any event
+      if (event.totalDuration > 0 && activeVideo) {
+        setManualDuration(event.totalDuration);
+        // Also update course_videos if duration_seconds is missing
+        if (!activeVideo.duration_seconds) {
+          supabase
+            .from("course_videos")
+            .update({ duration_seconds: Math.round(event.totalDuration) })
+            .eq("id", activeVideo.id)
+            .then(() => {
+              // Update local state so we don't keep updating
+              setVideos((prev) =>
+                prev.map((v) =>
+                  v.id === activeVideo.id
+                    ? { ...v, duration_seconds: Math.round(event.totalDuration) }
+                    : v
+                )
+              );
+            });
+        }
+      }
+      trackEvent(event);
+    },
+    [trackEvent, activeVideo, setManualDuration]
+  );
+
   // YouTube IFrame Player API hook
   const containerId = `yt-player-${activeVideo?.id || "empty"}`;
   useYouTubePlayer({
     containerId,
     videoUrl: activeVideo?.video_url || "",
-    onEvent: trackEvent,
+    onEvent: handlePlayerEvent,
     enabled: isYouTube && trackingOptIn && !!activeVideo,
   });
 
@@ -207,7 +236,7 @@ const CoursePlayer = () => {
       const effectiveDuration =
         engagement.totalDurationSeconds > 0
           ? engagement.totalDurationSeconds
-          : activeVideo.duration_seconds || engagement.watchTimeSeconds;
+          : activeVideo.duration_seconds || engagement.watchTimeSeconds || 1;
       const engagementScore =
         effectiveDuration > 0
           ? Math.min(
@@ -223,7 +252,7 @@ const CoursePlayer = () => {
           user_id: user?.id!,
           video_id: videoId,
           watch_time_seconds: engagement.watchTimeSeconds,
-          total_duration_seconds: effectiveDuration,
+          total_duration_seconds: Math.round(effectiveDuration),
           tab_switches: engagement.tabSwitches,
           engagement_score: Math.round(engagementScore),
           session_id: sessionId,
