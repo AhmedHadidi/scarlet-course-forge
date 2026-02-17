@@ -110,7 +110,7 @@ const CoursePlayer = () => {
   );
 
   // YouTube IFrame Player API hook
-  const containerId = `yt-player-${activeVideo?.id || "empty"}`;
+  const containerId = "yt-player-stable";
   useYouTubePlayer({
     containerId,
     videoUrl: activeVideo?.video_url || "",
@@ -380,7 +380,6 @@ const CoursePlayer = () => {
                   {isYouTube ? (
                     <div
                       id={containerId}
-                      key={activeVideo.id}
                       className="w-full h-full"
                     />
                   ) : (
