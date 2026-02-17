@@ -15,6 +15,12 @@ interface VideoRecord {
   watchPercentage: number;
   tabSwitches: number;
   engagementScore: number;
+  pauseCount: number;
+  rewindCount: number;
+  skipCount: number;
+  completionRate: number;
+  maxPlaybackRate: number;
+  dropOffPoint: number | null;
   updatedAt: string;
 }
 
@@ -25,6 +31,10 @@ interface CourseGroup {
   avgEngagementScore: number;
   totalTabSwitches: number;
   totalWatchTime: number;
+  totalPauses: number;
+  totalRewinds: number;
+  totalSkips: number;
+  avgCompletionRate: number;
 }
 
 interface UserEngagement {
@@ -48,6 +58,12 @@ export interface VideoEngagementRecord {
   watchPercentage: number;
   tabSwitches: number;
   engagementScore: number;
+  pauseCount: number;
+  rewindCount: number;
+  skipCount: number;
+  completionRate: number;
+  maxPlaybackRate: number;
+  dropOffPoint: number | null;
   updatedAt: string;
 }
 
@@ -115,6 +131,12 @@ export const VideoEngagementAnalytics = () => {
           watchPercentage: watchPct,
           tabSwitches: e.tab_switches,
           engagementScore: Number(e.engagement_score),
+          pauseCount: e.pause_count,
+          rewindCount: e.rewind_count,
+          skipCount: e.skip_count,
+          completionRate: Number(e.completion_rate),
+          maxPlaybackRate: Number(e.max_playback_rate),
+          dropOffPoint: e.drop_off_point != null ? Number(e.drop_off_point) : null,
           updatedAt: e.updated_at,
         };
 
@@ -133,6 +155,10 @@ export const VideoEngagementAnalytics = () => {
         avgEngagementScore: Math.round(videos.reduce((s, v) => s + v.engagementScore, 0) / videos.length),
         totalTabSwitches: videos.reduce((s, v) => s + v.tabSwitches, 0),
         totalWatchTime: videos.reduce((s, v) => s + v.watchTimeSeconds, 0),
+        totalPauses: videos.reduce((s, v) => s + v.pauseCount, 0),
+        totalRewinds: videos.reduce((s, v) => s + v.rewindCount, 0),
+        totalSkips: videos.reduce((s, v) => s + v.skipCount, 0),
+        avgCompletionRate: Math.round(videos.reduce((s, v) => s + v.completionRate, 0) / videos.length),
       });
 
       const grouped: UserEngagement[] = Array.from(userMap.entries()).map(([userId, courseMap]) => {
@@ -275,12 +301,17 @@ export const VideoEngagementAnalytics = () => {
 
                               {isCourseExpanded && (
                                 <div className="px-3 pb-3">
-                                  <Table>
+                                   <Table>
                                     <TableHeader>
                                       <TableRow>
                                         <TableHead>Video</TableHead>
                                         <TableHead>Watch %</TableHead>
                                         <TableHead>Watch Time</TableHead>
+                                        <TableHead>Completion</TableHead>
+                                        <TableHead>Pauses</TableHead>
+                                        <TableHead>Rewinds</TableHead>
+                                        <TableHead>Skips</TableHead>
+                                        <TableHead>Speed</TableHead>
                                         <TableHead>Tab Switches</TableHead>
                                         <TableHead>Engagement</TableHead>
                                         <TableHead>Date</TableHead>
@@ -294,6 +325,11 @@ export const VideoEngagementAnalytics = () => {
                                             <TableCell className="max-w-[200px] truncate" title={video.videoTitle}>{video.videoTitle}</TableCell>
                                             <TableCell><div className="flex items-center gap-2"><Progress value={video.watchPercentage} className="h-2 w-16" /><span className="text-sm">{video.watchPercentage}%</span></div></TableCell>
                                             <TableCell className="text-sm">{formatDuration(video.watchTimeSeconds)}{video.totalDurationSeconds > 0 ? ` / ${formatDuration(video.totalDurationSeconds)}` : ""}</TableCell>
+                                            <TableCell className="text-sm">{Math.round(video.completionRate)}%</TableCell>
+                                            <TableCell className="text-sm">{video.pauseCount}</TableCell>
+                                            <TableCell className="text-sm">{video.rewindCount}</TableCell>
+                                            <TableCell className="text-sm">{video.skipCount}</TableCell>
+                                            <TableCell className="text-sm">{video.maxPlaybackRate}x</TableCell>
                                             <TableCell><span className={`font-medium ${video.tabSwitches >= 5 ? "text-red-600" : video.tabSwitches >= 3 ? "text-amber-600" : "text-foreground"}`}>{video.tabSwitches}{video.tabSwitches >= 5 && <AlertTriangle className="inline ml-1 h-3 w-3" />}</span></TableCell>
                                             <TableCell><div className="flex items-center gap-2"><Progress value={video.engagementScore} className={`h-2 w-16 ${video.engagementScore < 50 ? "[&>div]:bg-red-500" : video.engagementScore < 70 ? "[&>div]:bg-amber-500" : ""}`} /><span className="text-sm">{Math.round(video.engagementScore)}%</span></div></TableCell>
                                             <TableCell className="text-sm text-muted-foreground">{format(new Date(video.updatedAt), "MMM dd, yyyy")}</TableCell>
@@ -323,11 +359,13 @@ export const VideoEngagementAnalytics = () => {
 export const getVideoEngagementCSVData = (records: VideoEngagementRecord[]) => {
   return [
     ["Video Engagement Details"],
-    ["User", "Video", "Course", "Watch %", "Watch Time (s)", "Total Duration (s)", "Tab Switches", "Engagement Score", "Date"],
+    ["User", "Video", "Course", "Watch %", "Watch Time (s)", "Total Duration (s)", "Completion Rate", "Pauses", "Rewinds", "Skips", "Max Speed", "Tab Switches", "Engagement Score", "Date"],
     ...records.map(r => [
       r.userName, r.videoTitle, r.courseTitle, `${r.watchPercentage}%`,
-      r.watchTimeSeconds, r.totalDurationSeconds, r.tabSwitches,
-      `${Math.round(r.engagementScore)}%`, format(new Date(r.updatedAt), "MMM dd, yyyy"),
+      r.watchTimeSeconds, r.totalDurationSeconds, `${Math.round(r.completionRate)}%`,
+      r.pauseCount, r.rewindCount, r.skipCount, `${r.maxPlaybackRate}x`,
+      r.tabSwitches, `${Math.round(r.engagementScore)}%`,
+      format(new Date(r.updatedAt), "MMM dd, yyyy"),
     ]),
   ];
 };
