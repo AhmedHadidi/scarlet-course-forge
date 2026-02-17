@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
 import { useVideoEngagement } from "@/hooks/useVideoEngagement";
+import { useYouTubePlayer } from "@/hooks/useYouTubePlayer";
+import { useVideoEventTracker } from "@/hooks/useVideoEventTracker";
 
 interface Video {
   id: string;
@@ -27,10 +29,8 @@ interface Course {
   description: string;
 }
 
-interface Course {
-  id: string;
-  title: string;
-  description: string;
+function generateSessionId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
 const CoursePlayer = () => {
@@ -45,13 +45,48 @@ const CoursePlayer = () => {
   const [quizId, setQuizId] = useState<string | null>(null);
   const [hasCompletedPreQuiz, setHasCompletedPreQuiz] = useState(false);
   const [hasCompletedPostQuiz, setHasCompletedPostQuiz] = useState(false);
+  const [trackingOptIn, setTrackingOptIn] = useState(true);
+
+  const [sessionId] = useState(() => generateSessionId());
+
+  const activeVideo = videos[currentVideoIndex];
+  const isYouTube = activeVideo?.video_source === "youtube_single";
 
   // Silent engagement tracking (data only visible to admins/sub-admins)
-  const activeVideo = videos[currentVideoIndex];
   const { engagement, resetEngagement } = useVideoEngagement({
     videoId: activeVideo?.id || "",
     videoDuration: activeVideo?.duration_seconds || null,
   });
+
+  // Event tracker for granular behavioral data
+  const { trackEvent, getSummary, flushEvents } = useVideoEventTracker({
+    userId: user?.id,
+    videoId: activeVideo?.id || "",
+    sessionId,
+    trackingEnabled: trackingOptIn,
+  });
+
+  // YouTube IFrame Player API hook
+  const containerId = `yt-player-${activeVideo?.id || "empty"}`;
+  useYouTubePlayer({
+    containerId,
+    videoUrl: activeVideo?.video_url || "",
+    onEvent: trackEvent,
+    enabled: isYouTube && trackingOptIn && !!activeVideo,
+  });
+
+  // Fetch tracking preference
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("tracking_opt_in")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setTrackingOptIn(data.tracking_opt_in ?? true);
+      });
+  }, [user]);
 
   useEffect(() => {
     if (user && courseId) {
@@ -61,7 +96,6 @@ const CoursePlayer = () => {
 
   const fetchCourseData = async () => {
     try {
-      // Check enrollment
       const { data: enrollment, error: enrollmentError } = await supabase
         .from("enrollments")
         .select("*")
@@ -75,7 +109,6 @@ const CoursePlayer = () => {
         return;
       }
 
-      // Fetch course details
       const { data: courseData, error: courseError } = await supabase
         .from("courses")
         .select("id, title, description")
@@ -85,7 +118,6 @@ const CoursePlayer = () => {
       if (courseError) throw courseError;
       setCourse(courseData);
 
-      // Fetch videos
       const { data: videosData, error: videosError } = await supabase
         .from("course_videos")
         .select("*")
@@ -94,7 +126,6 @@ const CoursePlayer = () => {
 
       if (videosError) throw videosError;
 
-      // Fetch video progress
       const { data: progressData } = await supabase
         .from("video_progress")
         .select("video_id, completed")
@@ -112,7 +143,6 @@ const CoursePlayer = () => {
       setVideos(videosWithProgress);
       calculateProgress(videosWithProgress);
 
-      // Check if there's a quiz for this course
       const { data: quizData } = await supabase
         .from("quizzes")
         .select("id")
@@ -122,7 +152,6 @@ const CoursePlayer = () => {
       if (quizData) {
         setQuizId(quizData.id);
 
-        // Check if user has completed the pre-quiz
         const { data: preAttemptData } = await supabase
           .from("quiz_attempts")
           .select("id")
@@ -133,7 +162,6 @@ const CoursePlayer = () => {
 
         setHasCompletedPreQuiz(!!preAttemptData);
 
-        // Check if user has passed the post-quiz
         const { data: postAttemptData } = await supabase
           .from("quiz_attempts")
           .select("passed")
@@ -171,14 +199,24 @@ const CoursePlayer = () => {
 
       if (error) throw error;
 
-      // Save engagement data silently for admin analytics
-      // Use video's duration_seconds as fallback if engagement didn't capture duration
-      const effectiveDuration = engagement.totalDurationSeconds > 0 
-        ? engagement.totalDurationSeconds 
-        : (activeVideo.duration_seconds || engagement.watchTimeSeconds);
-      const engagementScore = effectiveDuration > 0
-        ? Math.min(100, Math.round((engagement.watchTimeSeconds / effectiveDuration) * 100))
-        : 0;
+      // Flush any pending events before saving summary
+      await flushEvents();
+
+      const summary = getSummary();
+
+      const effectiveDuration =
+        engagement.totalDurationSeconds > 0
+          ? engagement.totalDurationSeconds
+          : activeVideo.duration_seconds || engagement.watchTimeSeconds;
+      const engagementScore =
+        effectiveDuration > 0
+          ? Math.min(
+              100,
+              Math.round(
+                (engagement.watchTimeSeconds / effectiveDuration) * 100
+              )
+            )
+          : 0;
 
       await supabase.from("video_engagement").upsert(
         {
@@ -188,20 +226,25 @@ const CoursePlayer = () => {
           total_duration_seconds: effectiveDuration,
           tab_switches: engagement.tabSwitches,
           engagement_score: Math.round(engagementScore),
+          session_id: sessionId,
+          pause_count: summary.pauseCount,
+          rewind_count: summary.rewindCount,
+          skip_count: summary.skipCount,
+          completion_rate: summary.completionRate,
+          max_playback_rate: summary.maxPlaybackRate,
+          drop_off_point: summary.dropOffPoint,
         },
         { onConflict: "user_id,video_id" }
       );
 
       resetEngagement();
 
-      // Update local state
       const updatedVideos = videos.map((v) =>
         v.id === videoId ? { ...v, completed: true } : v
       );
       setVideos(updatedVideos);
       calculateProgress(updatedVideos);
 
-      // Update enrollment progress
       const completedCount = updatedVideos.filter((v) => v.completed).length;
       const progressPercentage = Math.round(
         (completedCount / videos.length) * 100
@@ -236,13 +279,6 @@ const CoursePlayer = () => {
     return `${mins} min`;
   };
 
-  const getYouTubeEmbedUrl = (url: string) => {
-    const videoId = url.match(
-      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
-    )?.[1];
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
-  };
-
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -259,9 +295,6 @@ const CoursePlayer = () => {
     );
   }
 
-  // activeVideo already declared above with engagement tracking
-
-  // If there's a quiz and user hasn't completed pre-quiz, show pre-quiz screen
   if (quizId && !hasCompletedPreQuiz) {
     return (
       <div className="min-h-screen bg-background">
@@ -272,7 +305,8 @@ const CoursePlayer = () => {
               <FileText className="h-16 w-16 mx-auto text-primary" />
               <h1 className="text-2xl font-bold">{course.title}</h1>
               <p className="text-muted-foreground">
-                Before you start this course, please take a short pre-quiz to assess your current knowledge.
+                Before you start this course, please take a short pre-quiz to
+                assess your current knowledge.
               </p>
               <Button
                 onClick={() => navigate(`/quiz/${quizId}?type=pre`)}
@@ -299,15 +333,11 @@ const CoursePlayer = () => {
             <Card>
               <CardContent className="p-0">
                 <div className="aspect-video bg-black">
-                  {activeVideo.video_source === "youtube_single" ? (
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      src={getYouTubeEmbedUrl(activeVideo.video_url)}
-                      title={activeVideo.title}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
+                  {isYouTube ? (
+                    <div
+                      id={containerId}
+                      key={activeVideo.id}
+                      className="w-full h-full"
                     />
                   ) : (
                     <video
@@ -330,7 +360,6 @@ const CoursePlayer = () => {
                   Video {currentVideoIndex + 1} of {videos.length} •{" "}
                   {formatDuration(activeVideo.duration_seconds)}
                 </p>
-
 
                 {activeVideo.description && (
                   <p className="text-muted-foreground">
@@ -397,8 +426,8 @@ const CoursePlayer = () => {
                   </div>
                   <Progress value={progress} className="h-2" />
                   <p className="text-sm text-muted-foreground mt-2">
-                    {videos.filter((v) => v.completed).length} of {videos.length}{" "}
-                    videos completed
+                    {videos.filter((v) => v.completed).length} of{" "}
+                    {videos.length} videos completed
                   </p>
                 </div>
 
@@ -413,7 +442,7 @@ const CoursePlayer = () => {
                 )}
                 {progress === 100 && hasCompletedPostQuiz && (
                   <Button
-                    onClick={() => navigate('/certificates')}
+                    onClick={() => navigate("/certificates")}
                     className="w-full"
                   >
                     <Award className="mr-2 h-4 w-4" />
@@ -468,7 +497,6 @@ const CoursePlayer = () => {
           </div>
         </div>
       </div>
-
     </div>
   );
 };
