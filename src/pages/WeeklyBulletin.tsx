@@ -43,11 +43,34 @@ const WeeklyBulletin = () => {
   const [exporting, setExporting] = useState(false);
   const pageContentRef = useRef<HTMLDivElement>(null);
 
+  const loadArabicFont = (): Promise<void> => {
+    return new Promise((resolve) => {
+      // Check if already loaded
+      if (document.querySelector('#noto-sans-arabic-font')) {
+        resolve();
+        return;
+      }
+      const link = document.createElement('link');
+      link.id = 'noto-sans-arabic-font';
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap';
+      link.onload = () => {
+        // Wait a bit for font to be ready
+        document.fonts.ready.then(() => resolve());
+      };
+      link.onerror = () => resolve(); // Continue even if font fails
+      document.head.appendChild(link);
+    });
+  };
+
   const exportAsPdf = async () => {
     if (!bulletin || articles.length === 0 || !pageContentRef.current) return;
     setExporting(true);
 
     try {
+      // Load Arabic font first
+      await loadArabicFont();
+
       const element = pageContentRef.current;
 
       // Clone the element so we can modify it without affecting the page
@@ -58,9 +81,24 @@ const WeeklyBulletin = () => {
       clone.style.top = "0";
       clone.style.background = "#ffffff";
       clone.style.color = "#000000";
-      // Force a standard Arabic-supporting font on all text
-      clone.style.fontFamily = "'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif";
-      
+      clone.style.direction = "rtl";
+
+      // Force Noto Sans Arabic on ALL elements
+      const arabicFont = "'Noto Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif";
+      clone.style.fontFamily = arabicFont;
+      clone.querySelectorAll('*').forEach(el => {
+        (el as HTMLElement).style.fontFamily = arabicFont;
+      });
+
+      // Fix category badges - make them larger and more readable
+      clone.querySelectorAll('[class*="badge"], [class*="Badge"]').forEach(el => {
+        const badge = el as HTMLElement;
+        badge.style.fontSize = "14px";
+        badge.style.padding = "6px 14px";
+        badge.style.display = "inline-block";
+        badge.style.lineHeight = "1.4";
+      });
+
       // Expand all articles in clone
       clone.querySelectorAll('[data-article-content]').forEach(el => {
         (el as HTMLElement).style.display = 'block';
@@ -80,8 +118,11 @@ const WeeklyBulletin = () => {
 
       document.body.appendChild(clone);
 
+      // Wait for fonts to render in clone
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const canvas = await html2canvas(clone, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         logging: false,
         allowTaint: true,
