@@ -47,75 +47,71 @@ const WeeklyBulletin = () => {
     if (!bulletin || articles.length === 0 || !pageContentRef.current) return;
     setExporting(true);
 
-    // Expand all articles before capture
-    const previousExpanded = expandedArticle;
-    
     try {
-      // We need to temporarily show all content - we'll use a clone approach
       const element = pageContentRef.current;
+
+      // Clone the element so we can modify it without affecting the page
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.style.width = "1000px";
+      clone.style.position = "absolute";
+      clone.style.left = "-9999px";
+      clone.style.top = "0";
+      clone.style.background = "#ffffff";
+      clone.style.color = "#000000";
+      // Force a standard Arabic-supporting font on all text
+      clone.style.fontFamily = "'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif";
       
-      // Temporarily expand all articles by setting a data attribute
-      element.querySelectorAll('[data-article-content]').forEach(el => {
+      // Expand all articles in clone
+      clone.querySelectorAll('[data-article-content]').forEach(el => {
         (el as HTMLElement).style.display = 'block';
       });
-      element.querySelectorAll('[data-read-more-btn]').forEach(el => {
+      clone.querySelectorAll('[data-read-more-btn]').forEach(el => {
         (el as HTMLElement).style.display = 'none';
       });
-      element.querySelectorAll('[data-show-less-btn]').forEach(el => {
+      clone.querySelectorAll('[data-show-less-btn]').forEach(el => {
         (el as HTMLElement).style.display = 'none';
       });
-      // Hide the export button during capture
-      element.querySelectorAll('[data-export-btn]').forEach(el => {
+      clone.querySelectorAll('[data-export-btn]').forEach(el => {
         (el as HTMLElement).style.display = 'none';
       });
-      // Hide back button during capture
-      element.querySelectorAll('[data-back-btn]').forEach(el => {
+      clone.querySelectorAll('[data-back-btn]').forEach(el => {
         (el as HTMLElement).style.display = 'none';
       });
 
-      const canvas = await html2canvas(element, {
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         logging: false,
         allowTaint: true,
-        windowWidth: element.scrollWidth,
+        backgroundColor: "#ffffff",
+        width: 1000,
+        windowWidth: 1000,
       });
 
-      // Restore visibility
-      element.querySelectorAll('[data-article-content]').forEach(el => {
-        (el as HTMLElement).style.display = '';
-      });
-      element.querySelectorAll('[data-read-more-btn]').forEach(el => {
-        (el as HTMLElement).style.display = '';
-      });
-      element.querySelectorAll('[data-show-less-btn]').forEach(el => {
-        (el as HTMLElement).style.display = '';
-      });
-      element.querySelectorAll('[data-export-btn]').forEach(el => {
-        (el as HTMLElement).style.display = '';
-      });
-      element.querySelectorAll('[data-back-btn]').forEach(el => {
-        (el as HTMLElement).style.display = '';
-      });
+      document.body.removeChild(clone);
 
       const imgData = canvas.toDataURL("image/png");
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      const margin = 8;
+      const contentWidth = pdfWidth - margin * 2;
+      const contentHeight = (canvas.height * contentWidth) / canvas.width;
 
       const pdf = new jsPDF("p", "mm", "a4");
 
-      let heightLeft = imgHeight;
-      let position = 0;
+      let heightLeft = contentHeight;
+      let position = margin;
 
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      pdf.addImage(imgData, "PNG", margin, position, contentWidth, contentHeight);
+      heightLeft -= (pdfHeight - margin * 2);
 
       while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
+        position = margin - (contentHeight - heightLeft);
         pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        pdf.addImage(imgData, "PNG", margin, position, contentWidth, contentHeight);
+        heightLeft -= (pdfHeight - margin * 2);
       }
 
       pdf.save(`${bulletin.bulletin_number}.pdf`);
