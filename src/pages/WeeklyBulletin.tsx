@@ -5,7 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Calendar, Newspaper } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, Newspaper, Download } from "lucide-react";
+import jsPDF from "jspdf";
 import { format } from "date-fns";
 
 interface Category {
@@ -38,6 +39,64 @@ const WeeklyBulletin = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedArticle, setExpandedArticle] = useState<string | null>(null);
+
+  const exportAsPdf = () => {
+    if (!bulletin || articles.length === 0) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const maxWidth = pageWidth - margin * 2;
+    let y = 20;
+
+    const addText = (text: string, fontSize: number, bold = false, color: [number, number, number] = [0, 0, 0]) => {
+      doc.setFontSize(fontSize);
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setTextColor(...color);
+      const lines = doc.splitTextToSize(text, maxWidth);
+      for (const line of lines) {
+        if (y > doc.internal.pageSize.getHeight() - 20) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(line, margin, y);
+        y += fontSize * 0.5;
+      }
+      y += 4;
+    };
+
+    // Header
+    addText(bulletin.bulletin_number, 10, false, [100, 100, 100]);
+    addText(bulletin.title, 20, true);
+    if (bulletin.description) {
+      addText(bulletin.description, 11, false, [80, 80, 80]);
+    }
+    addText(`Week of ${format(new Date(bulletin.week_start_date), "MMMM d, yyyy")}`, 10, false, [100, 100, 100]);
+    y += 6;
+
+    // Articles
+    articles.forEach((article, index) => {
+      // Separator
+      if (index > 0) {
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 8;
+      }
+
+      // Categories
+      if (article.categories.length > 0) {
+        addText(article.categories.map(c => c.name).join(" • "), 9, false, [100, 100, 100]);
+      }
+
+      addText(article.title, 14, true);
+      addText(article.short_description, 10, false, [60, 60, 60]);
+      y += 2;
+      addText(article.full_content, 10);
+      y += 4;
+    });
+
+    doc.save(`${bulletin.bulletin_number}.pdf`);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -161,23 +220,31 @@ const WeeklyBulletin = () => {
             Back to Dashboard
           </Button>
 
-          <div className="flex items-start gap-4">
-            <div className="h-16 w-16 rounded-lg gradient-crimson flex items-center justify-center flex-shrink-0">
-              <Newspaper className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <Badge variant="outline" className="mb-2">
-                {bulletin.bulletin_number}
-              </Badge>
-              <h1 className="text-3xl font-bold mb-2">{bulletin.title}</h1>
-              {bulletin.description && (
-                <p className="text-muted-foreground mb-2">{bulletin.description}</p>
-              )}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>Week of {format(new Date(bulletin.week_start_date), "MMMM d, yyyy")}</span>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="h-16 w-16 rounded-lg gradient-crimson flex items-center justify-center flex-shrink-0">
+                <Newspaper className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <Badge variant="outline" className="mb-2">
+                  {bulletin.bulletin_number}
+                </Badge>
+                <h1 className="text-3xl font-bold mb-2">{bulletin.title}</h1>
+                {bulletin.description && (
+                  <p className="text-muted-foreground mb-2">{bulletin.description}</p>
+                )}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>Week of {format(new Date(bulletin.week_start_date), "MMMM d, yyyy")}</span>
+                </div>
               </div>
             </div>
+            {articles.length > 0 && (
+              <Button variant="outline" onClick={exportAsPdf}>
+                <Download className="mr-2 h-4 w-4" />
+                Export PDF
+              </Button>
+            )}
           </div>
         </div>
       </header>
