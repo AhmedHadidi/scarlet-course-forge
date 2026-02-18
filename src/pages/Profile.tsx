@@ -431,34 +431,6 @@ const Profile = () => {
               </CardContent>
             </Card>
 
-            {/* Privacy & Tracking */}
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Privacy & Tracking
-                </CardTitle>
-                <CardDescription>
-                  Control how your video watching behavior is tracked
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border">
-                  <div className="space-y-1">
-                    <Label className="font-medium">Video Engagement Tracking</Label>
-                    <p className="text-sm text-muted-foreground">
-                      When enabled, your video interactions (play, pause, seek, etc.) are tracked to improve content recommendations and learning analytics. Only your user ID is stored — no personal information.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={trackingOptIn}
-                    onCheckedChange={handleToggleTracking}
-                    disabled={savingTracking}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Change Password */}
             <Card className="border-border">
               <CardHeader>
