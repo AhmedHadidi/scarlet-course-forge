@@ -348,7 +348,7 @@ const WeeklyBulletin = () => {
                           </Badge>
                         ))}
                       </div>
-                      <CardTitle className="text-xl">{article.title}</CardTitle>
+                      <CardTitle className="text-xl" dir="rtl" style={{ unicodeBidi: "plaintext" }}>{article.title}</CardTitle>
                       <CardDescription>{article.short_description}</CardDescription>
                     </CardHeader>
                     <CardContent>
