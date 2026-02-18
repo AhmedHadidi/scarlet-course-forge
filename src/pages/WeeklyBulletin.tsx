@@ -41,32 +41,69 @@ const WeeklyBulletin = () => {
   const [loading, setLoading] = useState(true);
   const [expandedArticle, setExpandedArticle] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const pdfContentRef = useRef<HTMLDivElement>(null);
+  const pageContentRef = useRef<HTMLDivElement>(null);
 
   const exportAsPdf = async () => {
-    if (!bulletin || articles.length === 0 || !pdfContentRef.current) return;
+    if (!bulletin || articles.length === 0 || !pageContentRef.current) return;
     setExporting(true);
 
+    // Expand all articles before capture
+    const previousExpanded = expandedArticle;
+    
     try {
-      const element = pdfContentRef.current;
-      // Make visible for rendering
-      element.style.display = "block";
+      // We need to temporarily show all content - we'll use a clone approach
+      const element = pageContentRef.current;
+      
+      // Temporarily expand all articles by setting a data attribute
+      element.querySelectorAll('[data-article-content]').forEach(el => {
+        (el as HTMLElement).style.display = 'block';
+      });
+      element.querySelectorAll('[data-read-more-btn]').forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
+      element.querySelectorAll('[data-show-less-btn]').forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
+      // Hide the export button during capture
+      element.querySelectorAll('[data-export-btn]').forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
+      // Hide back button during capture
+      element.querySelectorAll('[data-back-btn]').forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
 
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: "#ffffff",
+        allowTaint: true,
+        windowWidth: element.scrollWidth,
       });
 
-      element.style.display = "none";
+      // Restore visibility
+      element.querySelectorAll('[data-article-content]').forEach(el => {
+        (el as HTMLElement).style.display = '';
+      });
+      element.querySelectorAll('[data-read-more-btn]').forEach(el => {
+        (el as HTMLElement).style.display = '';
+      });
+      element.querySelectorAll('[data-show-less-btn]').forEach(el => {
+        (el as HTMLElement).style.display = '';
+      });
+      element.querySelectorAll('[data-export-btn]').forEach(el => {
+        (el as HTMLElement).style.display = '';
+      });
+      element.querySelectorAll('[data-back-btn]').forEach(el => {
+        (el as HTMLElement).style.display = '';
+      });
 
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
+      const imgData = canvas.toDataURL("image/png");
+      const imgWidth = 210;
+      const pageHeight = 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       const pdf = new jsPDF("p", "mm", "a4");
-      const imgData = canvas.toDataURL("image/png");
 
       let heightLeft = imgHeight;
       let position = 0;
@@ -198,7 +235,7 @@ const WeeklyBulletin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" ref={pageContentRef}>
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="max-w-5xl mx-auto px-6 py-8">
@@ -206,6 +243,7 @@ const WeeklyBulletin = () => {
             variant="ghost"
             className="mb-4"
             onClick={() => navigate("/dashboard")}
+            data-back-btn
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
@@ -231,7 +269,7 @@ const WeeklyBulletin = () => {
               </div>
             </div>
             {articles.length > 0 && (
-              <Button variant="outline" onClick={exportAsPdf} disabled={exporting}>
+              <Button variant="outline" onClick={exportAsPdf} disabled={exporting} data-export-btn>
                 {exporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                 {exporting ? "Exporting..." : "Export PDF"}
               </Button>
@@ -273,7 +311,11 @@ const WeeklyBulletin = () => {
                       <CardDescription>{article.short_description}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {expandedArticle === article.id ? (
+                      {/* Always render full content but toggle visibility */}
+                      <div
+                        data-article-content
+                        style={{ display: expandedArticle === article.id ? "block" : "none" }}
+                      >
                         <div className="space-y-4">
                           <p className="text-foreground whitespace-pre-wrap">
                             {article.full_content}
@@ -282,15 +324,18 @@ const WeeklyBulletin = () => {
                             variant="link"
                             className="p-0 h-auto"
                             onClick={() => setExpandedArticle(null)}
+                            data-show-less-btn
                           >
                             Show less
                           </Button>
                         </div>
-                      ) : (
+                      </div>
+                      {expandedArticle !== article.id && (
                         <Button
                           variant="link"
                           className="p-0 h-auto"
                           onClick={() => setExpandedArticle(article.id)}
+                          data-read-more-btn
                         >
                           Read more
                         </Button>
@@ -303,33 +348,6 @@ const WeeklyBulletin = () => {
           </div>
         )}
       </main>
-      {/* Hidden PDF content for html2canvas */}
-      <div
-        ref={pdfContentRef}
-        style={{ display: "none", width: "800px", padding: "40px", backgroundColor: "#fff", color: "#000", fontFamily: "sans-serif" }}
-        dir="rtl"
-      >
-        <div style={{ marginBottom: "8px", color: "#666", fontSize: "14px" }}>{bulletin.bulletin_number}</div>
-        <h1 style={{ fontSize: "28px", fontWeight: "bold", marginBottom: "8px" }}>{bulletin.title}</h1>
-        {bulletin.description && <p style={{ color: "#555", marginBottom: "8px" }}>{bulletin.description}</p>}
-        <p style={{ color: "#888", fontSize: "13px", marginBottom: "24px" }}>
-          Week of {format(new Date(bulletin.week_start_date), "MMMM d, yyyy")}
-        </p>
-        <hr style={{ borderColor: "#ddd", marginBottom: "24px" }} />
-        {articles.map((article, index) => (
-          <div key={article.id} style={{ marginBottom: "28px" }}>
-            {article.categories.length > 0 && (
-              <div style={{ fontSize: "12px", color: "#888", marginBottom: "6px" }}>
-                {article.categories.map(c => c.name).join(" • ")}
-              </div>
-            )}
-            <h2 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "6px" }}>{article.title}</h2>
-            <p style={{ color: "#555", fontSize: "14px", marginBottom: "10px" }}>{article.short_description}</p>
-            <p style={{ fontSize: "14px", lineHeight: "1.8", whiteSpace: "pre-wrap" }}>{article.full_content}</p>
-            {index < articles.length - 1 && <hr style={{ borderColor: "#eee", marginTop: "24px" }} />}
-          </div>
-        ))}
-      </div>
     </div>
   );
 };
