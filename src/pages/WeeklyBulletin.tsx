@@ -67,35 +67,75 @@ const WeeklyBulletin = () => {
     if (!bulletin || articles.length === 0 || !pageContentRef.current) return;
     setExporting(true);
 
-    // Save original states to restore later
-    const element = pageContentRef.current;
-    const savedExpandedArticle = expandedArticle;
-
     try {
-      // Expand all articles by setting state, then wait for re-render
-      setExpandedArticle("__ALL__");
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Load Arabic font first (both weights)
+      await loadArabicFont();
 
-      // Hide UI-only elements temporarily
-      const hiddenEls: HTMLElement[] = [];
-      element.querySelectorAll('[data-export-btn], [data-back-btn], [data-read-more-btn], [data-show-less-btn]').forEach(el => {
+      const element = pageContentRef.current;
+      const clone = element.cloneNode(true) as HTMLElement;
+
+      // Fixed-width off-screen clone for consistent layout
+      clone.style.width = "1000px";
+      clone.style.position = "absolute";
+      clone.style.left = "-9999px";
+      clone.style.top = "0";
+      clone.style.background = "#ffffff";
+      clone.style.color = "#000000";
+      clone.style.direction = "rtl";
+
+      // Apply the SAME Arabic font to ALL elements (titles, body, badges, everything)
+      const arabicFont = "'Noto Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif";
+      clone.style.fontFamily = arabicFont;
+      clone.style.unicodeBidi = "plaintext";
+      clone.querySelectorAll('*').forEach(el => {
         const htmlEl = el as HTMLElement;
-        hiddenEls.push(htmlEl);
-        htmlEl.style.display = 'none';
+        htmlEl.style.fontFamily = arabicFont;
+        htmlEl.style.unicodeBidi = "plaintext";
+        htmlEl.style.direction = "rtl";
+        htmlEl.style.textAlign = "right";
       });
 
-      const canvas = await html2canvas(element, {
+      // Fix category badges - properly sized with same font
+      clone.querySelectorAll('[class*="badge"], [class*="Badge"]').forEach(el => {
+        const badge = el as HTMLElement;
+        badge.style.fontSize = "14px";
+        badge.style.padding = "8px 18px";
+        badge.style.display = "inline-flex";
+        badge.style.alignItems = "center";
+        badge.style.justifyContent = "center";
+        badge.style.lineHeight = "1.4";
+        badge.style.borderRadius = "9999px";
+        badge.style.whiteSpace = "nowrap";
+        badge.style.minHeight = "34px";
+        badge.style.boxSizing = "border-box";
+      });
+
+      // Expand all articles in clone
+      clone.querySelectorAll('[data-article-content]').forEach(el => {
+        (el as HTMLElement).style.display = 'block';
+      });
+      // Hide UI-only elements in clone
+      clone.querySelectorAll('[data-read-more-btn], [data-show-less-btn], [data-export-btn], [data-back-btn]').forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
+
+      document.body.appendChild(clone);
+
+      // Wait for font to fully render in clone
+      await document.fonts.ready;
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      const canvas = await html2canvas(clone, {
         scale: 3,
         useCORS: true,
         logging: false,
         allowTaint: true,
         backgroundColor: "#ffffff",
+        width: 1000,
+        windowWidth: 1000,
       });
 
-      // Restore hidden elements
-      hiddenEls.forEach(el => { el.style.display = ''; });
-      // Restore article state
-      setExpandedArticle(savedExpandedArticle);
+      document.body.removeChild(clone);
 
       const imgData = canvas.toDataURL("image/png");
       const pdfWidth = 210;
@@ -122,8 +162,6 @@ const WeeklyBulletin = () => {
       pdf.save(`${bulletin.bulletin_number}.pdf`);
     } catch (error) {
       console.error("Error exporting PDF:", error);
-      // Restore on error
-      setExpandedArticle(savedExpandedArticle);
     } finally {
       setExporting(false);
     }
