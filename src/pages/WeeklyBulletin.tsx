@@ -83,20 +83,32 @@ const WeeklyBulletin = () => {
       clone.style.color = "#000000";
       clone.style.direction = "rtl";
 
-      // Force Noto Sans Arabic on ALL elements
+      // Force Noto Sans Arabic on ALL elements with proper RTL
       const arabicFont = "'Noto Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif";
       clone.style.fontFamily = arabicFont;
+      clone.style.unicodeBidi = "embed";
       clone.querySelectorAll('*').forEach(el => {
-        (el as HTMLElement).style.fontFamily = arabicFont;
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.fontFamily = arabicFont;
+        htmlEl.style.direction = "rtl";
+        htmlEl.style.unicodeBidi = "embed";
       });
 
-      // Fix category badges - make them larger and more readable
+      // Fix category badges - properly sized and balanced
       clone.querySelectorAll('[class*="badge"], [class*="Badge"]').forEach(el => {
         const badge = el as HTMLElement;
-        badge.style.fontSize = "14px";
-        badge.style.padding = "6px 14px";
-        badge.style.display = "inline-block";
-        badge.style.lineHeight = "1.4";
+        badge.style.fontSize = "13px";
+        badge.style.padding = "6px 16px";
+        badge.style.display = "inline-flex";
+        badge.style.alignItems = "center";
+        badge.style.justifyContent = "center";
+        badge.style.lineHeight = "1.3";
+        badge.style.borderRadius = "9999px";
+        badge.style.whiteSpace = "nowrap";
+        badge.style.overflow = "hidden";
+        badge.style.textOverflow = "ellipsis";
+        badge.style.height = "auto";
+        badge.style.minHeight = "32px";
       });
 
       // Expand all articles in clone
