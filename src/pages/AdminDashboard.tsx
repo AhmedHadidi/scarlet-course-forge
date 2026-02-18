@@ -246,14 +246,6 @@ const AdminDashboard = () => {
                       <BookOpen className="mr-2 h-4 w-4" />
                       Create Course
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => handleQuickAction("issue-certificate")}
-                    >
-                      <Award className="mr-2 h-4 w-4" />
-                      Issue Certificate
-                    </Button>
                   </CardContent>
                 </Card>
                 <Card className="border-border/50">
