@@ -224,41 +224,29 @@ const AdminDashboard = () => {
               </div>
 
               {/* Quick Actions */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card className="border-border/50">
-                  <CardHeader>
-                    <CardTitle className="text-base">Quick Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => handleQuickAction("create-user")}
-                    >
-                      <Users className="mr-2 h-4 w-4" />
-                      Add New User
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => handleQuickAction("create-course")}
-                    >
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      Create Course
-                    </Button>
-                  </CardContent>
-                </Card>
-                <Card className="border-border/50">
-                  <CardHeader>
-                    <CardTitle className="text-base">Recent Activity</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      No recent activity to display
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
+              <Card className="border-border/50">
+                <CardHeader>
+                  <CardTitle className="text-base">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => handleQuickAction("create-user")}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Add New User
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => handleQuickAction("create-course")}
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Create Course
+                  </Button>
+                </CardContent>
+              </Card>
             </>
           )}
 
