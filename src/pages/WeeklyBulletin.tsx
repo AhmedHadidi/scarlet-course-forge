@@ -67,83 +67,35 @@ const WeeklyBulletin = () => {
     if (!bulletin || articles.length === 0 || !pageContentRef.current) return;
     setExporting(true);
 
+    // Save original states to restore later
+    const element = pageContentRef.current;
+    const savedExpandedArticle = expandedArticle;
+
     try {
-      // Load Arabic font first
-      await loadArabicFont();
+      // Expand all articles by setting state, then wait for re-render
+      setExpandedArticle("__ALL__");
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const element = pageContentRef.current;
-
-      // Clone the element so we can modify it without affecting the page
-      const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.width = "1000px";
-      clone.style.position = "absolute";
-      clone.style.left = "-9999px";
-      clone.style.top = "0";
-      clone.style.background = "#ffffff";
-      clone.style.color = "#000000";
-      clone.style.direction = "rtl";
-
-      // Force Noto Sans Arabic on ALL elements with proper RTL
-      const arabicFont = "'Noto Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif";
-      clone.style.fontFamily = arabicFont;
-      clone.style.unicodeBidi = "embed";
-      clone.querySelectorAll('*').forEach(el => {
+      // Hide UI-only elements temporarily
+      const hiddenEls: HTMLElement[] = [];
+      element.querySelectorAll('[data-export-btn], [data-back-btn], [data-read-more-btn], [data-show-less-btn]').forEach(el => {
         const htmlEl = el as HTMLElement;
-        htmlEl.style.fontFamily = arabicFont;
-        htmlEl.style.direction = "rtl";
-        htmlEl.style.unicodeBidi = "embed";
+        hiddenEls.push(htmlEl);
+        htmlEl.style.display = 'none';
       });
 
-      // Fix category badges - properly sized and balanced
-      clone.querySelectorAll('[class*="badge"], [class*="Badge"]').forEach(el => {
-        const badge = el as HTMLElement;
-        badge.style.fontSize = "13px";
-        badge.style.padding = "6px 16px";
-        badge.style.display = "inline-flex";
-        badge.style.alignItems = "center";
-        badge.style.justifyContent = "center";
-        badge.style.lineHeight = "1.3";
-        badge.style.borderRadius = "9999px";
-        badge.style.whiteSpace = "nowrap";
-        badge.style.overflow = "hidden";
-        badge.style.textOverflow = "ellipsis";
-        badge.style.height = "auto";
-        badge.style.minHeight = "32px";
-      });
-
-      // Expand all articles in clone
-      clone.querySelectorAll('[data-article-content]').forEach(el => {
-        (el as HTMLElement).style.display = 'block';
-      });
-      clone.querySelectorAll('[data-read-more-btn]').forEach(el => {
-        (el as HTMLElement).style.display = 'none';
-      });
-      clone.querySelectorAll('[data-show-less-btn]').forEach(el => {
-        (el as HTMLElement).style.display = 'none';
-      });
-      clone.querySelectorAll('[data-export-btn]').forEach(el => {
-        (el as HTMLElement).style.display = 'none';
-      });
-      clone.querySelectorAll('[data-back-btn]').forEach(el => {
-        (el as HTMLElement).style.display = 'none';
-      });
-
-      document.body.appendChild(clone);
-
-      // Wait for fonts to render in clone
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const canvas = await html2canvas(clone, {
+      const canvas = await html2canvas(element, {
         scale: 3,
         useCORS: true,
         logging: false,
         allowTaint: true,
         backgroundColor: "#ffffff",
-        width: 1000,
-        windowWidth: 1000,
       });
 
-      document.body.removeChild(clone);
+      // Restore hidden elements
+      hiddenEls.forEach(el => { el.style.display = ''; });
+      // Restore article state
+      setExpandedArticle(savedExpandedArticle);
 
       const imgData = canvas.toDataURL("image/png");
       const pdfWidth = 210;
@@ -170,6 +122,8 @@ const WeeklyBulletin = () => {
       pdf.save(`${bulletin.bulletin_number}.pdf`);
     } catch (error) {
       console.error("Error exporting PDF:", error);
+      // Restore on error
+      setExpandedArticle(savedExpandedArticle);
     } finally {
       setExporting(false);
     }
@@ -363,7 +317,7 @@ const WeeklyBulletin = () => {
                       {/* Always render full content but toggle visibility */}
                       <div
                         data-article-content
-                        style={{ display: expandedArticle === article.id ? "block" : "none" }}
+                        style={{ display: (expandedArticle === article.id || expandedArticle === "__ALL__") ? "block" : "none" }}
                       >
                         <div className="space-y-4">
                           <p className="text-foreground whitespace-pre-wrap">
@@ -379,7 +333,7 @@ const WeeklyBulletin = () => {
                           </Button>
                         </div>
                       </div>
-                      {expandedArticle !== article.id && (
+                      {expandedArticle !== article.id && expandedArticle !== "__ALL__" && (
                         <Button
                           variant="link"
                           className="p-0 h-auto"
