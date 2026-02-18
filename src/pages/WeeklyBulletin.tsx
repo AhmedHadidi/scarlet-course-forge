@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowLeft, Calendar, Newspaper, Download } from "lucide-react";
-import jsPDF from "jspdf";
 import { format } from "date-fns";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface Category {
   id: string;
@@ -39,63 +40,53 @@ const WeeklyBulletin = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedArticle, setExpandedArticle] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const pdfContentRef = useRef<HTMLDivElement>(null);
 
-  const exportAsPdf = () => {
-    if (!bulletin || articles.length === 0) return;
+  const exportAsPdf = async () => {
+    if (!bulletin || articles.length === 0 || !pdfContentRef.current) return;
+    setExporting(true);
 
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 20;
-    const maxWidth = pageWidth - margin * 2;
-    let y = 20;
+    try {
+      const element = pdfContentRef.current;
+      // Make visible for rendering
+      element.style.display = "block";
 
-    const addText = (text: string, fontSize: number, bold = false, color: [number, number, number] = [0, 0, 0]) => {
-      doc.setFontSize(fontSize);
-      doc.setFont("helvetica", bold ? "bold" : "normal");
-      doc.setTextColor(...color);
-      const lines = doc.splitTextToSize(text, maxWidth);
-      for (const line of lines) {
-        if (y > doc.internal.pageSize.getHeight() - 20) {
-          doc.addPage();
-          y = 20;
-        }
-        doc.text(line, margin, y);
-        y += fontSize * 0.5;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      element.style.display = "none";
+
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/png");
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
-      y += 4;
-    };
 
-    // Header
-    addText(bulletin.bulletin_number, 10, false, [100, 100, 100]);
-    addText(bulletin.title, 20, true);
-    if (bulletin.description) {
-      addText(bulletin.description, 11, false, [80, 80, 80]);
+      pdf.save(`${bulletin.bulletin_number}.pdf`);
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+    } finally {
+      setExporting(false);
     }
-    addText(`Week of ${format(new Date(bulletin.week_start_date), "MMMM d, yyyy")}`, 10, false, [100, 100, 100]);
-    y += 6;
-
-    // Articles
-    articles.forEach((article, index) => {
-      // Separator
-      if (index > 0) {
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, y, pageWidth - margin, y);
-        y += 8;
-      }
-
-      // Categories
-      if (article.categories.length > 0) {
-        addText(article.categories.map(c => c.name).join(" • "), 9, false, [100, 100, 100]);
-      }
-
-      addText(article.title, 14, true);
-      addText(article.short_description, 10, false, [60, 60, 60]);
-      y += 2;
-      addText(article.full_content, 10);
-      y += 4;
-    });
-
-    doc.save(`${bulletin.bulletin_number}.pdf`);
   };
 
   useEffect(() => {
@@ -240,9 +231,9 @@ const WeeklyBulletin = () => {
               </div>
             </div>
             {articles.length > 0 && (
-              <Button variant="outline" onClick={exportAsPdf}>
-                <Download className="mr-2 h-4 w-4" />
-                Export PDF
+              <Button variant="outline" onClick={exportAsPdf} disabled={exporting}>
+                {exporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                {exporting ? "Exporting..." : "Export PDF"}
               </Button>
             )}
           </div>
@@ -312,6 +303,33 @@ const WeeklyBulletin = () => {
           </div>
         )}
       </main>
+      {/* Hidden PDF content for html2canvas */}
+      <div
+        ref={pdfContentRef}
+        style={{ display: "none", width: "800px", padding: "40px", backgroundColor: "#fff", color: "#000", fontFamily: "sans-serif" }}
+        dir="rtl"
+      >
+        <div style={{ marginBottom: "8px", color: "#666", fontSize: "14px" }}>{bulletin.bulletin_number}</div>
+        <h1 style={{ fontSize: "28px", fontWeight: "bold", marginBottom: "8px" }}>{bulletin.title}</h1>
+        {bulletin.description && <p style={{ color: "#555", marginBottom: "8px" }}>{bulletin.description}</p>}
+        <p style={{ color: "#888", fontSize: "13px", marginBottom: "24px" }}>
+          Week of {format(new Date(bulletin.week_start_date), "MMMM d, yyyy")}
+        </p>
+        <hr style={{ borderColor: "#ddd", marginBottom: "24px" }} />
+        {articles.map((article, index) => (
+          <div key={article.id} style={{ marginBottom: "28px" }}>
+            {article.categories.length > 0 && (
+              <div style={{ fontSize: "12px", color: "#888", marginBottom: "6px" }}>
+                {article.categories.map(c => c.name).join(" • ")}
+              </div>
+            )}
+            <h2 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "6px" }}>{article.title}</h2>
+            <p style={{ color: "#555", fontSize: "14px", marginBottom: "10px" }}>{article.short_description}</p>
+            <p style={{ fontSize: "14px", lineHeight: "1.8", whiteSpace: "pre-wrap" }}>{article.full_content}</p>
+            {index < articles.length - 1 && <hr style={{ borderColor: "#eee", marginTop: "24px" }} />}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
