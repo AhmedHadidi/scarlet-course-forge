@@ -8,6 +8,7 @@ import { Loader2, ArrowLeft, Calendar, Newspaper, Download } from "lucide-react"
 import { format } from "date-fns";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import React from "react";
 
 /* ─────────────────────────── Types ──────────────────────────────── */
 interface Category { id: string; name: string; }
@@ -30,6 +31,259 @@ interface Bulletin {
 /* ─────────────────────────── Helpers ─────────────────────────────── */
 const CRIMSON = "#B91C2E";
 const CRIMSON_DARK = "#8B1528";
+const TEAL = "#0D9488";
+const TEAL_DARK = "#0F766E";
+const TEAL_DARKER = "#115E59";
+
+const CARDS_FIRST_PAGE = 3;
+const CARDS_PER_PAGE = 6;
+
+/* ── Oman MOI Emblem SVG (khanjar + swords) ── */
+const OmanEmblem = () => (
+  <svg width="48" height="56" viewBox="0 0 100 120" fill="white" xmlns="http://www.w3.org/2000/svg">
+    {/* Simplified Omani national emblem: khanjar (dagger) with crossed swords */}
+    {/* Khanjar handle */}
+    <ellipse cx="50" cy="18" rx="12" ry="8" fill="none" stroke="white" strokeWidth="2.5" />
+    <path d="M50 26 L50 60" stroke="white" strokeWidth="3" strokeLinecap="round" />
+    {/* Khanjar blade curve */}
+    <path d="M50 60 Q42 75 38 90" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    <path d="M50 60 Q52 75 50 85" stroke="white" strokeWidth="1.5" fill="none" opacity="0.5" />
+    {/* Khanjar sheath */}
+    <path d="M44 28 L56 28 L54 55 L46 55 Z" fill="none" stroke="white" strokeWidth="1.5" />
+    {/* Left sword */}
+    <line x1="20" y1="95" x2="50" y2="25" stroke="white" strokeWidth="2" />
+    <line x1="15" y1="100" x2="25" y2="90" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+    {/* Right sword */}
+    <line x1="80" y1="95" x2="50" y2="25" stroke="white" strokeWidth="2" />
+    <line x1="85" y1="100" x2="75" y2="90" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+    {/* Belt / horizontal band */}
+    <path d="M30 70 Q50 65 70 70" stroke="white" strokeWidth="2" fill="none" />
+    <path d="M30 74 Q50 69 70 74" stroke="white" strokeWidth="1.5" fill="none" />
+  </svg>
+);
+
+/* ═══════════════════════════════════════════════════════════════════
+   PdfPage — one page of the newsletter (rendered off-screen)
+   ═══════════════════════════════════════════════════════════════════ */
+interface PdfPageProps {
+  bulletin: Bulletin;
+  featuredArticle: Article | null;
+  pageArticles: Article[];
+  editionLabel: string;
+  isFirstPage: boolean;
+}
+
+const PdfPage: React.FC<PdfPageProps> = ({
+  bulletin,
+  featuredArticle,
+  pageArticles,
+  editionLabel,
+  isFirstPage,
+}) => {
+  const PAGE_W = 900;
+
+  return (
+    <div
+      dir="rtl"
+      style={{
+        width: `${PAGE_W}px`,
+        background: "#ffffff",
+        fontFamily: "'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif",
+        color: "#1a1a1a",
+        lineHeight: 1.6,
+        fontSize: "14px",
+        boxSizing: "border-box",
+      }}
+    >
+      {/* ══ HEADER ═══════════════════════════════════════════════════ */}
+      <div
+        style={{
+          background: `linear-gradient(160deg, ${TEAL} 0%, ${TEAL_DARK} 50%, ${TEAL_DARKER} 100%)`,
+          padding: "24px 36px 22px",
+          color: "#fff",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Decorative shapes */}
+        <div style={{ position: "absolute", top: -40, left: -40, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
+        <div style={{ position: "absolute", bottom: -30, right: 80, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
+
+        {/* Top row: edition label (left) — ministry emblem + name (right) */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1, marginBottom: 12 }}>
+          {/* Right side: emblem + ministry name */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <OmanEmblem />
+            <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: 0.5, lineHeight: 1.3 }}>
+              وزارة الإعلام
+            </div>
+          </div>
+          {/* Left side: edition badge */}
+          <div style={{
+            background: "rgba(0,0,0,0.2)",
+            borderRadius: 10,
+            padding: "10px 20px",
+            fontSize: 16,
+            fontWeight: 800,
+            lineHeight: 1.3,
+            textAlign: "center",
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.9 }}>الإصدار</div>
+            <div>{editionLabel}</div>
+          </div>
+        </div>
+
+        {/* Center branding: ذكاء+ */}
+        <div style={{ textAlign: "center", position: "relative", zIndex: 1, margin: "8px 0 6px" }}>
+          <div style={{ fontSize: 52, fontWeight: 900, lineHeight: 1.0, marginBottom: 6, letterSpacing: 2 }}>
+            ذكاء<span style={{ fontSize: 32, verticalAlign: "super", marginRight: 2, color: "#A7F3D0" }}>+</span>
+          </div>
+          <div style={{ fontSize: 12.5, opacity: 0.9, maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>
+            نشرة أسبوعية من فريق الذكاء الاصطناعي لمتابعة أحدث التطورات في مجال الذكاء الاصطناعي
+            <br />وإنجازات الوزارة في هذا المجال
+          </div>
+        </div>
+      </div>
+
+      {/* ══ FEATURED ARTICLE (page 1 only) ════════════════════════════ */}
+      {isFirstPage && featuredArticle && (
+        <div style={{ padding: "0" }}>
+          {/* Title banner */}
+          <div
+            style={{
+              background: TEAL,
+              color: "#fff",
+              textAlign: "center",
+              padding: "14px 32px",
+              fontSize: 19,
+              fontWeight: 800,
+              lineHeight: 1.5,
+            }}
+          >
+            {featuredArticle.title}
+          </div>
+
+          {/* Featured image */}
+          {featuredArticle.image_url && (
+            <div style={{ overflow: "hidden" }}>
+              <img
+                src={featuredArticle.image_url}
+                alt=""
+                crossOrigin="anonymous"
+                style={{ width: "100%", height: 300, objectFit: "cover", display: "block" }}
+              />
+            </div>
+          )}
+
+          {/* Description text */}
+          <p
+            style={{
+              fontSize: 13,
+              color: "#444",
+              lineHeight: 1.9,
+              margin: "0",
+              padding: "14px 36px 6px",
+              textAlign: "center",
+            }}
+          >
+            {featuredArticle.short_description || featuredArticle.full_content?.slice(0, 250)}
+          </p>
+        </div>
+      )}
+
+      {/* ══ ARTICLE CARDS GRID ══════════════════════════════════════ */}
+      {pageArticles.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            gap: 14,
+            padding: "16px 24px 20px",
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+        >
+          {pageArticles.map((article) => {
+            const colW = pageArticles.length <= 2
+              ? (pageArticles.length === 1 ? "100%" : "48%")
+              : "31%";
+            return (
+              <div
+                key={article.id}
+                style={{
+                  width: colW,
+                  background: "#F0FDFA",
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  border: "1px solid #CCF0EB",
+                  boxSizing: "border-box",
+                }}
+              >
+                {/* Card title bar */}
+                <div style={{
+                  background: TEAL_DARKER,
+                  color: "#fff",
+                  textAlign: "center",
+                  padding: "10px 12px",
+                  fontSize: 13,
+                  fontWeight: 800,
+                  lineHeight: 1.5,
+                  minHeight: 46,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                  {article.title}
+                </div>
+                {/* Card image — uses the article's image */}
+                {article.image_url && (
+                  <img
+                    src={article.image_url}
+                    alt=""
+                    crossOrigin="anonymous"
+                    style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }}
+                  />
+                )}
+                {/* Card description */}
+                <div style={{ padding: "10px 14px 14px" }}>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      color: "#444",
+                      lineHeight: 1.8,
+                      margin: 0,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 5,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {article.short_description || article.full_content?.slice(0, 150)}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ══ FOOTER ════════════════════════════════════════════════════ */}
+      <div
+        style={{
+          borderTop: "2px solid #E0F2F1",
+          padding: "10px 32px",
+          textAlign: "center",
+          fontSize: 10,
+          color: "#999",
+          background: "#F0FDFA",
+        }}
+      >
+        <span style={{ fontWeight: 600, color: "#666" }}>MOI AI Learning Hub</span>
+        {" · "}
+        تم إنشاء هذا التقرير بتاريخ {format(new Date(), "yyyy/MM/dd")} — جميع الحقوق محفوظة
+      </div>
+    </div>
+  );
+};
 
 /* ─────────────────────────── Component ──────────────────────────── */
 const WeeklyBulletin = () => {
@@ -44,59 +298,83 @@ const WeeklyBulletin = () => {
   const pdfContainerRef = useRef<HTMLDivElement>(null);
 
   /* ══════════════════════════════════════════════════════════════════
-     EXPORT: html2canvas of a dedicated off-screen layout → jsPDF
+     EXPORT: Render each page in the off-screen container → html2canvas → jsPDF
      ══════════════════════════════════════════════════════════════════ */
+  const [pdfPages, setPdfPages] = useState<{ featuredArticle: Article | null; pageArticles: Article[]; isFirstPage: boolean }[]>([]);
+
   const exportAsPdf = useCallback(async () => {
     if (!bulletin || articles.length === 0 || !pdfContainerRef.current) return;
     setExporting(true);
 
     try {
-      const el = pdfContainerRef.current;
+      // ── Build page data ────────────────────────────────────────
+      const featured = articles[0];
+      const rest = articles.slice(1);
+      const pages: typeof pdfPages = [];
 
-      // Briefly make it visible for html2canvas (still off-screen)
-      el.style.display = "block";
+      // Page 1: featured article + first N cards
+      const firstPageCards = rest.slice(0, CARDS_FIRST_PAGE);
+      pages.push({ featuredArticle: featured, pageArticles: firstPageCards, isFirstPage: true });
 
-      // Wait for images + fonts to settle
+      // Remaining pages
+      let offset = CARDS_FIRST_PAGE;
+      while (offset < rest.length) {
+        pages.push({
+          featuredArticle: null,
+          pageArticles: rest.slice(offset, offset + CARDS_PER_PAGE),
+          isFirstPage: false,
+        });
+        offset += CARDS_PER_PAGE;
+      }
+
+      // Trigger React render of PdfPage components
+      setPdfPages(pages);
+
+      // Wait for render + images
       await document.fonts.ready;
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 800));
 
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        width: el.scrollWidth,
-        windowWidth: el.scrollWidth,
-      });
+      const container = pdfContainerRef.current;
+      container.style.display = "block";
 
-      // Hide again
-      el.style.display = "none";
+      await new Promise(r => setTimeout(r, 500));
 
-      // Build PDF
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      const pdfW = 210; // A4 width mm
-      const pdfH = 297; // A4 height mm
-      const margin = 6;
+      const pageElements = container.querySelectorAll<HTMLDivElement>('[data-pdf-page]');
+
+      const pdfW = 210; // A4 mm
+      const pdfH = 297;
+      const margin = 4;
       const contentW = pdfW - margin * 2;
-      const contentH = (canvas.height * contentW) / canvas.width;
-      const pageContentH = pdfH - margin * 2;
 
       const pdf = new jsPDF("p", "mm", "a4");
-      let heightLeft = contentH;
-      let yOffset = margin;
 
-      // First page
-      pdf.addImage(imgData, "JPEG", margin, yOffset, contentW, contentH);
-      heightLeft -= pageContentH;
+      for (let i = 0; i < pageElements.length; i++) {
+        const pageEl = pageElements[i];
 
-      // Additional pages
-      while (heightLeft > 0) {
-        pdf.addPage();
-        yOffset = margin - (contentH - heightLeft);
-        pdf.addImage(imgData, "JPEG", margin, yOffset, contentW, contentH);
-        heightLeft -= pageContentH;
+        const canvas = await html2canvas(pageEl, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+          width: pageEl.scrollWidth,
+          windowWidth: pageEl.scrollWidth,
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.92);
+        const contentH = (canvas.height * contentW) / canvas.width;
+
+        if (i > 0) pdf.addPage();
+
+        const yOffset = contentH < pdfH - margin * 2
+          ? margin + (pdfH - margin * 2 - contentH) / 2
+          : margin;
+
+        pdf.addImage(imgData, "JPEG", margin, Math.max(margin, yOffset), contentW, contentH);
       }
+
+      container.style.display = "none";
+      setPdfPages([]);
 
       pdf.save(`${bulletin.bulletin_number}.pdf`);
     } catch (err) {
@@ -254,154 +532,27 @@ const WeeklyBulletin = () => {
         </main>
       </div>
 
-      {/* ░░░ OFF-SCREEN PDF LAYOUT (captured by html2canvas) ░░░░░░░ */}
+      {/* ░░░ OFF-SCREEN PDF PAGES (captured by html2canvas) ░░░░░░░ */}
       <div
         ref={pdfContainerRef}
-        dir="rtl"
         style={{
           display: "none",
           position: "absolute",
           left: "-9999px",
           top: 0,
-          width: "900px",
-          background: "#ffffff",
-          fontFamily: "'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif",
-          color: "#1a1a1a",
-          lineHeight: 1.7,
-          fontSize: "14px",
-          padding: "0",
         }}
       >
-        {/* ══ HEADER ═════════════════════════════════════════════════ */}
-        <div style={{
-          background: `linear-gradient(135deg, ${CRIMSON} 0%, ${CRIMSON_DARK} 60%, #5C0E1C 100%)`,
-          color: "#fff",
-          padding: "44px 48px 40px",
-          position: "relative",
-          overflow: "hidden",
-        }}>
-          {/* Decorative circles */}
-          <div style={{ position: "absolute", top: "-50px", left: "-50px", width: "200px", height: "200px", borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
-          <div style={{ position: "absolute", bottom: "-40px", right: "50px", width: "140px", height: "140px", borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
-
-          <div style={{ position: "relative", zIndex: 1 }}>
-            {/* Top: icon + bulletin number */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-              <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: "12px", padding: "14px", display: "inline-flex" }}>
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
-                  <path d="M18 14h-8" /><path d="M15 18h-5" /><path d="M10 6h8v4h-8V6Z" />
-                </svg>
-              </div>
-              <div style={{ background: "rgba(255,255,255,0.18)", borderRadius: "24px", padding: "8px 24px", fontSize: "14px", fontWeight: 700, letterSpacing: "0.5px" }}>
-                {bulletin.bulletin_number}
-              </div>
-            </div>
-
-            {/* Title */}
-            <h1 style={{ fontSize: "34px", fontWeight: 800, margin: "0 0 10px 0", lineHeight: 1.35 }}>
-              {bulletin.title}
-            </h1>
-            {bulletin.description && (
-              <p style={{ fontSize: "16px", opacity: 0.85, margin: "0 0 16px 0", maxWidth: "650px" }}>{bulletin.description}</p>
-            )}
-
-            {/* Date */}
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "14px", opacity: 0.9, background: "rgba(255,255,255,0.12)", borderRadius: "8px", padding: "8px 16px" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                <line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" />
-                <line x1="3" x2="21" y1="10" y2="10" />
-              </svg>
-              <span>{formattedDate}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ══ ARTICLE COUNT BAR ══════════════════════════════════════ */}
-        <div style={{ textAlign: "center", padding: "16px 0 24px", borderBottom: "2px solid #f0f0f0", marginBottom: "32px", fontSize: "15px", color: "#555" }}>
-          <span style={{ background: CRIMSON, color: "#fff", borderRadius: "20px", padding: "5px 18px", fontSize: "14px", fontWeight: 700, marginLeft: "8px" }}>
-            {articles.length}
-          </span>
-          أخبار في هذا العدد
-        </div>
-
-        {/* ══ FEATURED ARTICLE ═══════════════════════════════════════ */}
-        {featuredArticle && (
-          <div style={{ padding: "0 40px", marginBottom: "36px" }}>
-            {featuredArticle.image_url && (
-              <div style={{ borderRadius: "14px", overflow: "hidden", marginBottom: "20px" }}>
-                <img src={featuredArticle.image_url} alt="" crossOrigin="anonymous"
-                  style={{ width: "100%", height: "300px", objectFit: "cover", display: "block" }} />
-              </div>
-            )}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
-              {featuredArticle.categories.map(cat => (
-                <span key={cat.id} style={{ background: CRIMSON, color: "#fff", borderRadius: "16px", padding: "5px 16px", fontSize: "12px", fontWeight: 700 }}>
-                  {cat.name}
-                </span>
-              ))}
-            </div>
-            <h2 style={{ fontSize: "26px", fontWeight: 800, margin: "0 0 12px 0", lineHeight: 1.4, color: "#1a1a1a" }}>
-              {featuredArticle.title}
-            </h2>
-            <p style={{ fontSize: "14px", color: "#666", margin: "0 0 16px 0", lineHeight: 1.7 }}>
-              {featuredArticle.short_description}
-            </p>
-            <div style={{ fontSize: "14px", color: "#333", lineHeight: 1.9, whiteSpace: "pre-wrap", borderRight: `4px solid ${CRIMSON}`, paddingRight: "20px" }}>
-              {featuredArticle.full_content}
-            </div>
-            <div style={{ margin: "36px 40px", height: "2px", background: "linear-gradient(90deg, transparent, #ddd 20%, #ddd 80%, transparent)" }} />
-          </div>
-        )}
-
-        {/* ══ REST ARTICLES ══════════════════════════════════════════ */}
-        {restArticles.map((article, idx) => (
-          <div key={article.id} style={{ padding: "0 40px", marginBottom: "28px" }}>
-            <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
-              {article.image_url && (
-                <div style={{ width: "200px", minWidth: "200px", height: "150px", borderRadius: "10px", overflow: "hidden", flexShrink: 0 }}>
-                  <img src={article.image_url} alt="" crossOrigin="anonymous"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                </div>
-              )}
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
-                  {article.categories.map(cat => (
-                    <span key={cat.id} style={{ background: "#FEF2F2", color: CRIMSON, borderRadius: "12px", padding: "3px 14px", fontSize: "11px", fontWeight: 700, border: "1px solid #FECACA" }}>
-                      {cat.name}
-                    </span>
-                  ))}
-                </div>
-                <h3 style={{ fontSize: "19px", fontWeight: 700, margin: "0 0 8px 0", lineHeight: 1.4, color: "#1a1a1a" }}>
-                  {article.title}
-                </h3>
-                <p style={{ fontSize: "13px", color: "#666", margin: 0, lineHeight: 1.6 }}>
-                  {article.short_description}
-                </p>
-              </div>
-            </div>
-            <div style={{ fontSize: "13.5px", color: "#333", lineHeight: 1.9, whiteSpace: "pre-wrap", marginTop: "14px", paddingRight: "16px", borderRight: "3px solid #E5E7EB" }}>
-              {article.full_content}
-            </div>
-            {idx < restArticles.length - 1 && (
-              <div style={{ margin: "28px 0 0", height: "1px", background: "linear-gradient(90deg, transparent, #e0e0e0 15%, #e0e0e0 85%, transparent)" }} />
-            )}
+        {pdfPages.map((page, idx) => (
+          <div key={idx} data-pdf-page style={{ marginBottom: 20 }}>
+            <PdfPage
+              bulletin={bulletin}
+              featuredArticle={page.featuredArticle}
+              pageArticles={page.pageArticles}
+              editionLabel={bulletin.bulletin_number}
+              isFirstPage={page.isFirstPage}
+            />
           </div>
         ))}
-
-        {/* ══ FOOTER ═════════════════════════════════════════════════ */}
-        <div style={{ marginTop: "48px", borderTop: "2px solid #f0f0f0", padding: "24px 40px", textAlign: "center", fontSize: "12px", color: "#999" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "8px" }}>
-            <div style={{ width: "28px", height: "28px", borderRadius: "6px", background: `linear-gradient(135deg, ${CRIMSON}, ${CRIMSON_DARK})`, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
-              </svg>
-            </div>
-            <span style={{ fontWeight: 600, color: "#666" }}>MOI AI Learning Hub</span>
-          </div>
-          <div>تم إنشاء هذا التقرير بتاريخ {format(new Date(), "yyyy/MM/dd")} — جميع الحقوق محفوظة</div>
-        </div>
       </div>
     </>
   );
