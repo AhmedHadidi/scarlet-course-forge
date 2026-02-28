@@ -8,18 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-<<<<<<< HEAD
-import { User, Mail, Lock, Newspaper, Building2 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import UserNav from "@/components/UserNav";
-import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
-=======
 import { User, Mail, Lock, Newspaper, Building2, Eye } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import UserNav from "@/components/UserNav";
 import { useToast } from "@/hooks/use-toast";
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
 
 interface Category {
   id: string;
@@ -35,10 +27,6 @@ interface Department {
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-<<<<<<< HEAD
-  const { t } = useTranslation();
-=======
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   const [profile, setProfile] = useState({
     full_name: "",
     avatar_url: "",
@@ -153,25 +141,15 @@ const Profile = () => {
 
       if (!error) {
         toast({
-<<<<<<< HEAD
-          title: t("profile.profileUpdated"),
-          description: t("profile.profileSavedDesc"),
-=======
           title: "Profile Updated",
           description: "Your profile has been saved successfully.",
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         });
       }
     } catch (error) {
       console.error("Error saving profile:", error);
       toast({
-<<<<<<< HEAD
-        title: t("profile.updateFailed"),
-        description: t("profile.couldNotSave"),
-=======
         title: "Update Failed",
         description: "Could not save profile changes.",
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         variant: "destructive",
       });
     } finally {
@@ -182,13 +160,8 @@ const Profile = () => {
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
-<<<<<<< HEAD
-        title: t("profile.passwordMismatch"),
-        description: t("profile.passwordMismatchDesc"),
-=======
         title: "Passwords Don't Match",
         description: "Please make sure both passwords are the same.",
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         variant: "destructive",
       });
       return;
@@ -201,26 +174,16 @@ const Profile = () => {
 
       if (!error) {
         toast({
-<<<<<<< HEAD
-          title: t("profile.passwordUpdated"),
-          description: t("profile.passwordChangedDesc"),
-=======
           title: "Password Updated",
           description: "Your password has been changed successfully.",
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         });
         setPasswordData({ newPassword: "", confirmPassword: "" });
       }
     } catch (error) {
       console.error("Error changing password:", error);
       toast({
-<<<<<<< HEAD
-        title: t("profile.updateFailed"),
-        description: t("profile.couldNotChangePassword"),
-=======
         title: "Update Failed",
         description: "Could not change password.",
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         variant: "destructive",
       });
     }
@@ -327,35 +290,21 @@ const Profile = () => {
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
-<<<<<<< HEAD
-          <h2 className="text-3xl font-bold mb-2">{t("profile.title")}</h2>
-          <p className="text-muted-foreground">{t("profile.subtitle")}</p>
-=======
           <h2 className="text-3xl font-bold mb-2">My Profile</h2>
           <p className="text-muted-foreground">Manage your personal information</p>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         </div>
 
         {loading ? (
           <div className="text-center py-12">
-<<<<<<< HEAD
-            <p className="text-muted-foreground">{t("profile.loading")}</p>
-=======
             <p className="text-muted-foreground">Loading profile...</p>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </div>
         ) : (
           <div className="space-y-6">
             {/* Profile Information */}
             <Card className="border-border">
               <CardHeader>
-<<<<<<< HEAD
-                <CardTitle>{t("profile.profileInfo")}</CardTitle>
-                <CardDescription>{t("profile.profileInfoDesc")}</CardDescription>
-=======
                 <CardTitle>Profile Information</CardTitle>
                 <CardDescription>Update your profile details and photo</CardDescription>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-6">
@@ -371,35 +320,22 @@ const Profile = () => {
                   <div className="space-y-2">
                     <Label htmlFor="full_name">
                       <User className="inline h-4 w-4 mr-2" />
-<<<<<<< HEAD
-                      {t("profile.fullName")}
-=======
                       Full Name
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                     </Label>
                     <Input
                       id="full_name"
                       value={profile.full_name}
-<<<<<<< HEAD
-                      onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                      placeholder={t("profile.fullNamePlaceholder")}
-=======
                       onChange={(e) =>
                         setProfile({ ...profile, full_name: e.target.value })
                       }
                       placeholder="Enter your full name"
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="email">
                       <Mail className="inline h-4 w-4 mr-2" />
-<<<<<<< HEAD
-                      {t("auth.email")}
-=======
                       Email
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                     </Label>
                     <Input id="email" value={user?.email || ""} disabled />
                   </div>
@@ -407,16 +343,6 @@ const Profile = () => {
                   <div className="space-y-2">
                     <Label htmlFor="department">
                       <Building2 className="inline h-4 w-4 mr-2" />
-<<<<<<< HEAD
-                      {t("auth.department")}
-                    </Label>
-                    <Select
-                      value={profile.department_id}
-                      onValueChange={(value) => setProfile({ ...profile, department_id: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("auth.selectDepartment")} />
-=======
                       Department
                     </Label>
                     <Select
@@ -427,7 +353,6 @@ const Profile = () => {
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select your department" />
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                       </SelectTrigger>
                       <SelectContent>
                         {departments.map((dept) => (
@@ -445,11 +370,7 @@ const Profile = () => {
                   onClick={handleSaveProfile}
                   disabled={saving}
                 >
-<<<<<<< HEAD
-                  {saving ? t("profile.saving") : t("profile.saveChanges")}
-=======
                   {saving ? "Saving..." : "Save Changes"}
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                 </Button>
               </CardContent>
             </Card>
@@ -459,15 +380,6 @@ const Profile = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Newspaper className="h-5 w-5" />
-<<<<<<< HEAD
-                  {t("profile.newsPreferences")}
-                </CardTitle>
-                <CardDescription>{t("profile.newsPreferencesDesc")}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {categories.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">{t("profile.noCategories")}</p>
-=======
                   News Preferences
                 </CardTitle>
                 <CardDescription>
@@ -479,7 +391,6 @@ const Profile = () => {
                   <p className="text-muted-foreground text-sm">
                     No categories available yet.
                   </p>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                 ) : (
                   <div className="grid gap-3">
                     {categories.map((category) => (
@@ -515,11 +426,7 @@ const Profile = () => {
                   onClick={handleSavePreferences}
                   disabled={savingPreferences}
                 >
-<<<<<<< HEAD
-                  {savingPreferences ? t("profile.saving") : t("profile.savePreferences")}
-=======
                   {savingPreferences ? "Saving..." : "Save Preferences"}
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                 </Button>
               </CardContent>
             </Card>
@@ -527,13 +434,8 @@ const Profile = () => {
             {/* Change Password */}
             <Card className="border-border">
               <CardHeader>
-<<<<<<< HEAD
-                <CardTitle>{t("profile.changePassword")}</CardTitle>
-                <CardDescription>{t("profile.changePasswordDesc")}</CardDescription>
-=======
                 <CardTitle>Change Password</CardTitle>
                 <CardDescription>Update your account password</CardDescription>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -569,11 +471,7 @@ const Profile = () => {
                 </div>
 
                 <Button variant="outline" onClick={handleChangePassword}>
-<<<<<<< HEAD
-                  {t("profile.updatePassword")}
-=======
                   Update Password
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                 </Button>
               </CardContent>
             </Card>

@@ -2,15 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Bell, Award, BookOpen, TrendingUp } from "lucide-react";
 import UserNav from "@/components/UserNav";
-<<<<<<< HEAD
-import { useTranslation } from "react-i18next";
 
 const Notifications = () => {
-  const { t } = useTranslation();
-=======
-
-const Notifications = () => {
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   // Mock notifications data - will be replaced with real data from backend
   const notifications = [
     {
@@ -52,13 +45,8 @@ const Notifications = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-<<<<<<< HEAD
-              <h2 className="text-3xl font-bold mb-2">{t("notifications.title")}</h2>
-              <p className="text-muted-foreground">{t("notifications.subtitle")}</p>
-=======
               <h2 className="text-3xl font-bold mb-2">Notifications</h2>
               <p className="text-muted-foreground">Stay updated with your learning journey</p>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             </div>
             {unreadCount > 0 && (
               <Badge className="gradient-crimson">{unreadCount} New</Badge>
@@ -69,11 +57,7 @@ const Notifications = () => {
         {notifications.length === 0 ? (
           <div className="text-center py-12">
             <Bell className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-<<<<<<< HEAD
-            <p className="text-muted-foreground">{t("notifications.noNotifications")}</p>
-=======
             <p className="text-muted-foreground">No notifications yet</p>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </div>
         ) : (
           <div className="space-y-4">
@@ -82,14 +66,9 @@ const Notifications = () => {
               return (
                 <Card
                   key={notification.id}
-<<<<<<< HEAD
-                  className={`border-border transition-smooth hover:shadow-crimson ${!notification.read ? "border-primary/50" : ""
-                    }`}
-=======
                   className={`border-border transition-smooth hover:shadow-crimson ${
                     !notification.read ? "border-primary/50" : ""
                   }`}
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                 >
                   <CardHeader>
                     <div className="flex items-start gap-4">

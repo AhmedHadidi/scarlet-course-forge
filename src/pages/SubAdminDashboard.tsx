@@ -8,12 +8,6 @@ import { SubAdminUserManagement } from "@/components/subadmin/SubAdminUserManage
 import { SubAdminAnalytics } from "@/components/subadmin/SubAdminAnalytics";
 import { SubAdminPendingRegistrations } from "@/components/subadmin/SubAdminPendingRegistrations";
 import { toast } from "sonner";
-<<<<<<< HEAD
-import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import ThemeToggle from "@/components/ThemeToggle";
-=======
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
 
 interface Department {
   id: string;
@@ -23,10 +17,6 @@ interface Department {
 
 const SubAdminDashboard = () => {
   const { signOut, user } = useAuth();
-<<<<<<< HEAD
-  const { t } = useTranslation();
-=======
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   const [activeView, setActiveView] = useState("overview");
   const [department, setDepartment] = useState<Department | null>(null);
   const [loading, setLoading] = useState(true);
@@ -142,12 +132,6 @@ const SubAdminDashboard = () => {
   };
 
   const statCards = [
-<<<<<<< HEAD
-    { title: t("admin.departmentUsers"), value: stats.totalUsers, icon: Users, description: t("admin.usersInDept") },
-    { title: t("admin.enrollments"), value: stats.totalEnrollments, icon: BookOpen, description: t("admin.courseEnrollments") },
-    { title: t("admin.completed"), value: stats.completedCourses, icon: TrendingUp, description: t("admin.completedCourses") },
-    { title: t("admin.certificates"), value: stats.totalCertificates, icon: Award, description: t("admin.issuedCertificates") },
-=======
     {
       title: "Department Users",
       value: stats.totalUsers,
@@ -172,24 +156,15 @@ const SubAdminDashboard = () => {
       icon: Award,
       description: "Issued certificates",
     },
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   ];
 
   // Menu items for sub-admin navigation
   const menuItems = [
-<<<<<<< HEAD
-    { id: "home", label: t("admin.home"), icon: Home, isExternal: true, path: "/" },
-    { id: "overview", label: t("admin.dashboard"), icon: BarChart },
-    { id: "registrations", label: t("admin.registrations"), icon: UserCheck },
-    { id: "users", label: t("admin.departmentUsers"), icon: Users },
-    { id: "analytics", label: t("admin.analytics"), icon: TrendingUp },
-=======
     { id: "home", label: "Home", icon: Home, isExternal: true, path: "/" },
     { id: "overview", label: "Dashboard", icon: BarChart },
     { id: "registrations", label: "Registrations", icon: UserCheck },
     { id: "users", label: "Department Users", icon: Users },
     { id: "analytics", label: "Analytics", icon: TrendingUp },
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   ];
 
   if (loading) {
@@ -206,13 +181,6 @@ const SubAdminDashboard = () => {
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-<<<<<<< HEAD
-            <h2 className="text-xl font-semibold mb-2">{t("admin.noDeptAssigned")}</h2>
-            <p className="text-muted-foreground mb-4">{t("admin.noDeptDesc")}</p>
-            <Button onClick={signOut} variant="outline">
-              <LogOut className="mr-2 h-4 w-4" />
-              {t("admin.signOut")}
-=======
             <h2 className="text-xl font-semibold mb-2">No Department Assigned</h2>
             <p className="text-muted-foreground mb-4">
               You haven't been assigned to any department yet. Please contact an administrator.
@@ -220,7 +188,6 @@ const SubAdminDashboard = () => {
             <Button onClick={signOut} variant="outline">
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             </Button>
           </CardContent>
         </Card>
@@ -239,13 +206,8 @@ const SubAdminDashboard = () => {
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <div>
-<<<<<<< HEAD
-              <h1 className="text-lg font-bold">{t("nav.brand")}</h1>
-              <p className="text-xs text-muted-foreground">{t("admin.subPanelLabel")}</p>
-=======
               <h1 className="text-lg font-bold">MOI AI Learning Hub</h1>
               <p className="text-xs text-muted-foreground">Sub-Admin Panel</p>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             </div>
           </div>
         </div>
@@ -269,11 +231,7 @@ const SubAdminDashboard = () => {
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
-<<<<<<< HEAD
-
-=======
               
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               if (item.isExternal) {
                 return (
                   <a
@@ -286,27 +244,16 @@ const SubAdminDashboard = () => {
                   </a>
                 );
               }
-<<<<<<< HEAD
-
-=======
               
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               return (
                 <button
                   key={item.id}
                   onClick={() => setActiveView(item.id)}
-<<<<<<< HEAD
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-=======
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                 >
                   <Icon className="h-5 w-5" />
                   <span className="font-medium">{item.label}</span>
@@ -317,21 +264,10 @@ const SubAdminDashboard = () => {
         </nav>
 
         {/* Sign Out Button */}
-<<<<<<< HEAD
-        <div className="p-4 border-t border-border space-y-2">
-          <div className="flex items-center justify-between">
-            <LanguageSwitcher />
-            <ThemeToggle />
-          </div>
-          <Button variant="outline" className="w-full" onClick={signOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            {t("admin.signOut")}
-=======
         <div className="p-4 border-t border-border">
           <Button variant="outline" className="w-full" onClick={signOut}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </Button>
         </div>
       </aside>
@@ -345,17 +281,10 @@ const SubAdminDashboard = () => {
               {menuItems.find(item => item.id === activeView)?.label || "Sub-Admin Dashboard"}
             </h2>
             <p className="text-muted-foreground mt-1">
-<<<<<<< HEAD
-              {activeView === "overview" && t("admin.manageDept", { dept: department.name })}
-              {activeView === "registrations" && t("admin.manageRegistrations")}
-              {activeView === "users" && t("admin.manageDeptUsers")}
-              {activeView === "analytics" && t("admin.manageDeptAnalytics")}
-=======
               {activeView === "overview" && `Manage ${department.name} department`}
               {activeView === "registrations" && "Review and approve new user registrations"}
               {activeView === "users" && "View and manage users in your department"}
               {activeView === "analytics" && "View analytics for your department"}
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             </p>
           </div>
         </header>
@@ -392,60 +321,31 @@ const SubAdminDashboard = () => {
                     <CardTitle className="text-base">Quick Actions</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-<<<<<<< HEAD
-                    <Button
-                      variant="outline"
-=======
                     <Button 
                       variant="outline" 
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                       className="w-full justify-start"
                       onClick={() => setActiveView("users")}
                     >
                       <Users className="mr-2 h-4 w-4" />
-<<<<<<< HEAD
-                      {t("admin.viewDeptUsers")}
-                    </Button>
-                    <Button
-                      variant="outline"
-=======
                       View Department Users
                     </Button>
                     <Button 
                       variant="outline" 
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                       className="w-full justify-start"
                       onClick={() => setActiveView("analytics")}
                     >
                       <TrendingUp className="mr-2 h-4 w-4" />
-<<<<<<< HEAD
-                      {t("admin.viewAnalytics")}
-=======
                       View Analytics
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                     </Button>
                   </CardContent>
                 </Card>
                 <Card className="border-border/50">
                   <CardHeader>
-<<<<<<< HEAD
-                    <CardTitle className="text-base">{t("admin.deptSummary")}</CardTitle>
-=======
                     <CardTitle className="text-base">Department Summary</CardTitle>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-<<<<<<< HEAD
-                        <span className="text-muted-foreground">{t("admin.totalUsers")}</span>
-                        <span className="font-medium">{stats.totalUsers}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">{t("admin.completionRate")}</span>
-                        <span className="font-medium">
-                          {stats.totalEnrollments > 0
-=======
                         <span className="text-muted-foreground">Total Users</span>
                         <span className="font-medium">{stats.totalUsers}</span>
                       </div>
@@ -453,17 +353,12 @@ const SubAdminDashboard = () => {
                         <span className="text-muted-foreground">Completion Rate</span>
                         <span className="font-medium">
                           {stats.totalEnrollments > 0 
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                             ? Math.round((stats.completedCourses / stats.totalEnrollments) * 100)
                             : 0}%
                         </span>
                       </div>
                       <div className="flex justify-between">
-<<<<<<< HEAD
-                        <span className="text-muted-foreground">{t("admin.certificates")}</span>
-=======
                         <span className="text-muted-foreground">Certificates Earned</span>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                         <span className="font-medium">{stats.totalCertificates}</span>
                       </div>
                     </div>

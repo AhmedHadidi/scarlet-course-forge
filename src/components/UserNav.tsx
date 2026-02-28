@@ -6,44 +6,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
-<<<<<<< HEAD
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { useTranslation } from "react-i18next";
-=======
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
 
 const UserNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, userRole } = useAuth();
-<<<<<<< HEAD
-  const { t } = useTranslation();
-  const [featureSettings, setFeatureSettings] = useState<Record<string, boolean>>({});
-
-  const adminNavItems = [
-    { path: "/dashboard", icon: Home, label: t("nav.courses") },
-    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
-    { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
-    { path: "/admin", icon: BarChart, label: t("nav.adminDashboard") },
-    { path: "/profile", icon: User, label: t("nav.myProfile") },
-  ];
-
-  const subAdminNavItems = [
-    { path: "/dashboard", icon: Home, label: t("nav.courses") },
-    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
-    { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
-    { path: "/subadmin", icon: BarChart, label: t("nav.myDashboard") },
-    { path: "/profile", icon: User, label: t("nav.myProfile") },
-  ];
-
-  const userNavItems: Array<{ path: string; icon: any; label: string; feature?: string }> = [
-    { path: "/dashboard", icon: BookOpen, label: t("nav.courses") },
-    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
-    { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
-    { path: "/certificates", icon: Award, label: t("nav.certificates"), feature: "certificates" },
-    { path: "/profile", icon: User, label: t("nav.profile") },
-    { path: "/notifications", icon: Bell, label: t("nav.notifications"), feature: "notifications" },
-=======
   const [featureSettings, setFeatureSettings] = useState<Record<string, boolean>>({});
 
   // Admin menu items
@@ -72,7 +39,6 @@ const UserNav = () => {
     { path: "/certificates", icon: Award, label: "Certificates", feature: "certificates" },
     { path: "/profile", icon: User, label: "Profile" },
     { path: "/notifications", icon: Bell, label: "Notifications", feature: "notifications" },
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   ];
 
   useEffect(() => {
@@ -84,11 +50,7 @@ const UserNav = () => {
       const { data } = await supabase
         .from("feature_settings")
         .select("feature_name, is_enabled");
-<<<<<<< HEAD
-
-=======
       
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
       if (data) {
         const settings: Record<string, boolean> = {};
         data.forEach(item => {
@@ -101,22 +63,6 @@ const UserNav = () => {
     }
   };
 
-<<<<<<< HEAD
-  const navItems = userRole === 'admin'
-    ? adminNavItems
-    : userRole === 'sub_admin'
-      ? subAdminNavItems
-      : userNavItems;
-
-  const filteredNavItems = userRole === 'admin' || userRole === 'sub_admin'
-    ? navItems
-    : navItems.filter(item => {
-      if ('feature' in item && item.feature) {
-        return featureSettings[item.feature] !== false;
-      }
-      return true;
-    });
-=======
   const navItems = userRole === 'admin' 
     ? adminNavItems 
     : userRole === 'sub_admin' 
@@ -132,7 +78,6 @@ const UserNav = () => {
         }
         return true;
       });
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
 
   return (
     <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
@@ -143,11 +88,7 @@ const UserNav = () => {
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <div>
-<<<<<<< HEAD
-              <h1 className="text-xl font-bold">{t("nav.brand")}</h1>
-=======
               <h1 className="text-xl font-bold">MOI AI Learning Hub</h1>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             </div>
           </Link>
 
@@ -175,18 +116,10 @@ const UserNav = () => {
           </nav>
 
           <div className="flex items-center gap-2">
-<<<<<<< HEAD
-            <LanguageSwitcher />
-            <ThemeToggle />
-            <Button variant="outline" size="sm" onClick={signOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              {t("nav.signOut")}
-=======
             <ThemeToggle />
             <Button variant="outline" size="sm" onClick={signOut}>
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             </Button>
           </div>
         </div>

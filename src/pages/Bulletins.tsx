@@ -8,10 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Calendar, Newspaper, ArrowRight, Settings } from "lucide-react";
 import { format } from "date-fns";
 import UserNav from "@/components/UserNav";
-<<<<<<< HEAD
-import { useTranslation } from "react-i18next";
-=======
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
 
 interface Category {
   id: string;
@@ -39,10 +35,6 @@ interface Bulletin {
 const Bulletins = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-<<<<<<< HEAD
-  const { t } = useTranslation();
-=======
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   const [bulletins, setBulletins] = useState<Bulletin[]>([]);
   const [userPreferences, setUserPreferences] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,17 +112,10 @@ const Bulletins = () => {
 
           const filteredArticles = preferredCategoryIdSet.size
             ? articlesWithCategories.filter((article) =>
-<<<<<<< HEAD
-              article.categories.some((cat) =>
-                preferredCategoryIdSet.has(normalizeId(cat.id))
-              )
-            )
-=======
                 article.categories.some((cat) =>
                   preferredCategoryIdSet.has(normalizeId(cat.id))
                 )
               )
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             : articlesWithCategories;
 
           return { ...bulletin, articles: filteredArticles };
@@ -157,22 +142,13 @@ const Bulletins = () => {
             <div className="h-10 w-10 rounded-lg gradient-crimson flex items-center justify-center">
               <Newspaper className="h-5 w-5 text-white" />
             </div>
-<<<<<<< HEAD
-            <h2 className="text-3xl font-bold">{t("bulletins.title")}</h2>
-=======
             <h2 className="text-3xl font-bold">Weekly AI Bulletins</h2>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </div>
           <div className="flex items-center gap-2">
             <p className="text-muted-foreground">
               {userPreferences.length > 0
-<<<<<<< HEAD
-                ? t("bulletins.showingPersonalized")
-                : t("bulletins.setPreferences")}
-=======
                 ? "Showing news based on your preferences"
                 : "Set your preferences in your profile to see personalized news"}
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             </p>
             <Button
               variant="ghost"
@@ -181,11 +157,7 @@ const Bulletins = () => {
               className="text-primary"
             >
               <Settings className="h-4 w-4 mr-1" />
-<<<<<<< HEAD
-              {t("bulletins.preferences")}
-=======
               Preferences
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             </Button>
           </div>
         </div>
@@ -197,11 +169,6 @@ const Bulletins = () => {
         ) : userPreferences.length === 0 ? (
           <div className="text-center py-12">
             <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-<<<<<<< HEAD
-            <h3 className="text-lg font-semibold mb-2">{t("bulletins.setYourPreferences")}</h3>
-            <p className="text-muted-foreground mb-4">{t("bulletins.setPreferencesDesc")}</p>
-            <Button onClick={() => navigate("/profile")}>{t("bulletins.goToProfile")}</Button>
-=======
             <h3 className="text-lg font-semibold mb-2">Set Your Preferences</h3>
             <p className="text-muted-foreground mb-4">
               To see personalized AI news, please set your category preferences.
@@ -209,18 +176,13 @@ const Bulletins = () => {
             <Button onClick={() => navigate("/profile")}>
               Go to Profile Settings
             </Button>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </div>
         ) : bulletins.length === 0 ? (
           <div className="text-center py-12">
             <Newspaper className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-<<<<<<< HEAD
-            <p className="text-muted-foreground">{t("bulletins.noNews")}</p>
-=======
             <p className="text-muted-foreground">
               No news matching your preferences yet.
             </p>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -233,13 +195,9 @@ const Bulletins = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="outline">{bulletin.bulletin_number}</Badge>
-<<<<<<< HEAD
-                    <span className="text-sm text-muted-foreground">{bulletin.articles.length} {t("bulletins.articles")}</span>
-=======
                     <span className="text-sm text-muted-foreground">
                       {bulletin.articles.length} articles
                     </span>
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                   </div>
                   <CardTitle className="text-lg group-hover:text-primary transition-colors">
                     {bulletin.title}
@@ -259,11 +217,7 @@ const Bulletins = () => {
                       </span>
                     </div>
                     <Button variant="ghost" size="sm" className="group-hover:text-primary">
-<<<<<<< HEAD
-                      {t("bulletins.read")}
-=======
                       Read
->>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                       <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   </div>
