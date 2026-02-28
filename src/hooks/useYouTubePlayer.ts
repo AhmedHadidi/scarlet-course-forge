@@ -21,6 +21,8 @@ interface UseYouTubePlayerOptions {
   videoUrl: string;
   onEvent: (event: YouTubePlayerEvent) => void;
   enabled?: boolean;
+  /** Start playback from this position in seconds (for resume) */
+  startSeconds?: number;
 }
 
 function extractYouTubeId(url: string): string | null {
@@ -61,27 +63,37 @@ export function useYouTubePlayer({
   videoUrl,
   onEvent,
   enabled = true,
+  startSeconds = 0,
 }: UseYouTubePlayerOptions) {
   const playerRef = useRef<any>(null);
   const lastTimeRef = useRef(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(0);
   const onEventRef = useRef(onEvent);
   onEventRef.current = onEvent;
+  // Store startSeconds in a ref so initPlayer always has the latest value
+  const startSecondsRef = useRef(startSeconds);
+  startSecondsRef.current = startSeconds;
 
   const emitEvent = useCallback(
     (type: string, metadata?: Record<string, any>) => {
       if (!playerRef.current) return;
       const player = playerRef.current;
       try {
-        const currentTime = player.getCurrentTime?.() || 0;
+        const ct = player.getCurrentTime?.() || 0;
         const duration = player.getDuration?.() || 0;
         const rate = player.getPlaybackRate?.() || 1;
-        const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
+        const pct = duration > 0 ? (ct / duration) * 100 : 0;
+
+        setCurrentTime(Math.round(ct));
+        if (duration > 0) setTotalDuration(Math.round(duration));
 
         onEventRef.current({
           eventType: type,
-          videoTime: Math.round(currentTime * 100) / 100,
+          videoTime: Math.round(ct * 100) / 100,
           totalDuration: Math.round(duration * 100) / 100,
           playbackRate: rate,
           percentageWatched: Math.round(pct * 100) / 100,
@@ -102,15 +114,9 @@ export function useYouTubePlayer({
       const diff = current - lastTimeRef.current;
       if (Math.abs(diff) > 2) {
         if (diff > 0) {
-          emitEvent("seek_forward", {
-            from: lastTimeRef.current,
-            to: current,
-          });
+          emitEvent("seek_forward", { from: lastTimeRef.current, to: current });
         } else {
-          emitEvent("seek_backward", {
-            from: lastTimeRef.current,
-            to: current,
-          });
+          emitEvent("seek_backward", { from: lastTimeRef.current, to: current });
         }
       }
       lastTimeRef.current = current;
@@ -132,13 +138,11 @@ export function useYouTubePlayer({
 
       // Destroy previous player
       if (playerRef.current) {
-        try {
-          playerRef.current.destroy();
-        } catch {
-          // ignore
-        }
+        try { playerRef.current.destroy(); } catch { /* ignore */ }
         playerRef.current = null;
       }
+
+      const start = startSecondsRef.current;
 
       playerRef.current = new window.YT.Player(containerId, {
         videoId,
@@ -146,11 +150,17 @@ export function useYouTubePlayer({
           enablejsapi: 1,
           rel: 0,
           modestbranding: 1,
+          // Resume from last saved position (0 = start from beginning)
+          start: start > 0 ? Math.floor(start) : undefined,
         },
         events: {
           onReady: () => {
             if (destroyed) return;
             setIsReady(true);
+            // Also seek explicitly in case playerVars.start was ignored
+            if (start > 0) {
+              try { playerRef.current?.seekTo(start, true); } catch { }
+            }
             emitEvent("player_ready");
           },
           onStateChange: (e: any) => {
@@ -159,18 +169,20 @@ export function useYouTubePlayer({
 
             switch (e.data) {
               case window.YT.PlayerState.PLAYING:
+                setIsPlaying(true);
                 emitEvent("play");
-                // Start progress tracking
                 if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
                 progressIntervalRef.current = setInterval(() => {
                   checkForSeek();
                   emitEvent("progress");
                   if (playerRef.current) {
                     lastTimeRef.current = playerRef.current.getCurrentTime?.() || 0;
+                    setCurrentTime(Math.round(lastTimeRef.current));
                   }
                 }, 5000); // every 5 seconds
                 break;
               case window.YT.PlayerState.PAUSED:
+                setIsPlaying(false);
                 emitEvent("pause");
                 if (progressIntervalRef.current) {
                   clearInterval(progressIntervalRef.current);
@@ -178,6 +190,7 @@ export function useYouTubePlayer({
                 }
                 break;
               case window.YT.PlayerState.ENDED:
+                setIsPlaying(false);
                 emitEvent("completed");
                 if (progressIntervalRef.current) {
                   clearInterval(progressIntervalRef.current);
@@ -205,21 +218,18 @@ export function useYouTubePlayer({
 
     return () => {
       destroyed = true;
+      setIsPlaying(false);
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
       }
       if (playerRef.current) {
-        try {
-          playerRef.current.destroy();
-        } catch {
-          // ignore
-        }
+        try { playerRef.current.destroy(); } catch { /* ignore */ }
         playerRef.current = null;
       }
       setIsReady(false);
     };
   }, [videoUrl, containerId, enabled, emitEvent, checkForSeek]);
 
-  return { isReady, player: playerRef };
+  return { isReady, isPlaying, currentTime, totalDuration, player: playerRef };
 }

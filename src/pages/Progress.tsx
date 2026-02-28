@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Trophy, Clock } from "lucide-react";
 import UserNav from "@/components/UserNav";
+import { useTranslation } from "react-i18next";
 
 interface Enrollment {
   id: string;
@@ -24,6 +25,7 @@ interface Enrollment {
 
 const Progress = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -127,24 +129,9 @@ const Progress = () => {
   const notStartedCourses = enrollments.filter((e) => e.progress_percentage === 0);
 
   const stats = [
-    {
-      title: "In Progress",
-      value: inProgressCourses.length,
-      icon: TrendingUp,
-      color: "text-primary",
-    },
-    {
-      title: "Completed",
-      value: completedCourses.length,
-      icon: Trophy,
-      color: "text-secondary",
-    },
-    {
-      title: "Not Started",
-      value: notStartedCourses.length,
-      icon: Clock,
-      color: "text-muted-foreground",
-    },
+    { title: t("progress.inProgress"), value: inProgressCourses.length, icon: TrendingUp, color: "text-primary" },
+    { title: t("progress.completed"), value: completedCourses.length, icon: Trophy, color: "text-secondary" },
+    { title: t("progress.notStarted"), value: notStartedCourses.length, icon: Clock, color: "text-muted-foreground" },
   ];
 
   const renderCourseCard = (enrollment: Enrollment) => (
@@ -164,17 +151,15 @@ const Progress = () => {
       <CardContent>
         <ProgressBar value={enrollment.progress_percentage} className="mb-4" />
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-          <span>{enrollment.courses.video_count} videos</span>
-          <span>
-            Enrolled {new Date(enrollment.enrolled_at).toLocaleDateString()}
-          </span>
+          <span>{enrollment.courses.video_count} {t("progress.videos")}</span>
+          <span>{t("progress.enrolled")} {new Date(enrollment.enrolled_at).toLocaleDateString()}</span>
         </div>
-        <Button 
-          className="w-full" 
+        <Button
+          className="w-full"
           variant="outline"
           onClick={() => window.location.href = `/courses/${enrollment.courses.id}`}
         >
-          Continue Learning
+          {t("progress.continueLearning")}
         </Button>
       </CardContent>
     </Card>
@@ -186,8 +171,8 @@ const Progress = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">My Progress</h2>
-          <p className="text-muted-foreground">Track your learning journey</p>
+          <h2 className="text-3xl font-bold mb-2">{t("progress.title")}</h2>
+          <p className="text-muted-foreground">{t("progress.subtitle")}</p>
         </div>
 
         {/* Stats */}
@@ -214,14 +199,14 @@ const Progress = () => {
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading progress...</p>
+            <p className="text-muted-foreground">{t("progress.loading")}</p>
           </div>
         ) : (
           <>
             {/* In Progress */}
             {inProgressCourses.length > 0 && (
               <div className="mb-12">
-                <h3 className="text-2xl font-bold mb-6">In Progress</h3>
+                <h3 className="text-2xl font-bold mb-6">{t("progress.inProgress")}</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {inProgressCourses.map(renderCourseCard)}
                 </div>
@@ -231,7 +216,7 @@ const Progress = () => {
             {/* Completed */}
             {completedCourses.length > 0 && (
               <div className="mb-12">
-                <h3 className="text-2xl font-bold mb-6">Completed Courses</h3>
+                <h3 className="text-2xl font-bold mb-6">{t("progress.completed")}</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {completedCourses.map(renderCourseCard)}
                 </div>
@@ -241,7 +226,7 @@ const Progress = () => {
             {/* Not Started */}
             {notStartedCourses.length > 0 && (
               <div>
-                <h3 className="text-2xl font-bold mb-6">Not Started</h3>
+                <h3 className="text-2xl font-bold mb-6">{t("progress.notStarted")}</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {notStartedCourses.map(renderCourseCard)}
                 </div>
@@ -250,12 +235,12 @@ const Progress = () => {
 
             {enrollments.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">No enrolled courses yet</p>
-                <Button 
+                <p className="text-muted-foreground mb-4">{t("progress.noEnrolled")}</p>
+                <Button
                   className="gradient-crimson"
                   onClick={() => window.location.href = '/dashboard'}
                 >
-                  Browse Courses
+                  {t("progress.browseCourses")}
                 </Button>
               </div>
             )}

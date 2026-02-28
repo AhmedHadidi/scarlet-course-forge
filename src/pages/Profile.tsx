@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Mail, Lock, Newspaper, Building2, Eye } from "lucide-react";
+import { User, Mail, Lock, Newspaper, Building2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import UserNav from "@/components/UserNav";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface Category {
   id: string;
@@ -27,6 +28,7 @@ interface Department {
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [profile, setProfile] = useState({
     full_name: "",
     avatar_url: "",
@@ -141,15 +143,15 @@ const Profile = () => {
 
       if (!error) {
         toast({
-          title: "Profile Updated",
-          description: "Your profile has been saved successfully.",
+          title: t("profile.profileUpdated"),
+          description: t("profile.profileSavedDesc"),
         });
       }
     } catch (error) {
       console.error("Error saving profile:", error);
       toast({
-        title: "Update Failed",
-        description: "Could not save profile changes.",
+        title: t("profile.updateFailed"),
+        description: t("profile.couldNotSave"),
         variant: "destructive",
       });
     } finally {
@@ -160,8 +162,8 @@ const Profile = () => {
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
-        title: "Passwords Don't Match",
-        description: "Please make sure both passwords are the same.",
+        title: t("profile.passwordMismatch"),
+        description: t("profile.passwordMismatchDesc"),
         variant: "destructive",
       });
       return;
@@ -174,16 +176,16 @@ const Profile = () => {
 
       if (!error) {
         toast({
-          title: "Password Updated",
-          description: "Your password has been changed successfully.",
+          title: t("profile.passwordUpdated"),
+          description: t("profile.passwordChangedDesc"),
         });
         setPasswordData({ newPassword: "", confirmPassword: "" });
       }
     } catch (error) {
       console.error("Error changing password:", error);
       toast({
-        title: "Update Failed",
-        description: "Could not change password.",
+        title: t("profile.updateFailed"),
+        description: t("profile.couldNotChangePassword"),
         variant: "destructive",
       });
     }
@@ -290,21 +292,21 @@ const Profile = () => {
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">My Profile</h2>
-          <p className="text-muted-foreground">Manage your personal information</p>
+          <h2 className="text-3xl font-bold mb-2">{t("profile.title")}</h2>
+          <p className="text-muted-foreground">{t("profile.subtitle")}</p>
         </div>
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading profile...</p>
+            <p className="text-muted-foreground">{t("profile.loading")}</p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Profile Information */}
             <Card className="border-border">
               <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Update your profile details and photo</CardDescription>
+                <CardTitle>{t("profile.profileInfo")}</CardTitle>
+                <CardDescription>{t("profile.profileInfoDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-6">
@@ -320,22 +322,20 @@ const Profile = () => {
                   <div className="space-y-2">
                     <Label htmlFor="full_name">
                       <User className="inline h-4 w-4 mr-2" />
-                      Full Name
+                      {t("profile.fullName")}
                     </Label>
                     <Input
                       id="full_name"
                       value={profile.full_name}
-                      onChange={(e) =>
-                        setProfile({ ...profile, full_name: e.target.value })
-                      }
-                      placeholder="Enter your full name"
+                      onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                      placeholder={t("profile.fullNamePlaceholder")}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="email">
                       <Mail className="inline h-4 w-4 mr-2" />
-                      Email
+                      {t("auth.email")}
                     </Label>
                     <Input id="email" value={user?.email || ""} disabled />
                   </div>
@@ -343,16 +343,14 @@ const Profile = () => {
                   <div className="space-y-2">
                     <Label htmlFor="department">
                       <Building2 className="inline h-4 w-4 mr-2" />
-                      Department
+                      {t("auth.department")}
                     </Label>
                     <Select
                       value={profile.department_id}
-                      onValueChange={(value) =>
-                        setProfile({ ...profile, department_id: value })
-                      }
+                      onValueChange={(value) => setProfile({ ...profile, department_id: value })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your department" />
+                        <SelectValue placeholder={t("auth.selectDepartment")} />
                       </SelectTrigger>
                       <SelectContent>
                         {departments.map((dept) => (
@@ -370,7 +368,7 @@ const Profile = () => {
                   onClick={handleSaveProfile}
                   disabled={saving}
                 >
-                  {saving ? "Saving..." : "Save Changes"}
+                  {saving ? t("profile.saving") : t("profile.saveChanges")}
                 </Button>
               </CardContent>
             </Card>
@@ -380,17 +378,13 @@ const Profile = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Newspaper className="h-5 w-5" />
-                  News Preferences
+                  {t("profile.newsPreferences")}
                 </CardTitle>
-                <CardDescription>
-                  Select the AI news categories you're interested in
-                </CardDescription>
+                <CardDescription>{t("profile.newsPreferencesDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {categories.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">
-                    No categories available yet.
-                  </p>
+                  <p className="text-muted-foreground text-sm">{t("profile.noCategories")}</p>
                 ) : (
                   <div className="grid gap-3">
                     {categories.map((category) => (
@@ -426,7 +420,7 @@ const Profile = () => {
                   onClick={handleSavePreferences}
                   disabled={savingPreferences}
                 >
-                  {savingPreferences ? "Saving..." : "Save Preferences"}
+                  {savingPreferences ? t("profile.saving") : t("profile.savePreferences")}
                 </Button>
               </CardContent>
             </Card>
@@ -434,8 +428,8 @@ const Profile = () => {
             {/* Change Password */}
             <Card className="border-border">
               <CardHeader>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>Update your account password</CardDescription>
+                <CardTitle>{t("profile.changePassword")}</CardTitle>
+                <CardDescription>{t("profile.changePasswordDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -471,7 +465,7 @@ const Profile = () => {
                 </div>
 
                 <Button variant="outline" onClick={handleChangePassword}>
-                  Update Password
+                  {t("profile.updatePassword")}
                 </Button>
               </CardContent>
             </Card>

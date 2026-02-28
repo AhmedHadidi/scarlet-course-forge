@@ -6,39 +6,39 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 
 const UserNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, userRole } = useAuth();
+  const { t } = useTranslation();
   const [featureSettings, setFeatureSettings] = useState<Record<string, boolean>>({});
 
-  // Admin menu items
   const adminNavItems = [
-    { path: "/dashboard", icon: Home, label: "Courses" },
-    { path: "/bulletins", icon: Newspaper, label: "AI News" },
-    { path: "/progress", icon: TrendingUp, label: "My Progress" },
-    { path: "/admin", icon: BarChart, label: "Admin Dashboard" },
-    { path: "/profile", icon: User, label: "My Profile" },
+    { path: "/dashboard", icon: Home, label: t("nav.courses") },
+    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
+    { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
+    { path: "/admin", icon: BarChart, label: t("nav.adminDashboard") },
+    { path: "/profile", icon: User, label: t("nav.myProfile") },
   ];
 
-  // Sub-admin menu items
   const subAdminNavItems = [
-    { path: "/dashboard", icon: Home, label: "Courses" },
-    { path: "/bulletins", icon: Newspaper, label: "AI News" },
-    { path: "/progress", icon: TrendingUp, label: "My Progress" },
-    { path: "/subadmin", icon: BarChart, label: "My Dashboard" },
-    { path: "/profile", icon: User, label: "My Profile" },
+    { path: "/dashboard", icon: Home, label: t("nav.courses") },
+    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
+    { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
+    { path: "/subadmin", icon: BarChart, label: t("nav.myDashboard") },
+    { path: "/profile", icon: User, label: t("nav.myProfile") },
   ];
 
-  // Regular user menu items
   const userNavItems: Array<{ path: string; icon: any; label: string; feature?: string }> = [
-    { path: "/dashboard", icon: BookOpen, label: "Courses" },
-    { path: "/bulletins", icon: Newspaper, label: "AI News" },
-    { path: "/progress", icon: TrendingUp, label: "My Progress" },
-    { path: "/certificates", icon: Award, label: "Certificates", feature: "certificates" },
-    { path: "/profile", icon: User, label: "Profile" },
-    { path: "/notifications", icon: Bell, label: "Notifications", feature: "notifications" },
+    { path: "/dashboard", icon: BookOpen, label: t("nav.courses") },
+    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
+    { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
+    { path: "/certificates", icon: Award, label: t("nav.certificates"), feature: "certificates" },
+    { path: "/profile", icon: User, label: t("nav.profile") },
+    { path: "/notifications", icon: Bell, label: t("nav.notifications"), feature: "notifications" },
   ];
 
   useEffect(() => {
@@ -50,7 +50,7 @@ const UserNav = () => {
       const { data } = await supabase
         .from("feature_settings")
         .select("feature_name, is_enabled");
-      
+
       if (data) {
         const settings: Record<string, boolean> = {};
         data.forEach(item => {
@@ -63,21 +63,20 @@ const UserNav = () => {
     }
   };
 
-  const navItems = userRole === 'admin' 
-    ? adminNavItems 
-    : userRole === 'sub_admin' 
-      ? subAdminNavItems 
+  const navItems = userRole === 'admin'
+    ? adminNavItems
+    : userRole === 'sub_admin'
+      ? subAdminNavItems
       : userNavItems;
-  
-  // Filter nav items based on feature settings for regular users
+
   const filteredNavItems = userRole === 'admin' || userRole === 'sub_admin'
-    ? navItems 
+    ? navItems
     : navItems.filter(item => {
-        if ('feature' in item && item.feature) {
-          return featureSettings[item.feature] !== false;
-        }
-        return true;
-      });
+      if ('feature' in item && item.feature) {
+        return featureSettings[item.feature] !== false;
+      }
+      return true;
+    });
 
   return (
     <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
@@ -88,7 +87,7 @@ const UserNav = () => {
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">MOI AI Learning Hub</h1>
+              <h1 className="text-xl font-bold">{t("nav.brand")}</h1>
             </div>
           </Link>
 
@@ -116,10 +115,11 @@ const UserNav = () => {
           </nav>
 
           <div className="flex items-center gap-2">
+            <LanguageSwitcher />
             <ThemeToggle />
             <Button variant="outline" size="sm" onClick={signOut}>
               <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
+              {t("nav.signOut")}
             </Button>
           </div>
         </div>

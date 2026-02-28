@@ -8,6 +8,9 @@ import { SubAdminUserManagement } from "@/components/subadmin/SubAdminUserManage
 import { SubAdminAnalytics } from "@/components/subadmin/SubAdminAnalytics";
 import { SubAdminPendingRegistrations } from "@/components/subadmin/SubAdminPendingRegistrations";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface Department {
   id: string;
@@ -17,6 +20,7 @@ interface Department {
 
 const SubAdminDashboard = () => {
   const { signOut, user } = useAuth();
+  const { t } = useTranslation();
   const [activeView, setActiveView] = useState("overview");
   const [department, setDepartment] = useState<Department | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,39 +136,19 @@ const SubAdminDashboard = () => {
   };
 
   const statCards = [
-    {
-      title: "Department Users",
-      value: stats.totalUsers,
-      icon: Users,
-      description: "Users in your department",
-    },
-    {
-      title: "Enrollments",
-      value: stats.totalEnrollments,
-      icon: BookOpen,
-      description: "Course enrollments",
-    },
-    {
-      title: "Completed",
-      value: stats.completedCourses,
-      icon: TrendingUp,
-      description: "Completed courses",
-    },
-    {
-      title: "Certificates",
-      value: stats.totalCertificates,
-      icon: Award,
-      description: "Issued certificates",
-    },
+    { title: t("admin.departmentUsers"), value: stats.totalUsers, icon: Users, description: t("admin.usersInDept") },
+    { title: t("admin.enrollments"), value: stats.totalEnrollments, icon: BookOpen, description: t("admin.courseEnrollments") },
+    { title: t("admin.completed"), value: stats.completedCourses, icon: TrendingUp, description: t("admin.completedCourses") },
+    { title: t("admin.certificates"), value: stats.totalCertificates, icon: Award, description: t("admin.issuedCertificates") },
   ];
 
   // Menu items for sub-admin navigation
   const menuItems = [
-    { id: "home", label: "Home", icon: Home, isExternal: true, path: "/" },
-    { id: "overview", label: "Dashboard", icon: BarChart },
-    { id: "registrations", label: "Registrations", icon: UserCheck },
-    { id: "users", label: "Department Users", icon: Users },
-    { id: "analytics", label: "Analytics", icon: TrendingUp },
+    { id: "home", label: t("admin.home"), icon: Home, isExternal: true, path: "/" },
+    { id: "overview", label: t("admin.dashboard"), icon: BarChart },
+    { id: "registrations", label: t("admin.registrations"), icon: UserCheck },
+    { id: "users", label: t("admin.departmentUsers"), icon: Users },
+    { id: "analytics", label: t("admin.analytics"), icon: TrendingUp },
   ];
 
   if (loading) {
@@ -181,13 +165,11 @@ const SubAdminDashboard = () => {
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No Department Assigned</h2>
-            <p className="text-muted-foreground mb-4">
-              You haven't been assigned to any department yet. Please contact an administrator.
-            </p>
+            <h2 className="text-xl font-semibold mb-2">{t("admin.noDeptAssigned")}</h2>
+            <p className="text-muted-foreground mb-4">{t("admin.noDeptDesc")}</p>
             <Button onClick={signOut} variant="outline">
               <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
+              {t("admin.signOut")}
             </Button>
           </CardContent>
         </Card>
@@ -206,8 +188,8 @@ const SubAdminDashboard = () => {
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold">MOI AI Learning Hub</h1>
-              <p className="text-xs text-muted-foreground">Sub-Admin Panel</p>
+              <h1 className="text-lg font-bold">{t("nav.brand")}</h1>
+              <p className="text-xs text-muted-foreground">{t("admin.subPanelLabel")}</p>
             </div>
           </div>
         </div>
@@ -231,7 +213,7 @@ const SubAdminDashboard = () => {
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
-              
+
               if (item.isExternal) {
                 return (
                   <a
@@ -244,16 +226,15 @@ const SubAdminDashboard = () => {
                   </a>
                 );
               }
-              
+
               return (
                 <button
                   key={item.id}
                   onClick={() => setActiveView(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
                 >
                   <Icon className="h-5 w-5" />
                   <span className="font-medium">{item.label}</span>
@@ -264,10 +245,14 @@ const SubAdminDashboard = () => {
         </nav>
 
         {/* Sign Out Button */}
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border space-y-2">
+          <div className="flex items-center justify-between">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
           <Button variant="outline" className="w-full" onClick={signOut}>
             <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
+            {t("admin.signOut")}
           </Button>
         </div>
       </aside>
@@ -281,10 +266,10 @@ const SubAdminDashboard = () => {
               {menuItems.find(item => item.id === activeView)?.label || "Sub-Admin Dashboard"}
             </h2>
             <p className="text-muted-foreground mt-1">
-              {activeView === "overview" && `Manage ${department.name} department`}
-              {activeView === "registrations" && "Review and approve new user registrations"}
-              {activeView === "users" && "View and manage users in your department"}
-              {activeView === "analytics" && "View analytics for your department"}
+              {activeView === "overview" && t("admin.manageDept", { dept: department.name })}
+              {activeView === "registrations" && t("admin.manageRegistrations")}
+              {activeView === "users" && t("admin.manageDeptUsers")}
+              {activeView === "analytics" && t("admin.manageDeptAnalytics")}
             </p>
           </div>
         </header>
@@ -321,44 +306,44 @@ const SubAdminDashboard = () => {
                     <CardTitle className="text-base">Quick Actions</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full justify-start"
                       onClick={() => setActiveView("users")}
                     >
                       <Users className="mr-2 h-4 w-4" />
-                      View Department Users
+                      {t("admin.viewDeptUsers")}
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full justify-start"
                       onClick={() => setActiveView("analytics")}
                     >
                       <TrendingUp className="mr-2 h-4 w-4" />
-                      View Analytics
+                      {t("admin.viewAnalytics")}
                     </Button>
                   </CardContent>
                 </Card>
                 <Card className="border-border/50">
                   <CardHeader>
-                    <CardTitle className="text-base">Department Summary</CardTitle>
+                    <CardTitle className="text-base">{t("admin.deptSummary")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Total Users</span>
+                        <span className="text-muted-foreground">{t("admin.totalUsers")}</span>
                         <span className="font-medium">{stats.totalUsers}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Completion Rate</span>
+                        <span className="text-muted-foreground">{t("admin.completionRate")}</span>
                         <span className="font-medium">
-                          {stats.totalEnrollments > 0 
+                          {stats.totalEnrollments > 0
                             ? Math.round((stats.completedCourses / stats.totalEnrollments) * 100)
                             : 0}%
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Certificates Earned</span>
+                        <span className="text-muted-foreground">{t("admin.certificates")}</span>
                         <span className="font-medium">{stats.totalCertificates}</span>
                       </div>
                     </div>

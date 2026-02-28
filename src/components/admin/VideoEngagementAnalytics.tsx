@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -68,6 +69,7 @@ export interface VideoEngagementRecord {
 }
 
 export const VideoEngagementAnalytics = () => {
+  const { t } = useTranslation();
   const [userEngagements, setUserEngagements] = useState<UserEngagement[]>([]);
   const [allRecords, setAllRecords] = useState<VideoEngagementRecord[]>([]);
   const [summary, setSummary] = useState({ totalUsers: 0, totalRecords: 0, avgEngagementScore: 0, avgWatchPercentage: 0, suspiciousCount: 0 });
@@ -115,8 +117,8 @@ export const VideoEngagementAnalytics = () => {
 
       engagementData.forEach(e => {
         // Use video's actual duration from course_videos if engagement record has 0
-        const effectiveDuration = e.total_duration_seconds > 0 
-          ? e.total_duration_seconds 
+        const effectiveDuration = e.total_duration_seconds > 0
+          ? e.total_duration_seconds
           : (videosMap.get(e.video_id)?.durationSeconds || 0);
         const watchPct = effectiveDuration > 0 ? Math.min(100, Math.round((e.watch_time_seconds / effectiveDuration) * 100)) : (e.watch_time_seconds > 0 ? 100 : 0);
         const video = videosMap.get(e.video_id);
@@ -174,7 +176,7 @@ export const VideoEngagementAnalytics = () => {
           avgWatchPercentage: avgWatch, avgEngagementScore: avgEng,
           totalTabSwitches: totalTabs, totalWatchTime: totalWatch,
           videoCount: allVideos.length,
-          isSuspicious: avgEng < 50 || totalTabs / allVideos.length >= 5,
+          isSuspicious: totalTabs >= 10 && avgEng < 30,
         };
       });
 
@@ -219,30 +221,30 @@ export const VideoEngagementAnalytics = () => {
   });
 
   if (loading) {
-    return <Card><CardContent className="py-8 text-center text-muted-foreground">Loading video engagement data...</CardContent></Card>;
+    return <Card><CardContent className="py-8 text-center text-muted-foreground">{t("engagement.loadingData")}</CardContent></Card>;
   }
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-2 mb-2"><User className="h-5 w-5 text-primary" /><span className="text-sm text-muted-foreground">Total Users</span></div><p className="text-2xl font-bold">{summary.totalUsers}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-2 mb-2"><Eye className="h-5 w-5 text-primary" /><span className="text-sm text-muted-foreground">Total Records</span></div><p className="text-2xl font-bold">{summary.totalRecords}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-2 mb-2"><Brain className="h-5 w-5 text-primary" /><span className="text-sm text-muted-foreground">Avg Engagement</span></div><p className="text-2xl font-bold">{summary.avgEngagementScore}%</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-2 mb-2"><AlertTriangle className="h-5 w-5 text-amber-500" /><span className="text-sm text-muted-foreground">Suspicious Users</span></div><p className="text-2xl font-bold">{summary.suspiciousCount}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-2 mb-2"><User className="h-5 w-5 text-primary" /><span className="text-sm text-muted-foreground">{t("engagement.totalUsers")}</span></div><p className="text-2xl font-bold">{summary.totalUsers}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-2 mb-2"><Eye className="h-5 w-5 text-primary" /><span className="text-sm text-muted-foreground">{t("engagement.totalRecords")}</span></div><p className="text-2xl font-bold">{summary.totalRecords}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-2 mb-2"><Brain className="h-5 w-5 text-primary" /><span className="text-sm text-muted-foreground">{t("engagement.avgEngagement")}</span></div><p className="text-2xl font-bold">{summary.avgEngagementScore}%</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-2 mb-2"><AlertTriangle className="h-5 w-5 text-amber-500" /><span className="text-sm text-muted-foreground">{t("engagement.suspiciousUsers")}</span></div><p className="text-2xl font-bold">{summary.suspiciousCount}</p></CardContent></Card>
       </div>
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search by user, video, or course..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
+        <Input placeholder={t("engagement.searchPlaceholder")} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Brain className="h-5 w-5" />Video Engagement by User ({filtered.length} users)</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Brain className="h-5 w-5" />{t("engagement.titleByUser", { count: filtered.length })}</CardTitle>
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No video engagement data found</p>
+            <p className="text-center text-muted-foreground py-8">{t("engagement.noData")}</p>
           ) : (
             <div className="space-y-2 max-h-[700px] overflow-y-auto">
               {filtered.map(user => {
@@ -258,15 +260,15 @@ export const VideoEngagementAnalytics = () => {
                         </div>
                         {user.isSuspicious && (
                           <Badge variant="outline" className="border-amber-400 text-amber-600 text-xs shrink-0">
-                            <AlertTriangle className="mr-1 h-3 w-3" />Suspicious
+                            <AlertTriangle className="mr-1 h-3 w-3" />{t("engagement.suspicious")}
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-6 text-sm text-muted-foreground shrink-0">
-                        <div className="flex items-center gap-1" title="Courses"><BookOpen className="h-3.5 w-3.5" /><span>{user.courses.length}</span></div>
-                        <div className="flex items-center gap-1" title="Videos"><Eye className="h-3.5 w-3.5" /><span>{user.videoCount}</span></div>
-                        <div className="flex items-center gap-1" title="Total watch time"><Clock className="h-3.5 w-3.5" /><span>{formatDuration(user.totalWatchTime)}</span></div>
-                        <div className="flex items-center gap-1" title="Tab switches"><MonitorOff className="h-3.5 w-3.5" /><span className={user.totalTabSwitches / user.videoCount >= 5 ? "text-red-600 font-medium" : ""}>{user.totalTabSwitches}</span></div>
+                        <div className="flex items-center gap-1" title={t("engagement.courses")}><BookOpen className="h-3.5 w-3.5" /><span>{user.courses.length}</span></div>
+                        <div className="flex items-center gap-1" title={t("engagement.videos")}><Eye className="h-3.5 w-3.5" /><span>{user.videoCount}</span></div>
+                        <div className="flex items-center gap-1" title={t("engagement.totalWatchTime")}><Clock className="h-3.5 w-3.5" /><span>{formatDuration(user.totalWatchTime)}</span></div>
+                        <div className="flex items-center gap-1" title={t("engagement.tabSwitches")}><MonitorOff className="h-3.5 w-3.5" /><span className={user.totalTabSwitches / user.videoCount >= 5 ? "text-red-600 font-medium" : ""}>{user.totalTabSwitches}</span></div>
                         <div className="flex items-center gap-2 w-28">
                           <Progress value={user.avgEngagementScore} className={`h-2 w-14 ${user.avgEngagementScore < 50 ? "[&>div]:bg-red-500" : user.avgEngagementScore < 70 ? "[&>div]:bg-amber-500" : ""}`} />
                           <span className="font-medium">{user.avgEngagementScore}%</span>
@@ -287,7 +289,7 @@ export const VideoEngagementAnalytics = () => {
                                   {isCourseExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                                   <BookOpen className="h-4 w-4 text-primary" />
                                   <span className="font-medium text-sm">{course.courseTitle}</span>
-                                  <Badge variant="secondary" className="text-xs ml-2">{course.videos.length} video{course.videos.length !== 1 ? "s" : ""}</Badge>
+                                  <Badge variant="secondary" className="text-xs ml-2">{course.videos.length !== 1 ? t("engagement.videosBadge", { count: course.videos.length }) : t("engagement.videoBadge", { count: course.videos.length })}</Badge>
                                 </div>
                                 <div className="flex items-center gap-5 text-sm text-muted-foreground shrink-0">
                                   <div className="flex items-center gap-1"><Clock className="h-3 w-3" /><span>{formatDuration(course.totalWatchTime)}</span></div>
@@ -301,20 +303,20 @@ export const VideoEngagementAnalytics = () => {
 
                               {isCourseExpanded && (
                                 <div className="px-3 pb-3">
-                                   <Table>
+                                  <Table>
                                     <TableHeader>
                                       <TableRow>
-                                        <TableHead>Video</TableHead>
-                                        <TableHead>Watch %</TableHead>
-                                        <TableHead>Watch Time</TableHead>
-                                        <TableHead>Completion</TableHead>
-                                        <TableHead>Pauses</TableHead>
-                                        <TableHead>Rewinds</TableHead>
-                                        <TableHead>Skips</TableHead>
-                                        <TableHead>Speed</TableHead>
-                                        <TableHead>Tab Switches</TableHead>
-                                        <TableHead>Engagement</TableHead>
-                                        <TableHead>Date</TableHead>
+                                        <TableHead>{t("engagement.video")}</TableHead>
+                                        <TableHead>{t("engagement.watchPercent")}</TableHead>
+                                        <TableHead>{t("engagement.watchTime")}</TableHead>
+                                        <TableHead>{t("engagement.completion")}</TableHead>
+                                        <TableHead>{t("engagement.pauses")}</TableHead>
+                                        <TableHead>{t("engagement.rewinds")}</TableHead>
+                                        <TableHead>{t("engagement.skips")}</TableHead>
+                                        <TableHead>{t("engagement.speed")}</TableHead>
+                                        <TableHead>{t("engagement.tabSwitches")}</TableHead>
+                                        <TableHead>{t("engagement.engagementLabel")}</TableHead>
+                                        <TableHead>{t("engagement.date")}</TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>

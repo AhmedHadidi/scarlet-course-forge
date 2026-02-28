@@ -7,6 +7,7 @@ import { Award, Download, Calendar, Trophy } from "lucide-react";
 import UserNav from "@/components/UserNav";
 import { downloadCertificatePDF } from "@/lib/generateCertificate";
 import { backfillCertificatesForUser } from "@/lib/certificates";
+import { useTranslation } from "react-i18next";
 
 interface Certificate {
   id: string;
@@ -29,6 +30,7 @@ interface QuizAttempt {
 
 const Certificates = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [quizScores, setQuizScores] = useState<{ [courseId: string]: { score: number; passingScore: number } }>({});
   const [userName, setUserName] = useState<string>("");
@@ -135,20 +137,20 @@ const Certificates = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">My Certificates</h2>
-          <p className="text-muted-foreground">View and download your earned certificates</p>
+          <h2 className="text-3xl font-bold mb-2">{t("certificates.title")}</h2>
+          <p className="text-muted-foreground">{t("certificates.subtitle")}</p>
         </div>
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading certificates...</p>
+            <p className="text-muted-foreground">{t("certificates.loading")}</p>
           </div>
         ) : certificates.length === 0 ? (
           <div className="text-center py-12">
             <Award className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-2">No certificates earned yet</p>
+            <p className="text-muted-foreground mb-2">{t("certificates.none")}</p>
             <p className="text-sm text-muted-foreground">
-              Complete courses and pass their quizzes to earn your certificates
+              {t("certificates.noneDesc")}
             </p>
           </div>
         ) : (
@@ -171,13 +173,13 @@ const Certificates = () => {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        Issued {new Date(certificate.issued_at).toLocaleDateString()}
+                        {t("certificates.issued")} {new Date(certificate.issued_at).toLocaleDateString()}
                       </span>
                     </div>
                     {scoreData && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Trophy className="h-4 w-4" />
-                        <span>Quiz Score: {scoreData.score}%</span>
+                        <span>{t("certificates.quizScore")}: {scoreData.score}%</span>
                       </div>
                     )}
                     <Button
@@ -185,7 +187,7 @@ const Certificates = () => {
                       onClick={() => handleDownload(certificate)}
                     >
                       <Download className="mr-2 h-4 w-4" />
-                      Download PDF
+                      {t("certificates.downloadPdf")}
                     </Button>
                   </CardContent>
                 </Card>
