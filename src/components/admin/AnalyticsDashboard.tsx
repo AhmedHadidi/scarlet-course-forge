@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
+<<<<<<< HEAD
 import { useTranslation } from "react-i18next";
+=======
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,7 +79,10 @@ interface CertificateDetail {
 }
 
 export const AnalyticsDashboard = () => {
+<<<<<<< HEAD
   const { t } = useTranslation();
+=======
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   const [stats, setStats] = useState<AnalyticsStats>({
     totalUsers: 0,
     activeUsers: 0,
@@ -151,7 +157,11 @@ export const AnalyticsDashboard = () => {
         // Enrollment count
         supabase.from("enrollments").select("*", { count: "exact", head: true }),
         // Course count with optional filter
+<<<<<<< HEAD
         categoryFilter !== "all"
+=======
+        categoryFilter !== "all" 
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           ? supabase.from("courses").select("*", { count: "exact", head: true }).eq("category_id", categoryFilter)
           : supabase.from("courses").select("*", { count: "exact", head: true }),
         // Certificates count
@@ -164,8 +174,13 @@ export const AnalyticsDashboard = () => {
         supabase.from("enrollments").select("progress_percentage"),
         // Courses with enrollments for top courses
         supabase.from("courses").select(`id, title, enrollments (id, progress_percentage)`),
+<<<<<<< HEAD
         // Enrollments for top users (no FK to profiles, so fetch separately)
         supabase.from("enrollments").select("user_id, progress_percentage"),
+=======
+        // Enrollments for top users
+        supabase.from("enrollments").select(`user_id, progress_percentage, profiles (full_name)`),
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         // Video progress for top videos
         supabase.from("video_progress").select(`video_id, course_videos (title, courses (title))`),
         // Enrollment trend data
@@ -221,6 +236,7 @@ export const AnalyticsDashboard = () => {
 
       setTopCourses(topCoursesData);
 
+<<<<<<< HEAD
       // Top engaged users – fetch profile names separately
       const enrollUsersData = enrollmentsForUsersResult.data || [];
       const enrollUserIds = [...new Set(enrollUsersData.map((e: any) => e.user_id))];
@@ -240,6 +256,15 @@ export const AnalyticsDashboard = () => {
         if (!userEnrollments[userId]) {
           userEnrollments[userId] = {
             name: topUsersProfilesMap.get(userId) || "Unknown",
+=======
+      // Top engaged users
+      const userEnrollments: { [key: string]: { name: string; count: number; totalProgress: number } } = {};
+      enrollmentsForUsersResult.data?.forEach((enrollment: any) => {
+        const userId = enrollment.user_id;
+        if (!userEnrollments[userId]) {
+          userEnrollments[userId] = {
+            name: enrollment.profiles?.full_name || "Unknown",
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             count: 0,
             totalProgress: 0
           };
@@ -354,7 +379,11 @@ export const AnalyticsDashboard = () => {
       ]);
 
       const quizCourseIds = [...new Set((quizzesResult.data || []).map(q => q.course_id))];
+<<<<<<< HEAD
       const quizCoursesResult = quizCourseIds.length > 0
+=======
+      const quizCoursesResult = quizCourseIds.length > 0 
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         ? await supabase.from("courses").select("id, title").in("id", quizCourseIds)
         : { data: [] as { id: string; title: string }[] };
 
@@ -364,11 +393,19 @@ export const AnalyticsDashboard = () => {
 
       // Group attempts by user+quiz
       const userQuizMap = new Map<string, UserQuizPerformance>();
+<<<<<<< HEAD
 
       quizAttemptsData.forEach((attempt: any) => {
         const quiz = quizzesMap.get(attempt.quiz_id);
         const key = `${attempt.user_id}-${attempt.quiz_id}`;
 
+=======
+      
+      quizAttemptsData.forEach((attempt: any) => {
+        const quiz = quizzesMap.get(attempt.quiz_id);
+        const key = `${attempt.user_id}-${attempt.quiz_id}`;
+        
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         if (!userQuizMap.has(key)) {
           userQuizMap.set(key, {
             user_name: quizProfilesMap.get(attempt.user_id) || "Unknown",
@@ -381,10 +418,17 @@ export const AnalyticsDashboard = () => {
             post_attempted_at: null,
           });
         }
+<<<<<<< HEAD
 
         const entry = userQuizMap.get(key)!;
         const attemptType = attempt.attempt_type || "post";
 
+=======
+        
+        const entry = userQuizMap.get(key)!;
+        const attemptType = attempt.attempt_type || "post";
+        
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         if (attemptType === "pre") {
           entry.pre_score = attempt.score;
           entry.pre_attempted_at = format(new Date(attempt.attempted_at), "MMM dd, yyyy HH:mm");
@@ -460,6 +504,7 @@ export const AnalyticsDashboard = () => {
   };
 
   const statCards = [
+<<<<<<< HEAD
     { title: t("analytics.totalUsers"), value: stats.totalUsers, icon: Users, color: "bg-blue-500" },
     { title: t("analytics.activeLearners"), value: stats.activeUsers, icon: Users, color: "bg-green-500" },
     { title: t("analytics.enrollments"), value: stats.totalEnrollments, icon: BookOpen, color: "bg-purple-500" },
@@ -468,6 +513,16 @@ export const AnalyticsDashboard = () => {
     { title: t("analytics.totalVideos"), value: stats.totalVideos, icon: Video, color: "bg-pink-500" },
     { title: t("analytics.avgQuizScore"), value: `${stats.avgQuizScore}%`, icon: CheckCircle, color: "bg-indigo-500" },
     { title: t("analytics.completionRate"), value: `${stats.completionRate}%`, icon: TrendingUp, color: "bg-teal-500" },
+=======
+    { title: "Total Users", value: stats.totalUsers, icon: Users, color: "bg-blue-500" },
+    { title: "Active Learners", value: stats.activeUsers, icon: Users, color: "bg-green-500" },
+    { title: "Enrollments", value: stats.totalEnrollments, icon: BookOpen, color: "bg-purple-500" },
+    { title: "Courses", value: stats.totalCourses, icon: BookOpen, color: "bg-orange-500" },
+    { title: "Certificates Issued", value: stats.totalCertificates, icon: Award, color: "bg-yellow-500" },
+    { title: "Total Videos", value: stats.totalVideos, icon: Video, color: "bg-pink-500" },
+    { title: "Avg Quiz Score", value: `${stats.avgQuizScore}%`, icon: CheckCircle, color: "bg-indigo-500" },
+    { title: "Completion Rate", value: `${stats.completionRate}%`, icon: TrendingUp, color: "bg-teal-500" },
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   ];
 
   return (
@@ -475,14 +530,22 @@ export const AnalyticsDashboard = () => {
       {/* Filters */}
       <Card>
         <CardHeader>
+<<<<<<< HEAD
           <CardTitle>{t("analytics.filters")}</CardTitle>
+=======
+          <CardTitle>Filters</CardTitle>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         </CardHeader>
         <CardContent className="flex flex-wrap gap-4">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-[200px] justify-start">
                 <CalendarIcon className="mr-2 h-4 w-4" />
+<<<<<<< HEAD
                 {dateFrom ? format(dateFrom, "PPP") : t("analytics.fromDate")}
+=======
+                {dateFrom ? format(dateFrom, "PPP") : "From Date"}
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -494,7 +557,11 @@ export const AnalyticsDashboard = () => {
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-[200px] justify-start">
                 <CalendarIcon className="mr-2 h-4 w-4" />
+<<<<<<< HEAD
                 {dateTo ? format(dateTo, "PPP") : t("analytics.toDate")}
+=======
+                {dateTo ? format(dateTo, "PPP") : "To Date"}
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -507,7 +574,11 @@ export const AnalyticsDashboard = () => {
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
+<<<<<<< HEAD
               <SelectItem value="all">{t("analytics.allCategories")}</SelectItem>
+=======
+              <SelectItem value="all">All Categories</SelectItem>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               {categories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.id}>
                   {cat.name}
@@ -546,7 +617,11 @@ export const AnalyticsDashboard = () => {
       {/* Enrollment Trend Chart */}
       <Card>
         <CardHeader>
+<<<<<<< HEAD
           <CardTitle>{t("analytics.enrollmentTrend")}</CardTitle>
+=======
+          <CardTitle>Enrollment Trend (Last 7 Days)</CardTitle>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -565,15 +640,25 @@ export const AnalyticsDashboard = () => {
       {/* Top Courses */}
       <Card>
         <CardHeader>
+<<<<<<< HEAD
           <CardTitle>{t("analytics.topCourses")}</CardTitle>
+=======
+          <CardTitle>Top Performing Courses</CardTitle>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+<<<<<<< HEAD
                 <TableHead>{t("analytics.courseTitle")}</TableHead>
                 <TableHead>{t("analytics.enrollments")}</TableHead>
                 <TableHead>{t("analytics.completionRate")}</TableHead>
+=======
+                <TableHead>Course Title</TableHead>
+                <TableHead>Enrollments</TableHead>
+                <TableHead>Completion Rate</TableHead>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -592,15 +677,25 @@ export const AnalyticsDashboard = () => {
       {/* Top Engaged Users */}
       <Card>
         <CardHeader>
+<<<<<<< HEAD
           <CardTitle>{t("analytics.topUsers")}</CardTitle>
+=======
+          <CardTitle>Top Engaged Users</CardTitle>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+<<<<<<< HEAD
                 <TableHead>{t("analytics.userName")}</TableHead>
                 <TableHead>{t("analytics.enrollments")}</TableHead>
                 <TableHead>{t("analytics.avgProgress")}</TableHead>
+=======
+                <TableHead>User Name</TableHead>
+                <TableHead>Enrollments</TableHead>
+                <TableHead>Avg Progress</TableHead>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -619,17 +714,29 @@ export const AnalyticsDashboard = () => {
       {/* Top Watched Videos */}
       <Card>
         <CardHeader>
+<<<<<<< HEAD
           <CardTitle>{t("analytics.topVideos")}</CardTitle>
+=======
+          <CardTitle>Top Watched Videos</CardTitle>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+<<<<<<< HEAD
                 <TableHead>{t("analytics.videoTitle")}</TableHead>
                 <TableHead>{t("analytics.course")}</TableHead>
                 <TableHead className="flex items-center gap-1">
                   <Eye className="h-4 w-4" />
                   {t("analytics.views")}
+=======
+                <TableHead>Video Title</TableHead>
+                <TableHead>Course</TableHead>
+                <TableHead className="flex items-center gap-1">
+                  <Eye className="h-4 w-4" />
+                  Views
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -651,12 +758,20 @@ export const AnalyticsDashboard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
+<<<<<<< HEAD
             User Course Progress ({userProgress.length} {t("analytics.users")})
+=======
+            User Course Progress ({userProgress.length} users)
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative max-w-md">
+<<<<<<< HEAD
             <Input placeholder={t("analytics.searchUserCourse")} value={progressSearchQuery} onChange={e => setProgressSearchQuery(e.target.value)} className="pl-3" />
+=======
+            <Input placeholder="Search by user or course..." value={progressSearchQuery} onChange={e => setProgressSearchQuery(e.target.value)} className="pl-3" />
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </div>
           <div className="max-h-[600px] overflow-y-auto space-y-2">
             {userProgress
@@ -677,7 +792,11 @@ export const AnalyticsDashboard = () => {
                         {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                         <Users className="h-4 w-4 text-primary" />
                         <span className="font-semibold">{user.user_name}</span>
+<<<<<<< HEAD
                         <span className="text-xs text-muted-foreground ml-2">{user.totalCourses} {user.totalCourses !== 1 ? t("analytics.courses") : t("analytics.course")}</span>
+=======
+                        <span className="text-xs text-muted-foreground ml-2">{user.totalCourses} course{user.totalCourses !== 1 ? "s" : ""}</span>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
@@ -691,9 +810,15 @@ export const AnalyticsDashboard = () => {
                         <Table>
                           <TableHeader>
                             <TableRow>
+<<<<<<< HEAD
                               <TableHead>{t("analytics.course")}</TableHead>
                               <TableHead>{t("analytics.progress")}</TableHead>
                               <TableHead>{t("analytics.enrolledDate")}</TableHead>
+=======
+                              <TableHead>Course</TableHead>
+                              <TableHead>Progress</TableHead>
+                              <TableHead>Enrolled Date</TableHead>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -729,12 +854,20 @@ export const AnalyticsDashboard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
+<<<<<<< HEAD
             User Quiz Performance ({t("analytics.preVsPost")})
+=======
+            User Quiz Performance (Pre vs Post)
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative max-w-md">
+<<<<<<< HEAD
             <Input placeholder={t("analytics.searchUserCourseQuiz")} value={quizSearchQuery} onChange={e => setQuizSearchQuery(e.target.value)} className="pl-3" />
+=======
+            <Input placeholder="Search by user, course, or quiz..." value={quizSearchQuery} onChange={e => setQuizSearchQuery(e.target.value)} className="pl-3" />
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </div>
           {(() => {
             // Group quiz performance by user
@@ -756,7 +889,11 @@ export const AnalyticsDashboard = () => {
               .sort((a, b) => a.userName.localeCompare(b.userName));
 
             if (groupedQuizUsers.length === 0) {
+<<<<<<< HEAD
               return <div className="text-center py-10 text-muted-foreground">{t("analytics.noQuizAttempts")}</div>;
+=======
+              return <div className="text-center py-10 text-muted-foreground">No quiz attempts yet</div>;
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             }
 
             return (
@@ -774,10 +911,17 @@ export const AnalyticsDashboard = () => {
                           {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                           <Users className="h-4 w-4 text-primary" />
                           <span className="font-semibold">{user.userName}</span>
+<<<<<<< HEAD
                           <span className="text-xs text-muted-foreground ml-2">{user.quizzes.length} {user.quizzes.length !== 1 ? t("analytics.quizzes") : t("analytics.quiz")}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <span>{passedCount}/{user.quizzes.length} {t("analytics.passed")}</span>
+=======
+                          <span className="text-xs text-muted-foreground ml-2">{user.quizzes.length} quiz{user.quizzes.length !== 1 ? "zes" : ""}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>{passedCount}/{user.quizzes.length} passed</span>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                         </div>
                       </button>
                       {isExpanded && (
@@ -785,12 +929,21 @@ export const AnalyticsDashboard = () => {
                           <Table>
                             <TableHeader>
                               <TableRow>
+<<<<<<< HEAD
                                 <TableHead>{t("analytics.course")}</TableHead>
                                 <TableHead>{t("analytics.quiz")}</TableHead>
                                 <TableHead>{t("analytics.preScore")}</TableHead>
                                 <TableHead>{t("analytics.postScore")}</TableHead>
                                 <TableHead>{t("analytics.improvement")}</TableHead>
                                 <TableHead>{t("analytics.status")}</TableHead>
+=======
+                                <TableHead>Course</TableHead>
+                                <TableHead>Quiz</TableHead>
+                                <TableHead>Pre-Score</TableHead>
+                                <TableHead>Post-Score</TableHead>
+                                <TableHead>Improvement</TableHead>
+                                <TableHead>Status</TableHead>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -800,18 +953,32 @@ export const AnalyticsDashboard = () => {
                                   <TableRow key={idx}>
                                     <TableCell>{perf.course_title}</TableCell>
                                     <TableCell>{perf.quiz_title}</TableCell>
+<<<<<<< HEAD
                                     <TableCell>{perf.pre_score !== null ? <span className="text-muted-foreground">{perf.pre_score}%</span> : <span className="text-muted-foreground text-xs">{t("analytics.notTaken")}</span>}</TableCell>
                                     <TableCell>{perf.post_score !== null ? <span className={perf.passed ? "text-green-600 font-semibold" : "text-red-600"}>{perf.post_score}%</span> : <span className="text-muted-foreground text-xs">{t("analytics.notTaken")}</span>}</TableCell>
+=======
+                                    <TableCell>{perf.pre_score !== null ? <span className="text-muted-foreground">{perf.pre_score}%</span> : <span className="text-muted-foreground text-xs">Not taken</span>}</TableCell>
+                                    <TableCell>{perf.post_score !== null ? <span className={perf.passed ? "text-green-600 font-semibold" : "text-red-600"}>{perf.post_score}%</span> : <span className="text-muted-foreground text-xs">Not taken</span>}</TableCell>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                                     <TableCell>{improvement !== null ? <span className={improvement >= 0 ? "text-green-600 font-semibold" : "text-red-600"}>{improvement >= 0 ? "+" : ""}{improvement}%</span> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
                                     <TableCell>
                                       {perf.passed !== null ? (
                                         perf.passed ? (
+<<<<<<< HEAD
                                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">{t("analytics.passedStatus")}</span>
                                         ) : (
                                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">{t("analytics.failedStatus")}</span>
                                         )
                                       ) : (
                                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{t("analytics.inProgress")}</span>
+=======
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Passed</span>
+                                        ) : (
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Failed</span>
+                                        )
+                                      ) : (
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">In Progress</span>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                                       )}
                                     </TableCell>
                                   </TableRow>
@@ -835,12 +1002,20 @@ export const AnalyticsDashboard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="h-5 w-5" />
+<<<<<<< HEAD
             {t("analytics.certDetails")}
+=======
+            Certificate Details
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative max-w-md">
+<<<<<<< HEAD
             <Input placeholder={t("analytics.searchUserCourse")} value={certSearchQuery} onChange={e => setCertSearchQuery(e.target.value)} className="pl-3" />
+=======
+            <Input placeholder="Search by user or course..." value={certSearchQuery} onChange={e => setCertSearchQuery(e.target.value)} className="pl-3" />
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </div>
           {(() => {
             // Group certificates by user
@@ -862,7 +1037,11 @@ export const AnalyticsDashboard = () => {
               .sort((a, b) => a.userName.localeCompare(b.userName));
 
             if (groupedCertUsers.length === 0) {
+<<<<<<< HEAD
               return <div className="text-center py-10 text-muted-foreground">{t("analytics.noCerts")}</div>;
+=======
+              return <div className="text-center py-10 text-muted-foreground">No certificates issued yet</div>;
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             }
 
             return (
@@ -918,7 +1097,11 @@ export const AnalyticsDashboard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5" />
+<<<<<<< HEAD
             {t("analytics.videoEngagement")}
+=======
+            Video Engagement & Watch Behavior
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </CardTitle>
         </CardHeader>
         <CardContent>

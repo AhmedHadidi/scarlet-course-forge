@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+<<<<<<< HEAD
 import { GraduationCap, BookOpen, Trophy, Users, ArrowRight, CheckCircle2 } from "lucide-react";
+=======
+import { GraduationCap, BookOpen, Trophy, Users, ArrowRight, CheckCircle2, Clock, Award } from "lucide-react";
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -10,8 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import UserNav from "@/components/UserNav";
 import ThemeToggle from "@/components/ThemeToggle";
+<<<<<<< HEAD
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
+=======
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
 
 interface Course {
   id: string;
@@ -21,6 +28,7 @@ interface Course {
   thumbnail_url: string | null;
   video_count: number;
   instructor_name: string | null;
+<<<<<<< HEAD
   created_at: string;
 }
 
@@ -36,6 +44,13 @@ const Landing = () => {
   const navigate = useNavigate();
   const { user, userRole, loading } = useAuth();
   const { t } = useTranslation();
+=======
+}
+
+const Landing = () => {
+  const navigate = useNavigate();
+  const { user, userRole, loading } = useAuth();
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
@@ -67,6 +82,10 @@ const Landing = () => {
 
   const fetchCourses = async () => {
     try {
+<<<<<<< HEAD
+=======
+      // Fetch all published courses
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
       const { data: coursesData, error: coursesError } = await supabase
         .from("courses")
         .select("*")
@@ -76,6 +95,10 @@ const Landing = () => {
       if (coursesError) throw coursesError;
       setCourses(coursesData || []);
 
+<<<<<<< HEAD
+=======
+      // If user is logged in, fetch their enrollments
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
       if (user) {
         const { data: enrollmentsData } = await supabase
           .from("enrollments")
@@ -129,6 +152,10 @@ const Landing = () => {
     } catch (error: any) {
       console.error("Error enrolling:", error);
       if (error.code === "23505") {
+<<<<<<< HEAD
+=======
+        // Already enrolled, navigate to course
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         navigate(`/courses/${courseId}`);
       }
     }
@@ -136,6 +163,7 @@ const Landing = () => {
 
   const getDifficultyColor = (level: string) => {
     switch (level) {
+<<<<<<< HEAD
       case "beginner": return "bg-green-500/10 text-green-600";
       case "intermediate": return "bg-yellow-500/10 text-yellow-600";
       case "advanced": return "bg-red-500/10 text-red-600";
@@ -149,10 +177,21 @@ const Landing = () => {
       case "intermediate": return t("landing.intermediate");
       case "advanced": return t("landing.advanced");
       default: return level;
+=======
+      case "beginner":
+        return "bg-green-500/10 text-green-600";
+      case "intermediate":
+        return "bg-yellow-500/10 text-yellow-600";
+      case "advanced":
+        return "bg-red-500/10 text-red-600";
+      default:
+        return "bg-gray-500/10 text-gray-600";
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
     }
   };
 
   const features = [
+<<<<<<< HEAD
     { icon: BookOpen, title: t("landing.feature1Title"), description: t("landing.feature1Desc") },
     { icon: Trophy, title: t("landing.feature2Title"), description: t("landing.feature2Desc") },
     { icon: Users, title: t("landing.feature3Title"), description: t("landing.feature3Desc") },
@@ -171,6 +210,29 @@ const Landing = () => {
     t("landing.benefit4"),
     t("landing.benefit5"),
     t("landing.benefit6"),
+=======
+    {
+      icon: BookOpen,
+      title: "Comprehensive Courses",
+      description: "Access a wide range of courses across multiple categories and difficulty levels.",
+    },
+    {
+      icon: Trophy,
+      title: "Earn Certificates",
+      description: "Complete courses and quizzes to earn verified certificates of completion.",
+    },
+    {
+      icon: Users,
+      title: "Expert Instructors",
+      description: "Learn from industry professionals and experienced educators.",
+    },
+  ];
+
+  const stats = [
+    { value: courses.length.toString(), label: "Courses Available" },
+    { value: "10k+", label: "Active Learners" },
+    { value: "95%", label: "Success Rate" },
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
   ];
 
   return (
@@ -182,34 +244,57 @@ const Landing = () => {
               <div className="h-10 w-10 rounded-full gradient-crimson flex items-center justify-center">
                 <GraduationCap className="h-5 w-5 text-white" />
               </div>
+<<<<<<< HEAD
               <h1 className="text-xl font-bold">{t("nav.brand")}</h1>
             </Link>
             <div className="flex items-center gap-2">
               <LanguageSwitcher />
               <ThemeToggle />
               <Button size="sm" onClick={() => navigate("/auth")}>{t("nav.signIn")}</Button>
+=======
+              <h1 className="text-xl font-bold">MOI AI Learning Hub</h1>
+            </Link>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button size="sm" onClick={() => navigate("/auth")}>Sign In</Button>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             </div>
           </div>
         </header>
       )}
+<<<<<<< HEAD
 
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDUpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
 
+=======
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDUpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
+        
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="text-center max-w-4xl mx-auto space-y-8">
             <div className="inline-flex h-20 w-20 items-center justify-center rounded-full gradient-crimson shadow-crimson mx-auto mb-6">
               <GraduationCap className="h-10 w-10 text-white" />
             </div>
+<<<<<<< HEAD
 
             {user && userName ? (
               <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
                 {t("landing.welcomeBack", { name: userName })}
+=======
+            
+            {user && userName ? (
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
+                Welcome back, <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">{userName}</span>!
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               </h1>
             ) : (
               <>
                 <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
+<<<<<<< HEAD
                   {t("landing.welcomeTitle")}
                   <span className="block mt-2 bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
                     {t("nav.brand")}
@@ -230,6 +315,29 @@ const Landing = () => {
               </>
             )}
 
+=======
+                  Welcome to the
+                  <span className="block mt-2 bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+                    MOI AI Learning Hub
+                  </span>
+                </h1>
+                
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  Empowering the Ministry's employees to lead the future of media through Artificial Intelligence and advanced technologies.
+                </p>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  Discover a growing collection of expert-led courses designed to help you understand, apply, and innovate with AI.
+                </p>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  From fundamentals of machine learning to real-world applications in media, communication, and digital transformation — this platform is your gateway to mastering tomorrow's skills, today.
+                </p>
+                <p className="text-2xl font-semibold text-secondary mt-6">
+                  Learn. Innovate. Transform.
+                </p>
+              </>
+            )}
+            
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
             {!user && (
               <>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
@@ -238,11 +346,19 @@ const Landing = () => {
                     className="gradient-crimson shadow-crimson hover:opacity-90 transition-smooth text-lg px-8"
                     onClick={() => navigate("/auth")}
                   >
+<<<<<<< HEAD
                     {t("landing.getStarted")}
+=======
+                    Get Started Free
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
 
+<<<<<<< HEAD
+=======
+                {/* Stats */}
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                 <div className="grid grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto">
                   {stats.map((stat, index) => (
                     <div key={index} className="text-center">
@@ -260,6 +376,7 @@ const Landing = () => {
       {/* Available Courses Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="mb-8">
+<<<<<<< HEAD
           <h2 className="text-4xl font-bold mb-4 text-center">{t("landing.availableCourses")}</h2>
           <p className="text-xl text-muted-foreground text-center mb-8">
             {t("landing.browseCourses")}
@@ -268,12 +385,24 @@ const Landing = () => {
           <div className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto mb-8">
             <Input
               placeholder={t("landing.searchCourses")}
+=======
+          <h2 className="text-4xl font-bold mb-4 text-center">Available Courses</h2>
+          <p className="text-xl text-muted-foreground text-center mb-8">
+            Browse our collection of courses and start learning today
+          </p>
+
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto mb-8">
+            <Input
+              placeholder="Search courses..."
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1"
             />
             <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
               <SelectTrigger className="w-full md:w-[180px]">
+<<<<<<< HEAD
                 <SelectValue placeholder={t("landing.difficulty")} />
               </SelectTrigger>
               <SelectContent>
@@ -281,6 +410,15 @@ const Landing = () => {
                 <SelectItem value="beginner">{t("landing.beginner")}</SelectItem>
                 <SelectItem value="intermediate">{t("landing.intermediate")}</SelectItem>
                 <SelectItem value="advanced">{t("landing.advanced")}</SelectItem>
+=======
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="beginner">Beginner</SelectItem>
+                <SelectItem value="intermediate">Intermediate</SelectItem>
+                <SelectItem value="advanced">Advanced</SelectItem>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
               </SelectContent>
             </Select>
           </div>
@@ -288,16 +426,25 @@ const Landing = () => {
 
         {loadingCourses ? (
           <div className="text-center py-12">
+<<<<<<< HEAD
             <p className="text-muted-foreground">{t("landing.loadingCourses")}</p>
           </div>
         ) : filteredCourses.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">{t("landing.noCoursesFound")}</p>
+=======
+            <p className="text-muted-foreground">Loading courses...</p>
+          </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No courses found matching your criteria.</p>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course) => {
               const isEnrolled = enrolledCourseIds.includes(course.id);
+<<<<<<< HEAD
               return (
                 <Card key={course.id} className="border-border transition-smooth hover:shadow-crimson hover:scale-105 relative overflow-hidden">
                   {!isEnrolled && course.created_at && isNewCourse(course.created_at) && (
@@ -326,6 +473,40 @@ const Landing = () => {
                     ) : (
                       <Button className="w-full gradient-crimson" onClick={() => handleEnroll(course.id)}>
                         {user ? t("landing.enrollNow") : t("landing.signUpToEnroll")}
+=======
+              
+              return (
+                <Card key={course.id} className="border-border transition-smooth hover:shadow-crimson hover:scale-105">
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-2">
+                      <Badge className={getDifficultyColor(course.difficulty_level)}>
+                        {course.difficulty_level}
+                      </Badge>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <BookOpen className="h-4 w-4" />
+                        <span>{course.video_count} videos</span>
+                      </div>
+                    </div>
+                    <CardTitle className="text-xl">{course.title}</CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {course.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter>
+                    {isEnrolled ? (
+                      <Button
+                        className="w-full"
+                        onClick={() => navigate(`/courses/${course.id}`)}
+                      >
+                        Continue Learning
+                      </Button>
+                    ) : (
+                      <Button
+                        className="w-full gradient-crimson"
+                        onClick={() => handleEnroll(course.id)}
+                      >
+                        {user ? "Enroll Now" : "Sign Up to Enroll"}
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                       </Button>
                     )}
                   </CardFooter>
@@ -339,9 +520,16 @@ const Landing = () => {
       {/* Features Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center mb-16">
+<<<<<<< HEAD
           <h2 className="text-4xl font-bold mb-4">{t("landing.whyChoose")}</h2>
           <p className="text-xl text-muted-foreground">{t("landing.whySubtitle")}</p>
         </div>
+=======
+          <h2 className="text-4xl font-bold mb-4">Why Choose MOI AI Learning Hub?</h2>
+          <p className="text-xl text-muted-foreground">Everything you need to succeed in your learning journey</p>
+        </div>
+
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {features.map((feature, index) => {
             const Icon = feature.icon;
@@ -367,12 +555,30 @@ const Landing = () => {
         <div className="container mx-auto px-4 py-20">
           <Card className="border-border/50 max-w-4xl mx-auto overflow-hidden">
             <div className="gradient-crimson p-8 text-center">
+<<<<<<< HEAD
               <h2 className="text-3xl font-bold text-white mb-4">{t("landing.startLearning")}</h2>
               <p className="text-white/90 text-lg mb-6">{t("landing.startLearningSubtitle")}</p>
             </div>
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 gap-6">
                 {benefits.map((benefit, index) => (
+=======
+              <h2 className="text-3xl font-bold text-white mb-4">Start Learning Today</h2>
+              <p className="text-white/90 text-lg mb-6">
+                Join our community and unlock your potential with structured learning paths
+              </p>
+            </div>
+            <CardContent className="p-8">
+              <div className="grid md:grid-cols-2 gap-6">
+                {[
+                  "Video lessons from industry experts",
+                  "Interactive quizzes and assessments",
+                  "Progress tracking and analytics",
+                  "Downloadable certificates",
+                  "Lifetime access to course materials",
+                  "Mobile-friendly learning experience",
+                ].map((benefit, index) => (
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                   <div key={index} className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-secondary flex-shrink-0 mt-0.5" />
                     <span className="text-foreground">{benefit}</span>
@@ -385,7 +591,11 @@ const Landing = () => {
                   className="gradient-crimson shadow-crimson hover:opacity-90 transition-smooth"
                   onClick={() => navigate("/auth")}
                 >
+<<<<<<< HEAD
                   {t("landing.createAccount")}
+=======
+                  Create Your Free Account
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
@@ -397,7 +607,11 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t border-border/50 py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
+<<<<<<< HEAD
           <p>{t("landing.footer")}</p>
+=======
+          <p>&copy; 2025 MOI AI Learning Hub. All rights reserved.</p>
+>>>>>>> 5b56e227004fb842bfd26ac33621142a3f1e8a88
         </div>
       </footer>
     </div>
