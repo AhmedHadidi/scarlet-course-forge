@@ -1,0 +1,57 @@
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useVerifyAdmin } from "@/hooks/useVerifyAdmin";
+import { useVerifySubAdmin } from "@/hooks/useVerifySubAdmin";
+import { Loader2 } from "lucide-react";
+
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredRole?: string;
+}
+
+export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
+  const { user, loading, userRole, approvalStatus } = useAuth();
+  const { isVerifiedAdmin, isVerifying: isVerifyingAdmin } = useVerifyAdmin();
+  const { isVerifiedSubAdmin, isVerifying: isVerifyingSubAdmin } = useVerifySubAdmin();
+
+  // Show loading while auth or role verification is in progress.
+  // NOTE: verification starts in an effect, so initial `null` must be treated as "pending"
+  // to avoid redirecting back to `/` before the verification call runs.
+  const isAdminVerificationPending = requiredRole === 'admin' && (isVerifyingAdmin || isVerifiedAdmin === null);
+  const isSubAdminVerificationPending = requiredRole === 'sub_admin' && (isVerifyingSubAdmin || isVerifiedSubAdmin === null);
+  const isApprovalPending = approvalStatus === null && user;
+
+  if (loading || isAdminVerificationPending || isSubAdminVerificationPending || isApprovalPending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Check approval status - admins bypass approval check
+  const isAdmin = userRole === 'admin';
+  if (!isAdmin && approvalStatus === 'pending') {
+    return <Navigate to="/pending-approval" replace />;
+  }
+  
+  if (!isAdmin && approvalStatus === 'rejected') {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // For admin routes, require server-side verification
+  if (requiredRole === 'admin' && isVerifiedAdmin !== true) {
+    return <Navigate to="/" replace />;
+  }
+
+  // For sub_admin routes, require role verification
+  if (requiredRole === 'sub_admin' && isVerifiedSubAdmin !== true) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};

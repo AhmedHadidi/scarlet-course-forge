@@ -1,0 +1,7 @@
+project_id = "wcmfpcejlldihchyaavn"
+
+[functions.submit-quiz]
+verify_jwt = false
+
+[functions.verify-video-watch]
+verify_jwt = false
