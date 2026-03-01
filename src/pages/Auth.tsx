@@ -57,7 +57,7 @@ const Auth = () => {
   const signupSchema = z.object({
     email: z.string().email("Invalid email address").max(255),
     password: strongPasswordSchema,
-    fullName: z.string().min(2, "Name must be at least 2 characters").max(100),
+    fullName: z.string().min(2, "Name must be at least 2 characters").max(100).regex(/^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s\-'\.]+$/, "الاسم يجب أن يكون باللغة العربية فقط"),
   });
 
   useEffect(() => {
