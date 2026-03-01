@@ -22,7 +22,7 @@ const userSchema = z.object({
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number")
     .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character"),
-  full_name: z.string().trim().min(1, "Name is required").max(100),
+  full_name: z.string().trim().min(1, "Name is required").max(100).regex(/^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s\-'\.]+$/, "الاسم يجب أن يكون باللغة العربية فقط"),
   role: z.enum(["admin", "sub_admin", "user"]),
   department_id: z.string().uuid().optional(),
 });
@@ -431,7 +431,8 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
                   id="full_name"
                   value={formData.full_name || ""}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  placeholder="John Doe"
+                  placeholder="الاسم بالعربية"
+                  dir="rtl"
                 />
                 {errors.full_name && <p className="text-sm text-destructive">{errors.full_name}</p>}
               </div>
