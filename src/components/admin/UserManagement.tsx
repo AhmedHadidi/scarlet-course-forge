@@ -12,8 +12,9 @@ import { Plus, Edit, Trash2, Users as UsersIcon, ShieldCheck, ShieldOff } from "
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { toast as sonnerToast } from "sonner";
+import { useTranslation } from "react-i18next";
 
-const userSchema = z.object({
+const createUserSchema = (t: (key: string) => string) => z.object({
   email: z.string().trim().email("Invalid email address").max(255),
   password: z.string()
     .min(8, "Password must be at least 8 characters")
@@ -22,12 +23,12 @@ const userSchema = z.object({
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number")
     .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character"),
-  full_name: z.string().trim().min(1, "Name is required").max(100).regex(/^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s\-'\.]+$/, "الاسم يجب أن يكون باللغة العربية فقط"),
+  full_name: z.string().trim().min(1, "Name is required").max(100).regex(/^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s\-'\.]+$/, t("auth.nameArabicOnly")),
   role: z.enum(["admin", "sub_admin", "user"]),
   department_id: z.string().uuid().optional(),
 });
 
-type UserFormData = z.infer<typeof userSchema>;
+type UserFormData = z.infer<ReturnType<typeof createUserSchema>>;
 
 interface Department {
   id: string;
@@ -49,6 +50,7 @@ interface UserManagementProps {
 }
 
 export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -116,9 +118,9 @@ export const UserManagement = ({ onOpenDialog }: UserManagementProps = {}) => {
   };
 
   const validateForm = (): boolean => {
+    const userSchema = createUserSchema(t);
     try {
       if (editingUser) {
-        // For editing, password is optional
         const editSchema = userSchema.extend({
           password: z.string().min(6).max(100).optional().or(z.literal("")),
         });
