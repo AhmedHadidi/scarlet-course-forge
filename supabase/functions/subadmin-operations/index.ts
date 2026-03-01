@@ -14,7 +14,7 @@ const passwordSchema = z.string()
   .regex(/[a-z]/, 'Must contain lowercase letter')
   .regex(/[0-9]/, 'Must contain a number')
   .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Must contain a special character');
-const fullNameSchema = z.string().trim().min(2).max(100).regex(/^[a-zA-Z\s\-'\.]+$/);
+const fullNameSchema = z.string().trim().min(2).max(100).regex(/^[\p{L}\p{M}\s\-'\.]+$/u);
 const uuidSchema = z.string().uuid();
 
 const createUserSchema = z.object({

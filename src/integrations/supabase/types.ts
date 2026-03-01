@@ -785,22 +785,28 @@ export type Database = {
           completed: boolean
           id: string
           last_watched_at: string
+          last_watched_position: number
           user_id: string
           video_id: string
+          watch_time_seconds: number
         }
         Insert: {
           completed?: boolean
           id?: string
           last_watched_at?: string
+          last_watched_position?: number
           user_id: string
           video_id: string
+          watch_time_seconds?: number
         }
         Update: {
           completed?: boolean
           id?: string
           last_watched_at?: string
+          last_watched_position?: number
           user_id?: string
           video_id?: string
+          watch_time_seconds?: number
         }
         Relationships: [
           {

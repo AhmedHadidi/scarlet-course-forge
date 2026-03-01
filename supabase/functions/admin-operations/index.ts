@@ -24,7 +24,7 @@ const fullNameSchema = z.string()
   .trim()
   .min(2, 'Name must be at least 2 characters')
   .max(100, 'Name must be less than 100 characters')
-  .regex(/^[a-zA-Z\s\-'\.]+$/, 'Name can only contain letters, spaces, hyphens, apostrophes, and periods');
+  .regex(/^[\p{L}\p{M}\s\-'\.]+$/u, 'Name can only contain letters, spaces, hyphens, apostrophes, and periods');
 
 const uuidSchema = z.string().uuid('Invalid user ID format');
 
