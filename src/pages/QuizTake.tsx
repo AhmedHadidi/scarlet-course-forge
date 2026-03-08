@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { toast as sonnerToast } from "sonner";
-import { Loader2, CheckCircle, XCircle, Award, Download } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Award, Download, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
 import UserNav from "@/components/UserNav";
 import { downloadCertificatePDF } from "@/lib/generateCertificate";
 
@@ -63,6 +63,7 @@ export default function QuizTake() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const [result, setResult] = useState<{
     score: number;
     passed: boolean;
@@ -223,13 +224,48 @@ export default function QuizTake() {
         throw new Error(data.error || "Failed to submit quiz");
       }
 
+      // Build review data only for final (post) quiz, not pre-quiz
+      let questionResults: QuestionResult[] = [];
+      if (attemptType !== "pre") {
+        try {
+          const questionIds = questions.map((q) => q.id);
+          const { data: correctAnswersData } = await supabase
+            .from("quiz_answers")
+            .select("id, question_id, answer_text, is_correct")
+            .in("question_id", questionIds);
+
+          if (correctAnswersData) {
+            questionResults = questions.map((q) => {
+              const qAnswers = correctAnswersData.filter((a) => a.question_id === q.id);
+              const correctAns = qAnswers.find((a) => a.is_correct);
+              const userSelectedId = userAnswers[q.id]?.[0] || "";
+              const userAns = qAnswers.find((a) => a.id === userSelectedId);
+              const isCorrect = correctAns ? userSelectedId === correctAns.id : false;
+
+              return {
+                questionId: q.id,
+                questionText: q.question_text,
+                isCorrect,
+                userAnswerId: userSelectedId,
+                userAnswerText: userAns?.answer_text || "",
+                correctAnswerId: correctAns?.id || "",
+                correctAnswerText: correctAns?.answer_text || "",
+                allAnswers: qAnswers.map((a) => ({ id: a.id, text: a.answer_text })),
+              };
+            });
+          }
+        } catch {
+          // Review data is optional – quiz result still shows
+        }
+      }
+
       setResult({
         score: data.score,
         passed: data.passed,
         totalQuestions: data.totalQuestions,
         correctAnswers: data.correctAnswers,
         certificateId: data.certificateId,
-        questionResults: data.questionResults || [],
+        questionResults,
       });
 
       if (attemptType === "pre") {
@@ -427,73 +463,114 @@ export default function QuizTake() {
             </CardContent>
           </Card>
 
-          {/* ── Question Review ── */}
-          {result.questionResults && result.questionResults.length > 0 && (
-            <div className="mt-8 space-y-4">
-              <h2 className="text-2xl font-bold text-center mb-6">مراجعة الإجابات</h2>
-              {result.questionResults.map((qr, idx) => (
-                <Card
-                  key={qr.questionId}
-                  className={`border-2 ${qr.isCorrect
-                      ? "border-green-300 bg-green-50/50 dark:bg-green-950/20 dark:border-green-700"
-                      : "border-red-300 bg-red-50/50 dark:bg-red-950/20 dark:border-red-700"
-                    }`}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3">
-                      {qr.isCorrect ? (
-                        <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0" />
-                      )}
-                      <CardTitle className="text-base">
-                        <span className="text-muted-foreground">Q{idx + 1}.</span>{" "}
-                        {qr.questionText}
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {qr.allAnswers.map((ans) => {
-                      const isUserAnswer = ans.id === qr.userAnswerId;
-                      const isCorrectAnswer = ans.id === qr.correctAnswerId;
+          {/* ── Question Review (final quiz only) ── */}
+          {!isPreQuiz && result.questionResults && result.questionResults.length > 0 && (
+            <div className="mt-8">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full py-6 text-base font-semibold gap-3 border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-all duration-300"
+                onClick={() => setShowReview(!showReview)}
+              >
+                {showReview ? (
+                  <>
+                    <EyeOff className="h-5 w-5" />
+                    إخفاء الإجابات
+                    <ChevronUp className="h-5 w-5 ms-auto" />
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-5 w-5" />
+                    إظهار الإجابات
+                    <ChevronDown className="h-5 w-5 ms-auto" />
+                  </>
+                )}
+              </Button>
 
-                      let bgClass = "border rounded-lg p-3 flex items-center gap-3 transition-colors ";
-                      if (isCorrectAnswer) {
-                        bgClass += "bg-green-100 border-green-400 dark:bg-green-900/40 dark:border-green-600";
-                      } else if (isUserAnswer && !qr.isCorrect) {
-                        bgClass += "bg-red-100 border-red-400 dark:bg-red-900/40 dark:border-red-600";
-                      } else {
-                        bgClass += "bg-background border-border opacity-60";
-                      }
-
-                      return (
-                        <div key={ans.id} className={bgClass}>
-                          <div className="flex-1 text-sm font-medium">
-                            {ans.text}
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {isCorrectAnswer && (
-                              <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">
-                                ✓ الإجابة الصحيحة
-                              </Badge>
-                            )}
-                            {isUserAnswer && !qr.isCorrect && (
-                              <Badge variant="destructive" className="text-xs">
-                                ✗ إجابتك
-                              </Badge>
-                            )}
-                            {isUserAnswer && qr.isCorrect && (
-                              <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">
-                                ✓ إجابتك
-                              </Badge>
+              <div
+                className="overflow-hidden transition-all duration-500 ease-in-out"
+                style={{
+                  maxHeight: showReview ? `${result.questionResults.length * 500}px` : "0px",
+                  opacity: showReview ? 1 : 0,
+                }}
+              >
+                <div className="space-y-4 pt-6">
+                  {result.questionResults.map((qr, idx) => (
+                    <Card
+                      key={qr.questionId}
+                      className={`border-2 transition-all duration-300 ${qr.isCorrect
+                          ? "border-green-300 bg-green-50/50 dark:bg-green-950/20 dark:border-green-700"
+                          : "border-red-300 bg-red-50/50 dark:bg-red-950/20 dark:border-red-700"
+                        }`}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0 ${qr.isCorrect
+                              ? "bg-green-100 dark:bg-green-900/50"
+                              : "bg-red-100 dark:bg-red-900/50"
+                            }`}>
+                            {qr.isCorrect ? (
+                              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            ) : (
+                              <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
                             )}
                           </div>
+                          <CardTitle className="text-base leading-relaxed">
+                            <span className="text-muted-foreground font-normal">Q{idx + 1}.</span>{" "}
+                            {qr.questionText}
+                          </CardTitle>
                         </div>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
-              ))}
+                      </CardHeader>
+                      <CardContent className="space-y-2 pt-0">
+                        {qr.allAnswers.map((ans, ansIdx) => {
+                          const isUserAnswer = ans.id === qr.userAnswerId;
+                          const isCorrectAnswer = ans.id === qr.correctAnswerId;
+
+                          let bgClass = "border rounded-xl p-3.5 flex items-center gap-3 transition-all duration-200 ";
+                          if (isCorrectAnswer) {
+                            bgClass += "bg-green-50 border-green-300 dark:bg-green-900/30 dark:border-green-600 shadow-sm shadow-green-200/50 dark:shadow-green-900/30";
+                          } else if (isUserAnswer && !qr.isCorrect) {
+                            bgClass += "bg-red-50 border-red-300 dark:bg-red-900/30 dark:border-red-600 shadow-sm shadow-red-200/50 dark:shadow-red-900/30";
+                          } else {
+                            bgClass += "bg-muted/30 border-border/50 opacity-50";
+                          }
+
+                          return (
+                            <div key={ans.id} className={bgClass}>
+                              <span className="text-xs font-bold text-muted-foreground w-6">
+                                {String.fromCharCode(65 + ansIdx)}.
+                              </span>
+                              <div className="flex-1 text-sm font-medium">
+                                {ans.text}
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                {isCorrectAnswer && (
+                                  <Badge className="bg-green-600 hover:bg-green-700 text-xs px-2 py-0.5 gap-1">
+                                    <CheckCircle className="h-3 w-3" />
+                                    الإجابة الصحيحة
+                                  </Badge>
+                                )}
+                                {isUserAnswer && !qr.isCorrect && (
+                                  <Badge variant="destructive" className="text-xs px-2 py-0.5 gap-1">
+                                    <XCircle className="h-3 w-3" />
+                                    إجابتك
+                                  </Badge>
+                                )}
+                                {isUserAnswer && qr.isCorrect && (
+                                  <Badge className="bg-green-600 hover:bg-green-700 text-xs px-2 py-0.5 gap-1">
+                                    <CheckCircle className="h-3 w-3" />
+                                    إجابتك
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
