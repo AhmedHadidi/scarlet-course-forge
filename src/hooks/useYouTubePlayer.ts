@@ -36,25 +36,53 @@ let apiLoaded = false;
 let apiLoading = false;
 const apiReadyCallbacks: (() => void)[] = [];
 
+function flushCallbacks() {
+  apiLoaded = true;
+  apiLoading = false;
+  apiReadyCallbacks.forEach((cb) => cb());
+  apiReadyCallbacks.length = 0;
+}
+
 function loadYouTubeAPI(): Promise<void> {
   return new Promise((resolve) => {
-    if (apiLoaded && window.YT?.Player) {
+    // Already loaded — resolve immediately
+    if (window.YT?.Player) {
+      apiLoaded = true;
       resolve();
       return;
     }
+
     apiReadyCallbacks.push(resolve);
+
+    // If another call is already loading, just wait
     if (apiLoading) return;
     apiLoading = true;
 
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(tag);
+    // Check if the script tag already exists (e.g., from previous SPA navigation)
+    const existingScript = document.querySelector(
+      'script[src*="youtube.com/iframe_api"]'
+    );
 
-    window.onYouTubeIframeAPIReady = () => {
-      apiLoaded = true;
-      apiReadyCallbacks.forEach((cb) => cb());
-      apiReadyCallbacks.length = 0;
-    };
+    if (!existingScript) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    }
+
+    // Set the global callback
+    window.onYouTubeIframeAPIReady = () => flushCallbacks();
+
+    // Fallback: poll for YT.Player in case the callback already fired
+    // before we registered it (race condition on re-navigation)
+    const poll = setInterval(() => {
+      if (window.YT?.Player) {
+        clearInterval(poll);
+        if (!apiLoaded) flushCallbacks();
+      }
+    }, 100);
+
+    // Safety: stop polling after 15 seconds
+    setTimeout(() => clearInterval(poll), 15000);
   });
 }
 
@@ -135,6 +163,14 @@ export function useYouTubePlayer({
     const initPlayer = async () => {
       await loadYouTubeAPI();
       if (destroyed) return;
+
+      // Ensure the container element exists in the DOM
+      const containerEl = document.getElementById(containerId);
+      if (!containerEl) {
+        // Retry after a short delay (React may not have rendered yet)
+        setTimeout(() => { if (!destroyed) initPlayer(); }, 200);
+        return;
+      }
 
       // Destroy previous player
       if (playerRef.current) {

@@ -99,11 +99,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch questions
+    // Fetch questions (include question_text for review)
     const { data: questions, error: questionsError } = await userClient
       .from("quiz_questions")
-      .select("id")
-      .eq("quiz_id", quizId);
+      .select("id, question_text, order_index")
+      .eq("quiz_id", quizId)
+      .order("order_index");
 
     if (questionsError || !questions || questions.length === 0) {
       return new Response(JSON.stringify({ error: "No questions found for this quiz" }), {
@@ -125,10 +126,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch correct answers using admin client (bypasses RLS to access is_correct)
+    // Fetch all answers using admin client (bypasses RLS to access is_correct + answer_text)
     const { data: allAnswers, error: answersError } = await adminClient
       .from("quiz_answers")
-      .select("id, question_id, is_correct")
+      .select("id, question_id, answer_text, is_correct")
       .in("question_id", questionIds);
 
     if (answersError || !allAnswers) {
@@ -139,22 +140,49 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Calculate score server-side
+    // Calculate score server-side + build per-question review data
     let correctCount = 0;
-    for (const questionId of questionIds) {
+    const questionResults: {
+      questionId: string;
+      questionText: string;
+      isCorrect: boolean;
+      userAnswerId: string;
+      userAnswerText: string;
+      correctAnswerId: string;
+      correctAnswerText: string;
+      allAnswers: { id: string; text: string }[];
+    }[] = [];
+
+    for (const question of questions) {
+      const questionId = question.id;
       const userSelectedIds = userAnswers[questionId] || [];
-      const correctAnswerIds = allAnswers
-        .filter((a) => a.question_id === questionId && a.is_correct)
+      const questionAnswers = allAnswers.filter((a) => a.question_id === questionId);
+      const correctAnswer = questionAnswers.find((a) => a.is_correct);
+      const correctAnswerIds = questionAnswers
+        .filter((a) => a.is_correct)
         .map((a) => a.id);
 
       // Check if user selected all correct answers and no incorrect ones
       const isCorrect =
         userSelectedIds.length === correctAnswerIds.length &&
-        userSelectedIds.every((id) => correctAnswerIds.includes(id));
+        userSelectedIds.every((id: string) => correctAnswerIds.includes(id));
 
       if (isCorrect) {
         correctCount++;
       }
+
+      const userAnswer = questionAnswers.find((a) => userSelectedIds.includes(a.id));
+
+      questionResults.push({
+        questionId,
+        questionText: question.question_text,
+        isCorrect,
+        userAnswerId: userSelectedIds[0] || "",
+        userAnswerText: userAnswer?.answer_text || "",
+        correctAnswerId: correctAnswer?.id || "",
+        correctAnswerText: correctAnswer?.answer_text || "",
+        allAnswers: questionAnswers.map((a) => ({ id: a.id, text: a.answer_text })),
+      });
     }
 
     const score = Math.round((correctCount / questions.length) * 100);
@@ -231,6 +259,7 @@ Deno.serve(async (req) => {
         totalQuestions: questions.length,
         correctAnswers: correctCount,
         certificateId,
+        questionResults,
       }),
       {
         status: 200,

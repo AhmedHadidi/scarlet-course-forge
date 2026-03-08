@@ -618,15 +618,20 @@ const CoursePlayer = () => {
           <div className="lg:col-span-2 space-y-4">
             <Card>
               <CardContent className="p-0">
-                <div className="aspect-video bg-black">
+                <div className="aspect-video bg-black relative">
                   {isYouTube ? (
-                    resumeReady ? (
-                      <div id={containerId} className="w-full h-full" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white text-sm opacity-60">
-                        {t("coursePlayer.loading")}
-                      </div>
-                    )
+                    <>
+                      <div
+                        id={containerId}
+                        className="w-full h-full"
+                        style={{ display: resumeReady ? "block" : "none" }}
+                      />
+                      {!resumeReady && (
+                        <div className="absolute inset-0 flex items-center justify-center text-white text-sm opacity-60">
+                          {t("coursePlayer.loading")}
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <video
                       width="100%"

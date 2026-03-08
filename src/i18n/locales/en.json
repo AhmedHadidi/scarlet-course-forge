@@ -123,7 +123,8 @@
         "alreadyRegistered": "This email is already registered. Please sign in instead.",
         "selectDeptError": "Please select your department",
         "welcomeUser": "Welcome {{name}}! Let's set up your preferences.",
-        "welcomeBack": "Welcome {{name}}!"
+        "welcomeBack": "Welcome {{name}}!",
+        "nameArabicOnly": "Name must be in Arabic only"
     },
     "dashboard": {
         "welcomeBack": "Welcome back!",

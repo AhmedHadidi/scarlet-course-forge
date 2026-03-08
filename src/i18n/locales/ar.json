@@ -123,7 +123,8 @@
         "alreadyRegistered": "هذا البريد الإلكتروني مسجل مسبقاً. يُرجى تسجيل الدخول بدلاً من ذلك.",
         "selectDeptError": "يُرجى اختيار قسمك",
         "welcomeUser": "مرحباً {{name}}! لنحدد تفضيلاتك.",
-        "welcomeBack": "مرحباً بعودتك {{name}}!"
+        "welcomeBack": "مرحباً بعودتك {{name}}!",
+        "nameArabicOnly": "الاسم يجب أن يكون باللغة العربية فقط"
     },
     "dashboard": {
         "welcomeBack": "مرحباً بعودتك!",

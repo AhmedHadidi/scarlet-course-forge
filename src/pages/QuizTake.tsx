@@ -39,6 +39,17 @@ interface Answer {
   answer_text: string;
 }
 
+interface QuestionResult {
+  questionId: string;
+  questionText: string;
+  isCorrect: boolean;
+  userAnswerId: string;
+  userAnswerText: string;
+  correctAnswerId: string;
+  correctAnswerText: string;
+  allAnswers: { id: string; text: string }[];
+}
+
 export default function QuizTake() {
   const { quizId } = useParams();
   const navigate = useNavigate();
@@ -58,6 +69,7 @@ export default function QuizTake() {
     totalQuestions: number;
     correctAnswers: number;
     certificateId?: string;
+    questionResults?: QuestionResult[];
   } | null>(null);
   const [previousAttempt, setPreviousAttempt] = useState<any>(null);
   const [canTakeQuiz, setCanTakeQuiz] = useState(true);
@@ -217,6 +229,7 @@ export default function QuizTake() {
         totalQuestions: data.totalQuestions,
         correctAnswers: data.correctAnswers,
         certificateId: data.certificateId,
+        questionResults: data.questionResults || [],
       });
 
       if (attemptType === "pre") {
@@ -335,15 +348,15 @@ export default function QuizTake() {
                 {isPreQuiz
                   ? "Pre-Quiz Completed!"
                   : result.passed
-                  ? "Congratulations!"
-                  : "Quiz Completed"}
+                    ? "Congratulations!"
+                    : "Quiz Completed"}
               </CardTitle>
               <CardDescription>
                 {isPreQuiz
                   ? "Your baseline score has been recorded. You can now start the course."
                   : result.passed
-                  ? "You have successfully passed the quiz!"
-                  : "Keep practicing to improve your score"}
+                    ? "You have successfully passed the quiz!"
+                    : "Keep practicing to improve your score"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -413,6 +426,76 @@ export default function QuizTake() {
               </div>
             </CardContent>
           </Card>
+
+          {/* ── Question Review ── */}
+          {result.questionResults && result.questionResults.length > 0 && (
+            <div className="mt-8 space-y-4">
+              <h2 className="text-2xl font-bold text-center mb-6">مراجعة الإجابات</h2>
+              {result.questionResults.map((qr, idx) => (
+                <Card
+                  key={qr.questionId}
+                  className={`border-2 ${qr.isCorrect
+                      ? "border-green-300 bg-green-50/50 dark:bg-green-950/20 dark:border-green-700"
+                      : "border-red-300 bg-red-50/50 dark:bg-red-950/20 dark:border-red-700"
+                    }`}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      {qr.isCorrect ? (
+                        <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0" />
+                      )}
+                      <CardTitle className="text-base">
+                        <span className="text-muted-foreground">Q{idx + 1}.</span>{" "}
+                        {qr.questionText}
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {qr.allAnswers.map((ans) => {
+                      const isUserAnswer = ans.id === qr.userAnswerId;
+                      const isCorrectAnswer = ans.id === qr.correctAnswerId;
+
+                      let bgClass = "border rounded-lg p-3 flex items-center gap-3 transition-colors ";
+                      if (isCorrectAnswer) {
+                        bgClass += "bg-green-100 border-green-400 dark:bg-green-900/40 dark:border-green-600";
+                      } else if (isUserAnswer && !qr.isCorrect) {
+                        bgClass += "bg-red-100 border-red-400 dark:bg-red-900/40 dark:border-red-600";
+                      } else {
+                        bgClass += "bg-background border-border opacity-60";
+                      }
+
+                      return (
+                        <div key={ans.id} className={bgClass}>
+                          <div className="flex-1 text-sm font-medium">
+                            {ans.text}
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {isCorrectAnswer && (
+                              <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">
+                                ✓ الإجابة الصحيحة
+                              </Badge>
+                            )}
+                            {isUserAnswer && !qr.isCorrect && (
+                              <Badge variant="destructive" className="text-xs">
+                                ✗ إجابتك
+                              </Badge>
+                            )}
+                            {isUserAnswer && qr.isCorrect && (
+                              <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">
+                                ✓ إجابتك
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
