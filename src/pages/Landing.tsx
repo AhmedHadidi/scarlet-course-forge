@@ -42,6 +42,8 @@ const Landing = () => {
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [userName, setUserName] = useState<string>("");
+  const [totalLearners, setTotalLearners] = useState(0);
+  const [completionRate, setCompletionRate] = useState(0);
 
   useEffect(() => {
     fetchCourses();
@@ -74,6 +76,25 @@ const Landing = () => {
 
       if (coursesError) throw coursesError;
       setCourses(coursesData || []);
+
+      // Fetch real stats: total learners + completion rate
+      try {
+        const { count: learnersCount } = await supabase
+          .from("enrollments")
+          .select("*", { count: "exact", head: true });
+        setTotalLearners(learnersCount || 0);
+
+        const { count: totalEnrollments } = await supabase
+          .from("enrollments")
+          .select("*", { count: "exact", head: true });
+        const { count: completedEnrollments } = await supabase
+          .from("enrollments")
+          .select("*", { count: "exact", head: true })
+          .not("completed_at", "is", null);
+        if (totalEnrollments && totalEnrollments > 0) {
+          setCompletionRate(Math.round(((completedEnrollments || 0) / totalEnrollments) * 100));
+        }
+      } catch { /* stats are optional */ }
 
       if (user) {
         const { data: enrollmentsData } = await supabase
@@ -159,8 +180,8 @@ const Landing = () => {
 
   const stats = [
     { value: courses.length.toString(), label: t("landing.coursesAvailable") },
-    { value: "10k+", label: t("landing.activeLearners") },
-    { value: "95%", label: t("landing.successRate") },
+    { value: totalLearners.toString(), label: t("landing.activeLearners") },
+    { value: `${completionRate}%`, label: t("landing.successRate") },
   ];
 
   const benefits = [

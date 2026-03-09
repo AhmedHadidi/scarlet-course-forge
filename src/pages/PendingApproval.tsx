@@ -1,12 +1,19 @@
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, Mail } from "lucide-react";
+import { Clock, Mail, LogIn } from "lucide-react";
 
 const PendingApproval = () => {
   const { signOut } = useAuth();
+  const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const handleBackToLogin = async () => {
+    await signOut();
+    navigate("/auth");
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -26,9 +33,15 @@ const PendingApproval = () => {
             <span>{t("pendingApproval.submessage")}</span>
           </div>
           <p className="text-sm text-muted-foreground">{t("pendingApproval.checkBack")}</p>
-          <Button variant="outline" className="w-full" onClick={signOut}>
-            {t("pendingApproval.signOut")}
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button variant="outline" className="w-full gap-2" onClick={handleBackToLogin}>
+              <LogIn className="h-4 w-4" />
+              {t("pendingApproval.backToLogin")}
+            </Button>
+            <Button variant="ghost" className="w-full text-muted-foreground" onClick={signOut}>
+              {t("pendingApproval.signOut")}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

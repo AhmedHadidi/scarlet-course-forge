@@ -12,6 +12,7 @@ import { toast as sonnerToast } from "sonner";
 import { Loader2, CheckCircle, XCircle, Award, Download, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
 import UserNav from "@/components/UserNav";
 import { downloadCertificatePDF } from "@/lib/generateCertificate";
+import { useTranslation } from "react-i18next";
 
 interface Quiz {
   id: string;
@@ -56,6 +57,7 @@ export default function QuizTake() {
   const [searchParams] = useSearchParams();
   const attemptType = (searchParams.get("type") as "pre" | "post") || "post";
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<{ [key: string]: Answer[] }>({});
@@ -289,22 +291,8 @@ export default function QuizTake() {
     );
   }
 
-  if (!quiz || questions.length === 0) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>Quiz Not Available</CardTitle>
-            <CardDescription>This quiz could not be found or has no questions.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate("/dashboard")}>Return to Dashboard</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+  // Show previous result if quiz was already taken (must come BEFORE the
+  // "no questions" guard because fetchQuizData returns early when canTakeQuiz is false)
   if (!canTakeQuiz && previousAttempt) {
     return (
       <div className="min-h-screen bg-background">
@@ -319,46 +307,62 @@ export default function QuizTake() {
                   <XCircle className="h-8 w-8 text-red-500" />
                 )}
                 <div>
-                  <CardTitle>Quiz Already Completed</CardTitle>
-                  <CardDescription>{quiz.courses.title}</CardDescription>
+                  <CardTitle>{t("quizTake.alreadyCompleted")}</CardTitle>
+                  <CardDescription>{quiz?.courses?.title || ""}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="font-semibold mb-2">Your Previous Result</h3>
+                <h3 className="font-semibold mb-2">{t("quizTake.previousResult")}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg border p-4">
-                    <p className="text-sm text-muted-foreground mb-1">Score</p>
+                    <p className="text-sm text-muted-foreground mb-1">{t("quizTake.score")}</p>
                     <p className="text-2xl font-bold">{previousAttempt.score}%</p>
                   </div>
                   <div className="rounded-lg border p-4">
-                    <p className="text-sm text-muted-foreground mb-1">Status</p>
+                    <p className="text-sm text-muted-foreground mb-1">{t("quizTake.status")}</p>
                     <Badge variant={previousAttempt.passed ? "default" : "destructive"} className="text-sm">
-                      {previousAttempt.passed ? "Passed" : "Failed"}
+                      {previousAttempt.passed ? t("quizTake.passed") : t("quizTake.failed")}
                     </Badge>
                   </div>
                 </div>
               </div>
               <div className="rounded-lg bg-muted p-4">
                 <p className="text-sm text-muted-foreground">
-                  You have already taken this quiz. Retakes are not allowed for this quiz.
-                  {previousAttempt.passed && " You have passed and can continue with the course."}
+                  {t("quizTake.alreadyTakenMessage")}
+                  {previousAttempt.passed && " " + t("quizTake.passedMessage")}
                 </p>
               </div>
               <div className="flex gap-2">
                 <Button onClick={() => navigate("/dashboard")} variant="outline" className="flex-1">
-                  Back to Dashboard
+                  {t("quizTake.backToDashboard")}
                 </Button>
                 {previousAttempt.passed && (
                   <Button onClick={() => navigate("/progress")} className="flex-1">
-                    View Progress
+                    {t("quizTake.viewProgress")}
                   </Button>
                 )}
               </div>
             </CardContent>
           </Card>
         </div>
+      </div>
+    );
+  }
+
+  if (!quiz || questions.length === 0) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>{t("quizTake.notAvailable")}</CardTitle>
+            <CardDescription>{t("quizTake.notAvailableDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate("/dashboard")}>{t("quizTake.backToDashboard")}</Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -499,15 +503,15 @@ export default function QuizTake() {
                     <Card
                       key={qr.questionId}
                       className={`border-2 transition-all duration-300 ${qr.isCorrect
-                          ? "border-green-300 bg-green-50/50 dark:bg-green-950/20 dark:border-green-700"
-                          : "border-red-300 bg-red-50/50 dark:bg-red-950/20 dark:border-red-700"
+                        ? "border-green-300 bg-green-50/50 dark:bg-green-950/20 dark:border-green-700"
+                        : "border-red-300 bg-red-50/50 dark:bg-red-950/20 dark:border-red-700"
                         }`}
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-center gap-3">
                           <div className={`flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0 ${qr.isCorrect
-                              ? "bg-green-100 dark:bg-green-900/50"
-                              : "bg-red-100 dark:bg-red-900/50"
+                            ? "bg-green-100 dark:bg-green-900/50"
+                            : "bg-red-100 dark:bg-red-900/50"
                             }`}>
                             {qr.isCorrect ? (
                               <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />

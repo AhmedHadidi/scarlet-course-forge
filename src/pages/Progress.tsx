@@ -134,36 +134,76 @@ const Progress = () => {
     { title: t("progress.notStarted"), value: notStartedCourses.length, icon: Clock, color: "text-muted-foreground" },
   ];
 
-  const renderCourseCard = (enrollment: Enrollment) => (
-    <Card key={enrollment.id} className="border-border transition-smooth hover:shadow-crimson">
-      <CardHeader>
-        <div className="flex items-start justify-between mb-2">
-          <Badge variant="secondary" className="capitalize">
-            {enrollment.courses.difficulty_level}
-          </Badge>
-          <span className="text-sm font-medium">{enrollment.progress_percentage}%</span>
-        </div>
-        <CardTitle className="text-lg">{enrollment.courses.title}</CardTitle>
-        <CardDescription className="line-clamp-2">
-          {enrollment.courses.description}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ProgressBar value={enrollment.progress_percentage} className="mb-4" />
-        <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-          <span>{enrollment.courses.video_count} {t("progress.videos")}</span>
-          <span>{t("progress.enrolled")} {new Date(enrollment.enrolled_at).toLocaleDateString()}</span>
-        </div>
-        <Button
-          className="w-full"
-          variant="outline"
-          onClick={() => window.location.href = `/courses/${enrollment.courses.id}`}
-        >
-          {t("progress.continueLearning")}
-        </Button>
-      </CardContent>
-    </Card>
-  );
+  const renderCourseCard = (enrollment: Enrollment) => {
+    const isCompleted = enrollment.progress_percentage === 100;
+    const isInProgress = enrollment.progress_percentage > 0 && enrollment.progress_percentage < 100;
+
+    // Determine progress bar color — all stay within the red/crimson family
+    let progressBarColor = "bg-rose-200 dark:bg-rose-900/40"; // not started
+    if (isCompleted) progressBarColor = "bg-emerald-500 dark:bg-emerald-600";
+    else if (isInProgress) progressBarColor = "bg-primary"; // existing crimson
+
+    return (
+      <Card key={enrollment.id} className="border-border transition-smooth hover:shadow-crimson">
+        <CardHeader>
+          <div className="flex items-start justify-between mb-2">
+            <Badge variant="secondary" className="capitalize">
+              {enrollment.courses.difficulty_level}
+            </Badge>
+            <span className={`text-sm font-semibold ${isCompleted ? "text-emerald-600 dark:text-emerald-400" : isInProgress ? "text-primary" : "text-muted-foreground"
+              }`}>
+              {enrollment.progress_percentage}%
+            </span>
+          </div>
+          <CardTitle className="text-lg">{enrollment.courses.title}</CardTitle>
+          <CardDescription className="line-clamp-2">
+            {enrollment.courses.description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Custom progress bar with status color */}
+          <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary mb-1">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${progressBarColor}`}
+              style={{ width: `${enrollment.progress_percentage}%` }}
+            />
+          </div>
+          {/* Status label */}
+          <div className="flex items-center justify-between text-xs mb-4">
+            <span className={`font-medium ${isCompleted ? "text-emerald-600 dark:text-emerald-400" : isInProgress ? "text-primary" : "text-muted-foreground"
+              }`}>
+              {isCompleted ? (
+                <span className="flex items-center gap-1">
+                  <Trophy className="h-3 w-3" /> {t("progress.completed")}
+                </span>
+              ) : isInProgress ? (
+                <span className="flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" /> {t("progress.inProgress")}
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" /> {t("progress.notStarted")}
+                </span>
+              )}
+            </span>
+            <span className="text-muted-foreground">
+              {enrollment.courses.video_count} {t("progress.videos")}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+            <span>{t("progress.enrolled")} {new Date(enrollment.enrolled_at).toLocaleDateString()}</span>
+          </div>
+          <Button
+            className="w-full"
+            variant={isCompleted ? "outline" : "default"}
+            onClick={() => window.location.href = `/courses/${enrollment.courses.id}`}
+          >
+            {isCompleted ? t("progress.completed") : t("progress.continueLearning")}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">

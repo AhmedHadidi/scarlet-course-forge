@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Award, FileText } from "lucide-react";
+import { CheckCircle2, Award, FileText, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
@@ -523,10 +523,34 @@ const CoursePlayer = () => {
     }
   };
 
+  // Check if a video index is accessible (completed or first uncompleted)
+  const isVideoAccessible = useCallback(
+    (index: number) => {
+      const video = videosRef.current[index];
+      if (!video) return false;
+      // Already completed videos can always be revisited
+      if (video.completed) return true;
+      // Current video is always accessible
+      if (index === currentVideoIndex) return true;
+      // First uncompleted video is accessible only if all previous are completed
+      const allPreviousCompleted = videosRef.current
+        .slice(0, index)
+        .every((v) => v.completed);
+      return allPreviousCompleted;
+    },
+    [currentVideoIndex]
+  );
+
   // Switch video with position loading
   const switchToVideo = useCallback(
     async (index: number) => {
       if (index === currentVideoIndex) return;
+
+      // Block navigation to inaccessible videos
+      if (!isVideoAccessible(index)) {
+        toast.error(t("coursePlayer.completeCurrentFirst"));
+        return;
+      }
 
       // Save current engagement before switching
       if (activeVideo?.id) {
@@ -551,7 +575,7 @@ const CoursePlayer = () => {
       setCurrentVideoIndex(index);
       setTimeout(() => setResumeReady(true), 300);
     },
-    [currentVideoIndex, activeVideo, user, ytCurrentTime, resetEngagement]
+    [currentVideoIndex, activeVideo, user, ytCurrentTime, resetEngagement, isVideoAccessible, t]
   );
 
   const handleNextVideo = () => {
@@ -678,7 +702,12 @@ const CoursePlayer = () => {
                   )}
 
                   {currentVideoIndex < videos.length - 1 && (
-                    <Button onClick={handleNextVideo} variant="outline">
+                    <Button
+                      onClick={handleNextVideo}
+                      variant="outline"
+                      disabled={!activeVideo.completed}
+                      title={!activeVideo.completed ? t("coursePlayer.completeCurrentFirst") : ""}
+                    >
                       {t("coursePlayer.nextVideo")}
                     </Button>
                   )}
@@ -740,39 +769,49 @@ const CoursePlayer = () => {
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-4">{t("coursePlayer.courseContent")}</h3>
                 <div className="space-y-2">
-                  {videos.map((video, index) => (
-                    <button
-                      key={video.id}
-                      onClick={() => switchToVideo(index)}
-                      className={`w-full text-left p-3 rounded-lg border transition-colors ${currentVideoIndex === index
-                        ? "bg-primary/10 border-primary"
-                        : "bg-card hover:bg-accent border-border"
-                        }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        {video.completed ? (
-                          <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                        ) : (
-                          <div className="h-5 w-5 rounded-full border-2 border-border flex-shrink-0 mt-0.5" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className={`font-medium text-sm line-clamp-2 ${video.completed || currentVideoIndex === index
-                              ? "text-primary"
-                              : "text-foreground"
-                              }`}
-                          >
-                            {video.title}
-                          </p>
-                          {video.duration_seconds && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {formatDuration(video.duration_seconds)}
-                            </p>
+                  {videos.map((video, index) => {
+                    const accessible = video.completed || index === currentVideoIndex || isVideoAccessible(index);
+                    return (
+                      <button
+                        key={video.id}
+                        onClick={() => switchToVideo(index)}
+                        disabled={!accessible}
+                        className={`w-full text-left p-3 rounded-lg border transition-colors ${currentVideoIndex === index
+                          ? "bg-primary/10 border-primary"
+                          : accessible
+                            ? "bg-card hover:bg-accent border-border"
+                            : "bg-muted/50 border-border/50 opacity-50 cursor-not-allowed"
+                          }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {video.completed ? (
+                            <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                          ) : !accessible ? (
+                            <Lock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                          ) : (
+                            <div className="h-5 w-5 rounded-full border-2 border-border flex-shrink-0 mt-0.5" />
                           )}
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className={`font-medium text-sm line-clamp-2 ${video.completed || currentVideoIndex === index
+                                ? "text-primary"
+                                : accessible
+                                  ? "text-foreground"
+                                  : "text-muted-foreground"
+                                }`}
+                            >
+                              {video.title}
+                            </p>
+                            {video.duration_seconds && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {formatDuration(video.duration_seconds)}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

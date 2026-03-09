@@ -256,7 +256,22 @@
         "failedLoadCourse": "Failed to load course",
         "failedUpdateProgress": "Failed to update progress",
         "notEnrolled": "You are not enrolled in this course",
-        "min": "{{mins}} min"
+        "min": "{{mins}} min",
+        "completeCurrentFirst": "Please complete the current video before moving to the next"
+    },
+    "quizTake": {
+        "alreadyCompleted": "Quiz Already Completed",
+        "previousResult": "Your Previous Result",
+        "score": "Score",
+        "status": "Status",
+        "passed": "Passed",
+        "failed": "Failed",
+        "alreadyTakenMessage": "You have already taken this quiz. Retakes are not allowed for this quiz.",
+        "passedMessage": "You have passed and can continue with the course.",
+        "backToDashboard": "Back to Dashboard",
+        "viewProgress": "View Progress",
+        "notAvailable": "Quiz Not Available",
+        "notAvailableDesc": "This quiz could not be found or has no questions."
     },
     "engagement": {
         "loadingData": "Loading video engagement data...",
@@ -321,10 +336,11 @@
     },
     "pendingApproval": {
         "title": "Account Pending Approval",
-        "message": "Your account is currently under review by an administrator.",
+        "message": "Please wait until your account is approved by your direct supervisor or system administrator.",
         "submessage": "You will be notified by email once your account has been approved.",
         "signOut": "Sign Out",
-        "checkBack": "Please check back later or contact your administrator."
+        "backToLogin": "Back to Login",
+        "checkBack": "Please check back later."
     },
     "notFound": {
         "title": "404",
