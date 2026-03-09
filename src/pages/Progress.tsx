@@ -161,10 +161,15 @@ const Progress = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Custom progress bar with status color */}
-          <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary mb-1">
+          {/* Custom progress bar with clear contrast */}
+          <div className="relative h-4 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 mb-1">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${progressBarColor}`}
+              className={`h-full rounded-full transition-all duration-500 ${isCompleted
+                  ? "bg-emerald-500"
+                  : isInProgress
+                    ? "bg-emerald-500"
+                    : ""
+                }`}
               style={{ width: `${enrollment.progress_percentage}%` }}
             />
           </div>
