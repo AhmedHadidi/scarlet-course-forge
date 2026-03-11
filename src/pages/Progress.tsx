@@ -165,10 +165,10 @@ const Progress = () => {
           <div className="relative h-4 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 mb-1">
             <div
               className={`h-full rounded-full transition-all duration-500 ${isCompleted
+                ? "bg-emerald-500"
+                : isInProgress
                   ? "bg-emerald-500"
-                  : isInProgress
-                    ? "bg-emerald-500"
-                    : ""
+                  : ""
                 }`}
               style={{ width: `${enrollment.progress_percentage}%` }}
             />
@@ -203,7 +203,7 @@ const Progress = () => {
             variant={isCompleted ? "outline" : "default"}
             onClick={() => window.location.href = `/courses/${enrollment.courses.id}`}
           >
-            {isCompleted ? t("progress.completed") : t("progress.continueLearning")}
+            {isCompleted ? t("progress.courseCompleted") : t("progress.continueLearning")}
           </Button>
         </CardContent>
       </Card>

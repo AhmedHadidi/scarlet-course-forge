@@ -128,8 +128,8 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <Progress value={enrollment.progress_percentage} className="mb-4" />
-                    <Button className="w-full" variant="outline" onClick={() => navigate(`/courses/${enrollment.courses.id}`)}>
-                      {t("dashboard.continueLearning")}
+                    <Button className="w-full" variant={enrollment.progress_percentage === 100 ? "outline" : "default"} onClick={() => navigate(`/courses/${enrollment.courses.id}`)}>
+                      {enrollment.progress_percentage === 100 ? t("dashboard.courseCompleted") : t("dashboard.continueLearning")}
                     </Button>
                   </CardContent>
                 </Card>

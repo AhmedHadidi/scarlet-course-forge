@@ -77,6 +77,7 @@
         "noCoursesFound": "لم يتم العثور على دورات تطابق معاييرك.",
         "videos": "فيديوهات",
         "continueLearning": "متابعة التعلم",
+        "courseCompleted": "تم الإكمال",
         "enrollNow": "سجّل الآن",
         "new": "جديد",
         "signUpToEnroll": "سجّل حساباً للالتحاق",
@@ -136,6 +137,7 @@
         "exploreMore": "استكشف المزيد من الدورات",
         "loadingCourses": "جارٍ تحميل الدورات...",
         "continueLearning": "متابعة التعلم",
+        "courseCompleted": "تم الإكمال",
         "enrollNow": "سجّل الآن",
         "new": "جديد"
     },
@@ -203,6 +205,7 @@
         "videos": "فيديوهات",
         "enrolled": "سجّلت في",
         "continueLearning": "متابعة التعلم",
+        "courseCompleted": "تم الإكمال",
         "loading": "جارٍ تحميل التقدم...",
         "noEnrolled": "لا توجد دورات مسجّلة بعد"
     },

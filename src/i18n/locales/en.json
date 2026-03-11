@@ -77,6 +77,7 @@
         "noCoursesFound": "No courses found matching your criteria.",
         "videos": "videos",
         "continueLearning": "Continue Learning",
+        "courseCompleted": "Completed",
         "enrollNow": "Enroll Now",
         "new": "New",
         "signUpToEnroll": "Sign Up to Enroll",
@@ -136,6 +137,7 @@
         "exploreMore": "Explore More Courses",
         "loadingCourses": "Loading courses...",
         "continueLearning": "Continue Learning",
+        "courseCompleted": "Completed",
         "enrollNow": "Enroll Now",
         "new": "New"
     },
@@ -203,6 +205,7 @@
         "videos": "videos",
         "enrolled": "Enrolled",
         "continueLearning": "Continue Learning",
+        "courseCompleted": "Completed",
         "loading": "Loading progress...",
         "noEnrolled": "No enrolled courses yet"
     },
