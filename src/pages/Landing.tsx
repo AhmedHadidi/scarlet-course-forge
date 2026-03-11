@@ -38,6 +38,7 @@ const Landing = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
+  const [completedCourseIds, setCompletedCourseIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [loadingCourses, setLoadingCourses] = useState(true);
@@ -99,10 +100,15 @@ const Landing = () => {
       if (user) {
         const { data: enrollmentsData } = await supabase
           .from("enrollments")
-          .select("course_id")
+          .select("course_id, progress_percentage")
           .eq("user_id", user.id);
 
         setEnrolledCourseIds(enrollmentsData?.map((e) => e.course_id) || []);
+        setCompletedCourseIds(
+          enrollmentsData
+            ?.filter((e) => e.progress_percentage === 100)
+            .map((e) => e.course_id) || []
+        );
       }
     } catch (error) {
       console.error("Error fetching courses:", error);
@@ -340,8 +346,14 @@ const Landing = () => {
                   </CardHeader>
                   <CardFooter>
                     {isEnrolled ? (
-                      <Button className="w-full" onClick={() => navigate(`/courses/${course.id}`)}>
-                        {t("landing.continueLearning")}
+                      <Button
+                        className="w-full"
+                        variant={completedCourseIds.includes(course.id) ? "outline" : "default"}
+                        onClick={() => navigate(`/courses/${course.id}`)}
+                      >
+                        {completedCourseIds.includes(course.id)
+                          ? t("landing.courseCompleted")
+                          : t("landing.continueLearning")}
                       </Button>
                     ) : (
                       <Button className="w-full gradient-crimson" onClick={() => handleEnroll(course.id)}>

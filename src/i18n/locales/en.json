@@ -41,7 +41,7 @@
         "bothLangsRequired": "Both Arabic and English fields are required to publish"
     },
     "nav": {
-        "brand": "MOI AI Learning Hub",
+        "brand": "Thakaa+ Training Platform",
         "courses": "Courses",
         "aiNews": "AI News",
         "myProgress": "My Progress",
@@ -81,12 +81,12 @@
         "enrollNow": "Enroll Now",
         "new": "New",
         "signUpToEnroll": "Sign Up to Enroll",
-        "whyChoose": "Why Choose MOI AI Learning Hub?",
+        "whyChoose": "Why Choose Thakaa+ Training Platform?",
         "whySubtitle": "Everything you need to succeed in your learning journey",
         "startLearning": "Start Learning Today",
         "startLearningSubtitle": "Join our community and unlock your potential with structured learning paths",
         "createAccount": "Create Your Free Account",
-        "footer": "© 2025 MOI AI Learning Hub. All rights reserved.",
+        "footer": "© 2025 Thakaa+ Training Platform. All rights reserved.",
         "feature1Title": "Comprehensive Courses",
         "feature1Desc": "Access a wide range of courses across multiple categories and difficulty levels.",
         "feature2Title": "Earn Certificates",
@@ -101,7 +101,7 @@
         "benefit6": "Mobile-friendly learning experience"
     },
     "auth": {
-        "welcomeTitle": "Welcome to MOI AI Learning Hub",
+        "welcomeTitle": "Welcome to Thakaa+ Training Platform",
         "signInDesc": "Sign in to access your courses and progress",
         "preferencesTitle": "Set Your Preferences",
         "preferencesDesc": "Select AI topics to receive personalized weekly bulletins",

@@ -277,7 +277,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
           background: "#F0FDFA",
         }}
       >
-        <span style={{ fontWeight: 600, color: "#666" }}>MOI AI Learning Hub</span>
+        <span style={{ fontWeight: 600, color: "#666" }}>Thakaa+ Training Platform</span>
         {" · "}
         تم إنشاء هذا التقرير بتاريخ {format(new Date(), "yyyy/MM/dd")} — جميع الحقوق محفوظة
       </div>
