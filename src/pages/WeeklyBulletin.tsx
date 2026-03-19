@@ -101,7 +101,7 @@ const OmanEmblemRed = () => (
 );
 
 const PdfFooter = ({ pageNum }: { pageNum: number }) => (
-  <div style={{ position: 'absolute', bottom: '30px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '11px', borderTop: '1px solid #ddd', paddingTop: '1.5px' }}>
+  <div style={{ position: 'absolute', bottom: '30px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '11px', borderTop: '1px solid #ddd', paddingTop: '2px' }}>
     <div>{pageNum === 3 ? "ندعو كل من يرغب في عرض أعماله في العدد القادم إلى التواصل معنا عبر ayn.apps@omaninfo.om" : "تم تحرير الأخبار باستخدام تطبيقات الذكاء الاصطناعي"}</div>
     {pageNum === 3 ? (
       <div style={{ textAlign: 'left', direction: 'rtl' }}>الصفحة {pageNum} من 3</div>
