@@ -18,6 +18,9 @@ interface Article {
   short_description: string;
   full_content: string;
   image_url: string | null;
+  image_caption: string | null;   // اسم الموظف / تعليق الصورة
+  article_type: string;
+  pdf_position: string | null;    // global_news | ministry_news | employee_work
   categories: Category[];
 }
 interface Bulletin {
@@ -35,252 +38,162 @@ const TEAL = "#0D9488";
 const TEAL_DARK = "#0F766E";
 const TEAL_DARKER = "#115E59";
 
-const CARDS_FIRST_PAGE = 3;
-const CARDS_PER_PAGE = 6;
+const PDF_W = 794;
+const PDF_H = 1123;
 
-/* ── Oman MOI Emblem SVG (khanjar + swords) ── */
-const OmanEmblem = () => (
-  <svg width="48" height="56" viewBox="0 0 100 120" fill="white" xmlns="http://www.w3.org/2000/svg">
-    {/* Simplified Omani national emblem: khanjar (dagger) with crossed swords */}
-    {/* Khanjar handle */}
-    <ellipse cx="50" cy="18" rx="12" ry="8" fill="none" stroke="white" strokeWidth="2.5" />
-    <path d="M50 26 L50 60" stroke="white" strokeWidth="3" strokeLinecap="round" />
-    {/* Khanjar blade curve */}
-    <path d="M50 60 Q42 75 38 90" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-    <path d="M50 60 Q52 75 50 85" stroke="white" strokeWidth="1.5" fill="none" opacity="0.5" />
-    {/* Khanjar sheath */}
-    <path d="M44 28 L56 28 L54 55 L46 55 Z" fill="none" stroke="white" strokeWidth="1.5" />
-    {/* Left sword */}
-    <line x1="20" y1="95" x2="50" y2="25" stroke="white" strokeWidth="2" />
-    <line x1="15" y1="100" x2="25" y2="90" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-    {/* Right sword */}
-    <line x1="80" y1="95" x2="50" y2="25" stroke="white" strokeWidth="2" />
-    <line x1="85" y1="100" x2="75" y2="90" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-    {/* Belt / horizontal band */}
-    <path d="M30 70 Q50 65 70 70" stroke="white" strokeWidth="2" fill="none" />
-    <path d="M30 74 Q50 69 70 74" stroke="white" strokeWidth="1.5" fill="none" />
-  </svg>
+const CommonHeader = ({ titleText, bulletin }: { titleText?: string, bulletin: Bulletin }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px', position: 'relative' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+	{/* يمين: شعار وزارة الإعلام */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <OmanEmblemRed />
+      </div>
+
+      {/* وسط: شعار ذكاء */}
+      <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '-5px' }}>
+        <ZakaaLogo />
+      </div>
+     
+      {/* يسار: رقم الإصدار */}
+      <div style={{ textAlign: 'center', color: '#333', minWidth: '90px', marginTop: '40px' }}>
+         <div style={{ fontSize: '20px', fontWeight: '900', lineHeight: 1, color: '#222' }}>{bulletin.bulletin_number || "—"}</div>
+         <div style={{ fontSize: '10px', marginTop: '3px', fontWeight: '600', color: '#666' }}>
+           {bulletin.title || "نشرة الذكاء الاصطناعي"}
+         </div>
+      </div>
+    </div>
+    
+    <div style={{ textAlign: 'center', marginTop: '15px', borderBottom: titleText ? 'none' : '1px solid transparent' }}>
+       <div style={{ fontSize: '15px', fontWeight: '800', color: '#444', maxWidth: '600px', margin: '0 auto', lineHeight: 1.4 }}>
+         نشرة شهرية من فريق الذكاء الاصطناعي لمتابعة أحدث التطورات في مجال الذكاء الاصطناعي وأخبار الوزارة في هذا المجال
+       </div>
+    </div>
+    
+    {titleText && (
+      <div style={{ textAlign: 'center', marginTop: '10px' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#555', margin: 0 }}>{titleText}</h2>
+      </div>
+    )}
+  </div>
 );
 
-/* ═══════════════════════════════════════════════════════════════════
-   PdfPage — one page of the newsletter (rendered off-screen)
-   ═══════════════════════════════════════════════════════════════════ */
-interface PdfPageProps {
-  bulletin: Bulletin;
-  featuredArticle: Article | null;
-  pageArticles: Article[];
-  editionLabel: string;
-  isFirstPage: boolean;
-}
 
-const PdfPage: React.FC<PdfPageProps> = ({
-  bulletin,
-  featuredArticle,
-  pageArticles,
-  editionLabel,
-  isFirstPage,
-}) => {
-  const PAGE_W = 900;
+/* شعار ذكاء - يستخدم صورة من مجلد public */
+const ZakaaLogo = () => (
+  <div style={{ width: '140px', height: '140px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+    <img
+      src="/logo-zakaa.png"
+      alt="ذكاء"
+      style={{ width: '140px', height: '140px', objectFit: 'contain' }}
+      crossOrigin="anonymous"
+    />
+  </div>
+);
+
+/* شعار وزارة الإعلام - يستخدم صورة من مجلد public */
+const OmanEmblemRed = () => (
+  <img
+    src="/logo-ministry.png"
+    alt="وزارة الإعلام"
+    style={{ width: '140px', height: '140px', objectFit: 'contain' }}
+    crossOrigin="anonymous"
+  />
+);
+
+const PdfFooter = ({ pageNum }: { pageNum: number }) => (
+  <div style={{ position: 'absolute', bottom: '30px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '11px', borderTop: '1px solid #ddd', paddingTop: '1px' }}>
+    <div>{pageNum === 3 ? "ندعو كل من يرغب في عرض أعماله في العدد القادم إلى التواصل معنا عبر ayn.apps@omaninfo.om" : "تم تحرير الأخبار باستخدام تطبيقات الذكاء الاصطناعي"}</div>
+    {pageNum === 3 ? (
+      <div style={{ textAlign: 'left', direction: 'rtl' }}>الصفحة {pageNum} من 3</div>
+    ) : (
+      <>
+        <div style={{ textAlign: 'left', direction: 'rtl' }}>الصفحة {pageNum} من 3</div>
+      </>
+    )}
+  </div>
+);
+
+const PdfFooter3Names = () => (
+  <div style={{ marginTop: 'auto', marginBottom: '15px', paddingTop: '10px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '15px', borderTop: '1px solid #ccc', color: '#555', fontSize: '10px', textAlign: 'center' }}>
+     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>المتابعة العامة</div>
+       <div>أمل بنت علي المسعودي</div>
+     </div>
+     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>محرر المحتوى الإلكتروني</div>
+       <div>معاذ بن يوسف البلوشي</div>
+     </div>
+     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>تصميم الشعار</div>
+       <div>أسامة بن سيف الركواني</div>
+     </div>
+     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>مصمم القالب العام</div>
+       <div>سارة بنت هلال المخيني</div>
+     </div>
+     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>رئيس التحرير</div>
+       <div>أ. أحلام بنت عبدالرب البلوشي</div>
+     </div>
+     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '1px' }}>الإشراف العام</div>
+       <div>المديرية العامة للإعلام الإلكتروني</div>
+     </div>
+  </div>
+);
+
+const NewsCard = ({ article, headerColor, headerHeight = 50, imageHeight = 150, titleFontSize = 14, isFeatured = false }: any) => {
+  if (!article) {
+    return (
+      <div style={{ flex: 1, border: `1px solid ${headerColor}`, background: '#fdfdfd', display: 'flex', flexDirection: 'column', height: '100%', minHeight: isFeatured ? 360 : 320 }}>
+        <div style={{ background: headerColor, height: headerHeight }} />
+      </div>
+    );
+  }
+
+  const shortDesc = article.short_description || article.full_content?.slice(0, 200) || "";
 
   return (
-    <div
-      dir="rtl"
-      style={{
-        width: `${PAGE_W}px`,
-        background: "#ffffff",
-        fontFamily: "'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif",
-        color: "#1a1a1a",
-        lineHeight: 1.6,
-        fontSize: "14px",
-        boxSizing: "border-box",
-      }}
-    >
-      {/* ══ HEADER ═══════════════════════════════════════════════════ */}
-      <div
-        style={{
-          background: `linear-gradient(160deg, ${TEAL} 0%, ${TEAL_DARK} 50%, ${TEAL_DARKER} 100%)`,
-          padding: "24px 36px 22px",
-          color: "#fff",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Decorative shapes */}
-        <div style={{ position: "absolute", top: -40, left: -40, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-        <div style={{ position: "absolute", bottom: -30, right: 80, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
-
-        {/* Top row: edition label (left) — ministry emblem + name (right) */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1, marginBottom: 12 }}>
-          {/* Right side: emblem + ministry name */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <OmanEmblem />
-            <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: 0.5, lineHeight: 1.3 }}>
-              وزارة الإعلام
-            </div>
-          </div>
-          {/* Left side: edition badge */}
-          <div style={{
-            background: "rgba(0,0,0,0.2)",
-            borderRadius: 10,
-            padding: "10px 20px",
-            fontSize: 16,
-            fontWeight: 800,
-            lineHeight: 1.3,
-            textAlign: "center",
-          }}>
-            <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.9 }}>الإصدار</div>
-            <div>{editionLabel}</div>
-          </div>
-        </div>
-
-        {/* Center branding: ذكاء+ */}
-        <div style={{ textAlign: "center", position: "relative", zIndex: 1, margin: "8px 0 6px" }}>
-          <div style={{ fontSize: 52, fontWeight: 900, lineHeight: 1.0, marginBottom: 6, letterSpacing: 2 }}>
-            ذكاء<span style={{ fontSize: 32, verticalAlign: "super", marginRight: 2, color: "#A7F3D0" }}>+</span>
-          </div>
-          <div style={{ fontSize: 12.5, opacity: 0.9, maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>
-            نشرة أسبوعية من فريق الذكاء الاصطناعي لمتابعة أحدث التطورات في مجال الذكاء الاصطناعي
-            <br />وإنجازات الوزارة في هذا المجال
-          </div>
-        </div>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', border: '1px solid #e0e0e0', background: 'white', overflow: 'hidden', height: '100%' }}>
+      {/* Header */}
+      <div style={{
+        background: headerColor,
+        color: 'white',
+        textAlign: 'center',
+        padding: "8px 12px",
+        fontSize: titleFontSize,
+        fontWeight: "bold",
+        minHeight: headerHeight,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        {article.title}
       </div>
-
-      {/* ══ FEATURED ARTICLE (page 1 only) ════════════════════════════ */}
-      {isFirstPage && featuredArticle && (
-        <div style={{ padding: "0" }}>
-          {/* Title banner */}
-          <div
-            style={{
-              background: TEAL,
-              color: "#fff",
-              textAlign: "center",
-              padding: "14px 32px",
-              fontSize: 19,
-              fontWeight: 800,
-              lineHeight: 1.5,
-            }}
-          >
-            {featuredArticle.title}
-          </div>
-
-          {/* Featured image */}
-          {featuredArticle.image_url && (
-            <div style={{ overflow: "hidden" }}>
-              <img
-                src={featuredArticle.image_url}
-                alt=""
-                crossOrigin="anonymous"
-                style={{ width: "100%", height: 300, objectFit: "cover", display: "block" }}
-              />
-            </div>
-          )}
-
-          {/* Description text */}
-          <p
-            style={{
-              fontSize: 13,
-              color: "#444",
-              lineHeight: 1.9,
-              margin: "0",
-              padding: "14px 36px 6px",
-              textAlign: "center",
-            }}
-          >
-            {featuredArticle.short_description || featuredArticle.full_content?.slice(0, 250)}
-          </p>
+      {/* Image */}
+      {article.image_url && (
+        <div style={{ position: 'relative' }}>
+          <img src={article.image_url} style={{ width: '100%', height: imageHeight, objectFit: 'cover', display: 'block' }} crossOrigin="anonymous" />
         </div>
       )}
-
-      {/* ══ ARTICLE CARDS GRID ══════════════════════════════════════ */}
-      {pageArticles.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            gap: 14,
-            padding: "16px 24px 20px",
-            flexWrap: "wrap",
-            justifyContent: "center",
-          }}
-        >
-          {pageArticles.map((article) => {
-            const colW = pageArticles.length <= 2
-              ? (pageArticles.length === 1 ? "100%" : "48%")
-              : "31%";
-            return (
-              <div
-                key={article.id}
-                style={{
-                  width: colW,
-                  background: "#F0FDFA",
-                  borderRadius: 14,
-                  overflow: "hidden",
-                  border: "1px solid #CCF0EB",
-                  boxSizing: "border-box",
-                }}
-              >
-                {/* Card title bar */}
-                <div style={{
-                  background: TEAL_DARKER,
-                  color: "#fff",
-                  textAlign: "center",
-                  padding: "10px 12px",
-                  fontSize: 13,
-                  fontWeight: 800,
-                  lineHeight: 1.5,
-                  minHeight: 46,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
-                  {article.title}
-                </div>
-                {/* Card image — uses the article's image */}
-                {article.image_url && (
-                  <img
-                    src={article.image_url}
-                    alt=""
-                    crossOrigin="anonymous"
-                    style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }}
-                  />
-                )}
-                {/* Card description */}
-                <div style={{ padding: "10px 14px 14px" }}>
-                  <p
-                    style={{
-                      fontSize: 11,
-                      color: "#444",
-                      lineHeight: 1.8,
-                      margin: 0,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 5,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {article.short_description || article.full_content?.slice(0, 150)}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ══ FOOTER ════════════════════════════════════════════════════ */}
-      <div
-        style={{
-          borderTop: "2px solid #E0F2F1",
-          padding: "10px 32px",
-          textAlign: "center",
-          fontSize: 10,
-          color: "#999",
-          background: "#F0FDFA",
-        }}
-      >
-        <span style={{ fontWeight: 600, color: "#666" }}>Thakaa+ Training Platform</span>
-        {" · "}
-        تم إنشاء هذا التقرير بتاريخ {format(new Date(), "yyyy/MM/dd")} — جميع الحقوق محفوظة
+      {/* Content */}
+      <div style={{ padding: "10px 12px", fontSize: isFeatured ? '13px' : '11px', color: '#444', textAlign: 'justify', lineHeight: 1.65, flex: 1, overflow: 'hidden' }}>
+        <p style={{ margin: 0 }}>
+           {shortDesc}
+        </p>
       </div>
+    </div>
+  );
+};
+
+const ImageCard = ({ article, authorName }: any) => {
+  if (!article) return <div style={{ flex: 1, minHeight: 300, background: '#f9f9f9', border: '1px solid #ddd', borderRadius: 8 }} />;
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+       {article.image_url && (
+         <img src={article.image_url} style={{ width: '100%', height: '300px', borderRadius: '8px', objectFit: 'cover', display: 'block' }} crossOrigin="anonymous"/>
+       )}
+       <div style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '15px', color: '#222' }}>{authorName || article.title}</div>
     </div>
   );
 };
@@ -300,52 +213,21 @@ const WeeklyBulletin = () => {
   /* ══════════════════════════════════════════════════════════════════
      EXPORT: Render each page in the off-screen container → html2canvas → jsPDF
      ══════════════════════════════════════════════════════════════════ */
-  const [pdfPages, setPdfPages] = useState<{ featuredArticle: Article | null; pageArticles: Article[]; isFirstPage: boolean }[]>([]);
-
   const exportAsPdf = useCallback(async () => {
-    if (!bulletin || articles.length === 0 || !pdfContainerRef.current) return;
+    if (!bulletin || !pdfContainerRef.current) return;
     setExporting(true);
 
     try {
-      // ── Build page data ────────────────────────────────────────
-      const featured = articles[0];
-      const rest = articles.slice(1);
-      const pages: typeof pdfPages = [];
-
-      // Page 1: featured article + first N cards
-      const firstPageCards = rest.slice(0, CARDS_FIRST_PAGE);
-      pages.push({ featuredArticle: featured, pageArticles: firstPageCards, isFirstPage: true });
-
-      // Remaining pages
-      let offset = CARDS_FIRST_PAGE;
-      while (offset < rest.length) {
-        pages.push({
-          featuredArticle: null,
-          pageArticles: rest.slice(offset, offset + CARDS_PER_PAGE),
-          isFirstPage: false,
-        });
-        offset += CARDS_PER_PAGE;
-      }
-
-      // Trigger React render of PdfPage components
-      setPdfPages(pages);
-
-      // Wait for render + images
-      await document.fonts.ready;
-      await new Promise(r => setTimeout(r, 800));
-
       const container = pdfContainerRef.current;
       container.style.display = "block";
 
-      await new Promise(r => setTimeout(r, 500));
+      await document.fonts.ready;
+      await new Promise(r => setTimeout(r, 1500)); // wait for images and fonts to load
 
       const pageElements = container.querySelectorAll<HTMLDivElement>('[data-pdf-page]');
 
       const pdfW = 210; // A4 mm
       const pdfH = 297;
-      const margin = 4;
-      const contentW = pdfW - margin * 2;
-
       const pdf = new jsPDF("p", "mm", "a4");
 
       for (let i = 0; i < pageElements.length; i++) {
@@ -357,28 +239,24 @@ const WeeklyBulletin = () => {
           allowTaint: true,
           logging: false,
           backgroundColor: "#ffffff",
-          width: pageEl.scrollWidth,
-          windowWidth: pageEl.scrollWidth,
+          width: PDF_W,
+          height: PDF_H,
+          windowWidth: PDF_W,
         });
 
-        const imgData = canvas.toDataURL("image/jpeg", 0.92);
-        const contentH = (canvas.height * contentW) / canvas.width;
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
         if (i > 0) pdf.addPage();
-
-        const yOffset = contentH < pdfH - margin * 2
-          ? margin + (pdfH - margin * 2 - contentH) / 2
-          : margin;
-
-        pdf.addImage(imgData, "JPEG", margin, Math.max(margin, yOffset), contentW, contentH);
+        pdf.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
       }
 
       container.style.display = "none";
-      setPdfPages([]);
-
-      pdf.save(`${bulletin.bulletin_number}.pdf`);
+      pdf.save(`${bulletin?.bulletin_number || "bulletin"}.pdf`);
     } catch (err) {
       console.error("PDF export error:", err);
+      if (pdfContainerRef.current) {
+        pdfContainerRef.current.style.display = "none";
+      }
     } finally {
       setExporting(false);
     }
@@ -403,12 +281,6 @@ const WeeklyBulletin = () => {
       if (!bulletinData) { navigate("/dashboard"); return; }
       setBulletin(bulletinData);
 
-      const { data: prefsData } = await supabase
-        .from("user_category_preferences").select("category_id").eq("user_id", user!.id);
-      const preferredCategoryIdSet = new Set(
-        (prefsData || []).map(p => normalizeId(p.category_id)).filter(Boolean)
-      );
-
       const { data: articlesData, error: articlesError } = await supabase
         .from("news_articles").select("*").eq("bulletin_id", id).eq("is_published", true)
         .order("created_at", { ascending: false });
@@ -422,16 +294,18 @@ const WeeklyBulletin = () => {
           const articleCategories = (categoryLinks || [])
             .map(link => allCategories?.find(c => c.id === link.category_id))
             .filter(Boolean) as Category[];
-          return { ...article, categories: articleCategories };
+          return {
+            ...article,
+            article_type: (article as any).article_type || 'standard',
+            pdf_position: (article as any).pdf_position || null,
+            image_caption: (article as any).image_caption || null,
+            categories: articleCategories,
+          };
         })
       );
 
-      const filteredArticles = preferredCategoryIdSet.size
-        ? articlesWithCategories.filter(a =>
-          a.categories.some(cat => preferredCategoryIdSet.has(normalizeId(cat.id)))
-        )
-        : articlesWithCategories;
-      setArticles(filteredArticles);
+      // في النشرة الـ PDF تظهر جميع الأخبار التابعة للإصدار بغض النظر عن تفضيلات المستخدم
+      setArticles(articlesWithCategories);
     } catch (error) {
       console.error("Error fetching bulletin:", error);
     } finally {
@@ -456,8 +330,11 @@ const WeeklyBulletin = () => {
   }
 
   const formattedDate = format(new Date(bulletin.week_start_date), "MMMM d, yyyy");
-  const featuredArticle = articles[0];
-  const restArticles = articles.slice(1);
+
+  // ─── تصفية الأخبار حسب صفحة PDF ───
+  const globalNewsArticles  = articles.filter(a => a.pdf_position === 'global_news');
+  const ministryNewsArticles = articles.filter(a => a.pdf_position === 'ministry_news');
+  const employeeWorkArticles = articles.filter(a => a.pdf_position === 'employee_work');
 
   /* ═══════════════════════════════════════════════════════════════════
      RENDER
@@ -540,19 +417,63 @@ const WeeklyBulletin = () => {
           position: "absolute",
           left: "-9999px",
           top: 0,
+          fontFamily: "'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif",
         }}
       >
-        {pdfPages.map((page, idx) => (
-          <div key={idx} data-pdf-page style={{ marginBottom: 20 }}>
-            <PdfPage
-              bulletin={bulletin}
-              featuredArticle={page.featuredArticle}
-              pageArticles={page.pageArticles}
-              editionLabel={bulletin.bulletin_number}
-              isFirstPage={page.isFirstPage}
-            />
+        {/* Page 1: صفحة الأخبار العالمية */}
+        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '40px 45px', boxSizing: 'border-box' }} dir="rtl">
+          <CommonHeader bulletin={bulletin} titleText="أخبار عالمية" />
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+            {/* الخبر الرئيسي */}
+            <div style={{ height: '380px' }}>
+              <NewsCard article={globalNewsArticles[0]} headerColor="#1A67B5" headerHeight={55} imageHeight={180} titleFontSize={20} isFeatured={true} />
+            </div>
+            {/* أخبار صغيرة */}
+            <div style={{ display: 'flex', gap: '15px', height: '340px' }}>
+              <NewsCard article={globalNewsArticles[1]} headerColor="#59A6A8" headerHeight={45} imageHeight={130} titleFontSize={13} />
+              <NewsCard article={globalNewsArticles[2]} headerColor="#22589D" headerHeight={45} imageHeight={130} titleFontSize={13} />
+              <NewsCard article={globalNewsArticles[3]} headerColor="#59A6A8" headerHeight={45} imageHeight={130} titleFontSize={13} />
+            </div>
           </div>
-        ))}
+          <PdfFooter pageNum={1} />
+        </div>
+
+        {/* Page 2: صفحة أخبار الوزارة */}
+        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '40px 45px', boxSizing: 'border-box' }} dir="rtl">
+          <CommonHeader bulletin={bulletin} titleText="أخبار الوزارة" />
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+            {/* صف علوي */}
+            <div style={{ display: 'flex', gap: '20px', height: '360px' }}>
+              <NewsCard article={ministryNewsArticles[0]} headerColor="#1A67B5" headerHeight={50} imageHeight={160} titleFontSize={14} />
+              <NewsCard article={ministryNewsArticles[1]} headerColor="#1A67B5" headerHeight={50} imageHeight={160} titleFontSize={14} />
+            </div>
+            {/* صف سفلي */}
+            <div style={{ display: 'flex', gap: '15px', height: '360px' }}>
+              <NewsCard article={ministryNewsArticles[2]} headerColor="#59A6A8" headerHeight={50} imageHeight={140} titleFontSize={14} />
+              <NewsCard article={ministryNewsArticles[3]} headerColor="#22589D" headerHeight={50} imageHeight={140} titleFontSize={14} />
+              <NewsCard article={ministryNewsArticles[4]} headerColor="#59A6A8" headerHeight={50} imageHeight={140} titleFontSize={14} />
+            </div>
+          </div>
+          <PdfFooter pageNum={2} />
+        </div>
+
+        {/* Page 3: صفحة نماذج من أعمال الموظفين */}
+        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '40px 45px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} dir="rtl">
+          <CommonHeader bulletin={bulletin} titleText="نماذج من أعمال توليد الصور لموظفي الوزارة" />
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '10px' }}>
+            {/* يستخدم image_caption كاسم الموظف */}
+            <ImageCard article={employeeWorkArticles[0]} authorName={employeeWorkArticles[0]?.image_caption || employeeWorkArticles[0]?.title} />
+            <ImageCard article={employeeWorkArticles[1]} authorName={employeeWorkArticles[1]?.image_caption || employeeWorkArticles[1]?.title} />
+            <ImageCard article={employeeWorkArticles[2]} authorName={employeeWorkArticles[2]?.image_caption || employeeWorkArticles[2]?.title} />
+            <ImageCard article={employeeWorkArticles[3]} authorName={employeeWorkArticles[3]?.image_caption || employeeWorkArticles[3]?.title} />
+          </div>
+
+          <PdfFooter3Names />
+          <PdfFooter pageNum={3} />
+        </div>
       </div>
     </>
   );

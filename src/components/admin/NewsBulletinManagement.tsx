@@ -218,14 +218,22 @@ export const NewsBulletinManagement = () => {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="bulletin_number">Bulletin ID</Label>
-                <Input
-                  id="bulletin_number"
-                  value={formData.bulletin_number}
-                  onChange={(e) => setFormData({ ...formData, bulletin_number: e.target.value })}
-                  placeholder="e.g., AI-2024-W01"
-                  required
-                />
+                <Label htmlFor="bulletin_number">
+                  رقم الإصدار <span className="text-muted-foreground text-xs">(مثال: العدد 12)</span>
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="bulletin_number"
+                    value={formData.bulletin_number}
+                    onChange={(e) => setFormData({ ...formData, bulletin_number: e.target.value })}
+                    placeholder="مثال: العدد 12 — أو: AI-2025-W12"
+                    className="font-semibold"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  هذا الرقم سيظهر كرقم الإصدار على ملف PDF والنشرة الإلكترونية
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -291,9 +299,9 @@ export const NewsBulletinManagement = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Bulletin ID</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Week</TableHead>
+              <TableHead>رقم الإصدار</TableHead>
+              <TableHead>العنوان</TableHead>
+              <TableHead>الأسبوع</TableHead>
               <TableHead>Articles</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[150px]">Actions</TableHead>
