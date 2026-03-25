@@ -101,7 +101,7 @@ const OmanEmblemRed = () => (
 );
 
 const PdfFooter = ({ pageNum }: { pageNum: number }) => (
-  <div style={{ position: 'absolute', bottom: '30px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '11px', borderTop: '1px solid #ddd', paddingTop: '2px' }}>
+  <div style={{ position: 'absolute', bottom: '30px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '11px', paddingTop: '2px' }}>
     <div>{pageNum === 3 ? "ندعو كل من يرغب في عرض أعماله في العدد القادم إلى التواصل معنا عبر ayn.apps@omaninfo.om" : "تم تحرير الأخبار باستخدام تطبيقات الذكاء الاصطناعي"}</div>
     {pageNum === 3 ? (
       <div style={{ textAlign: 'left', direction: 'rtl' }}>الصفحة {pageNum} من 3</div>
@@ -114,30 +114,30 @@ const PdfFooter = ({ pageNum }: { pageNum: number }) => (
 );
 
 const PdfFooter3Names = () => (
-  <div style={{ marginTop: 'auto', marginBottom: '15px', paddingTop: '10px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '15px', borderTop: '1px solid #ccc', color: '#555', fontSize: '10px', textAlign: 'center' }}>
+  <div style={{ marginTop: 'auto', marginBottom: 'auto', padding: '10px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px', border: '1px solid #ccc', borderRadius: '8px' , color: '#555', fontSize: '10px', textAlign: 'center' }}>
      <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
-       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>المتابعة العامة</div>
-       <div>أمل بنت علي المسعودي</div>
+       <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>الإشراف العام</div>
+       <div>المديرية العامة للإعلام الإلكتروني</div>
      </div>
-     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
-       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>محرر المحتوى الإلكتروني</div>
-       <div>معاذ بن يوسف البلوشي</div>
-     </div>
-     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
-       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>تصميم الشعار</div>
-       <div>أسامة بن سيف الركواني</div>
-     </div>
-     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
-       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>مصمم القالب العام</div>
-       <div>سارة بنت هلال المخيني</div>
-     </div>
-     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
-       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>رئيس التحرير</div>
+	 <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>رئيس التحرير</div>
        <div>أ. أحلام بنت عبدالرب البلوشي</div>
      </div>
-     <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
-       <div style={{ fontWeight: 'bold', marginBottom: '1px' }}>الإشراف العام</div>
-       <div>المديرية العامة للإعلام الإلكتروني</div>
+	 <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>مصمم القالب العام</div>
+       <div>سارة بنت هلال المخيني</div>
+     </div>
+	 <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>تصميم الشعار</div>
+       <div>أسامة بن سيف الركواني</div>
+     </div>
+	 <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>محرر المحتوى الإلكتروني</div>
+       <div>معاذ بن يوسف البلوشي</div>
+     </div>
+	 <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
+       <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>المتابعة العامة</div>
+       <div>أمل بنت علي المسعودي</div>
      </div>
   </div>
 );
@@ -189,11 +189,11 @@ const NewsCard = ({ article, headerColor, headerHeight = 50, imageHeight = 150, 
 const ImageCard = ({ article, authorName }: any) => {
   if (!article) return <div style={{ flex: 1, minHeight: 300, background: '#f9f9f9', border: '1px solid #ddd', borderRadius: 8 }} />;
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0px' }}>
        {article.image_url && (
-         <img src={article.image_url} style={{ width: '100%', height: '300px', borderRadius: '8px', objectFit: 'cover', display: 'block' }} crossOrigin="anonymous"/>
+         <img src={article.image_url} style={{ width: '100%', height: '330px', borderRadius: '8px', objectFit: 'cover', display: 'block' }} crossOrigin="anonymous"/>
        )}
-       <div style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '15px', color: '#222' }}>{authorName || article.title}</div>
+       <div style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '13px', color: '#222' }}>{authorName || article.title}</div>
     </div>
   );
 };
@@ -202,7 +202,8 @@ const ImageCard = ({ article, authorName }: any) => {
 const WeeklyBulletin = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, userRole } = useAuth();
+  const isAdmin = userRole === 'admin';
   const [bulletin, setBulletin] = useState<Bulletin | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,29 +212,24 @@ const WeeklyBulletin = () => {
   const pdfContainerRef = useRef<HTMLDivElement>(null);
 
   /* ══════════════════════════════════════════════════════════════════
-     EXPORT: Render each page in the off-screen container → html2canvas → jsPDF
+     EXPORT: html2canvas → jsPDF
      ══════════════════════════════════════════════════════════════════ */
   const exportAsPdf = useCallback(async () => {
     if (!bulletin || !pdfContainerRef.current) return;
     setExporting(true);
-
     try {
       const container = pdfContainerRef.current;
       container.style.display = "block";
-
       await document.fonts.ready;
-      await new Promise(r => setTimeout(r, 1500)); // wait for images and fonts to load
+      await new Promise(r => setTimeout(r, 1500));
 
       const pageElements = container.querySelectorAll<HTMLDivElement>('[data-pdf-page]');
-
-      const pdfW = 210; // A4 mm
+      const pdfW = 210;
       const pdfH = 297;
-      const pdf = new jsPDF("p", "mm", "a4");
+      const doc = new jsPDF("p", "mm", "a4");
 
       for (let i = 0; i < pageElements.length; i++) {
-        const pageEl = pageElements[i];
-
-        const canvas = await html2canvas(pageEl, {
+        const canvas = await html2canvas(pageElements[i], {
           scale: 2,
           useCORS: true,
           allowTaint: true,
@@ -243,20 +239,16 @@ const WeeklyBulletin = () => {
           height: PDF_H,
           windowWidth: PDF_W,
         });
-
         const imgData = canvas.toDataURL("image/jpeg", 0.95);
-
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
+        if (i > 0) doc.addPage();
+        doc.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
       }
 
       container.style.display = "none";
-      pdf.save(`${bulletin?.bulletin_number || "bulletin"}.pdf`);
+      doc.save(`${bulletin.bulletin_number || "bulletin"}.pdf`);
     } catch (err) {
       console.error("PDF export error:", err);
-      if (pdfContainerRef.current) {
-        pdfContainerRef.current.style.display = "none";
-      }
+      if (pdfContainerRef.current) pdfContainerRef.current.style.display = "none";
     } finally {
       setExporting(false);
     }
@@ -377,7 +369,9 @@ const WeeklyBulletin = () => {
             <div className="text-center py-12 text-muted-foreground">No articles in this bulletin yet.</div>
           ) : (
             <div className="grid gap-6">
-              {articles.map(article => (
+              {articles
+                .filter(article => isAdmin || article.pdf_position !== 'employee_work')
+                .map(article => (
                 <div key={article.id} className="border border-border/50 rounded-xl overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex flex-col md:flex-row">
                     {article.image_url && (
@@ -409,7 +403,7 @@ const WeeklyBulletin = () => {
         </main>
       </div>
 
-      {/* ░░░ OFF-SCREEN PDF PAGES (captured by html2canvas) ░░░░░░░ */}
+      {/* ░░░ OFF-SCREEN PDF PAGES ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ */}
       <div
         ref={pdfContainerRef}
         style={{
@@ -420,16 +414,13 @@ const WeeklyBulletin = () => {
           fontFamily: "'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif",
         }}
       >
-        {/* Page 1: صفحة الأخبار العالمية */}
-        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '40px 45px', boxSizing: 'border-box' }} dir="rtl">
+        {/* Page 1: الأخبار العالمية */}
+        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '20px 30px', boxSizing: 'border-box' }} dir="rtl">
           <CommonHeader bulletin={bulletin} titleText="أخبار عالمية" />
-          
           <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-            {/* الخبر الرئيسي */}
             <div style={{ height: '380px' }}>
               <NewsCard article={globalNewsArticles[0]} headerColor="#1A67B5" headerHeight={55} imageHeight={180} titleFontSize={20} isFeatured={true} />
             </div>
-            {/* أخبار صغيرة */}
             <div style={{ display: 'flex', gap: '15px', height: '340px' }}>
               <NewsCard article={globalNewsArticles[1]} headerColor="#59A6A8" headerHeight={45} imageHeight={130} titleFontSize={13} />
               <NewsCard article={globalNewsArticles[2]} headerColor="#22589D" headerHeight={45} imageHeight={130} titleFontSize={13} />
@@ -439,17 +430,14 @@ const WeeklyBulletin = () => {
           <PdfFooter pageNum={1} />
         </div>
 
-        {/* Page 2: صفحة أخبار الوزارة */}
-        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '40px 45px', boxSizing: 'border-box' }} dir="rtl">
+        {/* Page 2: أخبار الوزارة */}
+        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '20px 30px', boxSizing: 'border-box' }} dir="rtl">
           <CommonHeader bulletin={bulletin} titleText="أخبار الوزارة" />
-          
           <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-            {/* صف علوي */}
             <div style={{ display: 'flex', gap: '20px', height: '360px' }}>
               <NewsCard article={ministryNewsArticles[0]} headerColor="#1A67B5" headerHeight={50} imageHeight={160} titleFontSize={14} />
               <NewsCard article={ministryNewsArticles[1]} headerColor="#1A67B5" headerHeight={50} imageHeight={160} titleFontSize={14} />
             </div>
-            {/* صف سفلي */}
             <div style={{ display: 'flex', gap: '15px', height: '360px' }}>
               <NewsCard article={ministryNewsArticles[2]} headerColor="#59A6A8" headerHeight={50} imageHeight={140} titleFontSize={14} />
               <NewsCard article={ministryNewsArticles[3]} headerColor="#22589D" headerHeight={50} imageHeight={140} titleFontSize={14} />
@@ -459,18 +447,15 @@ const WeeklyBulletin = () => {
           <PdfFooter pageNum={2} />
         </div>
 
-        {/* Page 3: صفحة نماذج من أعمال الموظفين */}
-        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '40px 45px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} dir="rtl">
+        {/* Page 3: نماذج أعمال الموظفين */}
+        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '20px 30px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} dir="rtl">
           <CommonHeader bulletin={bulletin} titleText="نماذج من أعمال توليد الصور لموظفي الوزارة" />
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '10px' }}>
-            {/* يستخدم image_caption كاسم الموظف */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '2px' }}>
             <ImageCard article={employeeWorkArticles[0]} authorName={employeeWorkArticles[0]?.image_caption || employeeWorkArticles[0]?.title} />
             <ImageCard article={employeeWorkArticles[1]} authorName={employeeWorkArticles[1]?.image_caption || employeeWorkArticles[1]?.title} />
             <ImageCard article={employeeWorkArticles[2]} authorName={employeeWorkArticles[2]?.image_caption || employeeWorkArticles[2]?.title} />
             <ImageCard article={employeeWorkArticles[3]} authorName={employeeWorkArticles[3]?.image_caption || employeeWorkArticles[3]?.title} />
           </div>
-
           <PdfFooter3Names />
           <PdfFooter pageNum={3} />
         </div>
