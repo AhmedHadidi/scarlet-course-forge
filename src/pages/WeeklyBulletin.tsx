@@ -57,21 +57,21 @@ const CommonHeader = ({ titleText, bulletin }: { titleText?: string, bulletin: B
       {/* يسار: رقم الإصدار */}
       <div style={{ textAlign: 'center', color: '#333', minWidth: '90px', marginTop: '40px' }}>
          <div style={{ fontSize: '20px', fontWeight: '900', lineHeight: 1, color: '#222' }}>{bulletin.bulletin_number || "—"}</div>
-         <div style={{ fontSize: '10px', marginTop: '3px', fontWeight: '600', color: '#666' }}>
+         <div style={{ fontSize: '10px', marginTop: '3px', fontWeight: '600', color: '#444' }}>
            {bulletin.title || "نشرة الذكاء الاصطناعي"}
          </div>
       </div>
     </div>
     
     <div style={{ textAlign: 'center', marginTop: '15px', borderBottom: titleText ? 'none' : '1px solid transparent' }}>
-       <div style={{ fontSize: '15px', fontWeight: '800', color: '#444', maxWidth: '600px', margin: '0 auto', lineHeight: 1.4 }}>
+       <div style={{ fontSize: '15px', fontWeight: '800', color: '#222', maxWidth: '600px', margin: '0 auto', lineHeight: 1.4 }}>
          نشرة شهرية من فريق الذكاء الاصطناعي لمتابعة أحدث التطورات في مجال الذكاء الاصطناعي وأخبار الوزارة في هذا المجال
        </div>
     </div>
     
     {titleText && (
       <div style={{ textAlign: 'center', marginTop: '10px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#555', margin: 0 }}>{titleText}</h2>
+        <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#222', margin: 0 }}>{titleText}</h2>
       </div>
     )}
   </div>
@@ -101,7 +101,7 @@ const OmanEmblemRed = () => (
 );
 
 const PdfFooter = ({ pageNum }: { pageNum: number }) => (
-  <div style={{ position: 'absolute', bottom: '30px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '11px', paddingTop: '2px' }}>
+  <div style={{ position: 'absolute', bottom: '30px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', color: '#222', fontSize: '11px', paddingTop: '2px' }}>
     <div>{pageNum === 3 ? "ندعو كل من يرغب في عرض أعماله في العدد القادم إلى التواصل معنا عبر ayn.apps@omaninfo.om" : "تم تحرير الأخبار باستخدام تطبيقات الذكاء الاصطناعي"}</div>
     {pageNum === 3 ? (
       <div style={{ textAlign: 'left', direction: 'rtl' }}>الصفحة {pageNum} من 3</div>
@@ -114,7 +114,7 @@ const PdfFooter = ({ pageNum }: { pageNum: number }) => (
 );
 
 const PdfFooter3Names = () => (
-  <div style={{ marginTop: 'auto', marginBottom: 'auto', padding: '10px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px', border: '1px solid #ccc', borderRadius: '8px' , color: '#555', fontSize: '10px', textAlign: 'center' }}>
+  <div style={{ marginTop: 'auto', marginBottom: 'auto', padding: '10px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px', border: '1px solid #ccc', borderRadius: '8px' , color: '#222', fontSize: '10px', textAlign: 'center' }}>
      <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>الإشراف العام</div>
        <div>المديرية العامة للإعلام الإلكتروني</div>
@@ -177,7 +177,7 @@ const NewsCard = ({ article, headerColor, headerHeight = 50, imageHeight = 150, 
         </div>
       )}
       {/* Content */}
-      <div style={{ padding: "10px 12px", fontSize: isFeatured ? '13px' : '11px', color: '#444', textAlign: 'justify', lineHeight: 1.65, flex: 1, overflow: 'hidden' }}>
+      <div style={{ padding: "10px 12px", fontSize: isFeatured ? '13px' : '11px', color: '#222', textAlign: 'justify', lineHeight: 1.65, flex: 1, overflow: 'hidden' }}>
         <p style={{ margin: 0 }}>
            {shortDesc}
         </p>
@@ -411,7 +411,7 @@ const WeeklyBulletin = () => {
           position: "absolute",
           left: "-9999px",
           top: 0,
-          fontFamily: "'Segoe UI', Tahoma, 'Noto Sans Arabic', Arial, sans-serif",
+          fontFamily: "'Noto Sans Arabic', Tahoma, 'Segoe UI', Arial, sans-serif",
         }}
       >
         {/* Page 1: الأخبار العالمية */}

@@ -2,19 +2,56 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Restrict CORS to known origins only — never use '*' in production
+const ALLOWED_ORIGINS = [
+  "https://wcmfpcejlldihchyaavn.lovable.app",
+  "https://scarlet-course-forge.lovable.app",
+  "http://localhost:8080",
+  "http://localhost:5173",
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+
+// UUID v4 validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+// HTML escape function to prevent XSS in email templates
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 interface BulletinEmailRequest {
   bulletinId: string;
 }
 
 serve(async (req: Request): Promise<Response> => {
+  const origin = req.headers.get("Origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Only allow POST
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -29,10 +66,19 @@ serve(async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const resend = new Resend(resendApiKey);
 
-    const { bulletinId }: BulletinEmailRequest = await req.json();
+    const body = await req.json();
+    const bulletinId: string = body?.bulletinId;
 
     if (!bulletinId) {
       throw new Error("Bulletin ID is required");
+    }
+
+    // Validate UUID format to prevent SQL injection / unexpected query behavior
+    if (!UUID_REGEX.test(bulletinId)) {
+      return new Response(JSON.stringify({ error: "Invalid bulletin ID format" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     console.log(`Processing bulletin: ${bulletinId}`);
@@ -153,12 +199,19 @@ serve(async (req: Request): Promise<Response> => {
         .map((article) => {
           const artCats = articleCategoryMap.get(article.id) || [];
           const catNames = artCats.map((id) => categoryMap.get(id)).filter(Boolean).join(", ");
+          // Escape all user-generated content to prevent XSS
+          const safeTitle = escapeHtml(article.title || "");
+          const safeDescription = escapeHtml(article.short_description || "");
+          const safeCatNames = escapeHtml(catNames);
+          // Validate image URL - only allow http(s) URLs
+          const safeImageUrl = article.image_url && /^https?:\/\//i.test(article.image_url) 
+            ? article.image_url : null;
           return `
             <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
-              ${article.image_url ? `<img src="${article.image_url}" alt="${article.title}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;">` : ""}
-              <h3 style="margin: 0 0 8px 0; color: #333;">${article.title}</h3>
-              <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">${article.short_description}</p>
-              <span style="display: inline-block; background: #e0e0e0; padding: 2px 8px; border-radius: 4px; font-size: 12px; color: #555;">${catNames}</span>
+              ${safeImageUrl ? `<img src="${safeImageUrl}" alt="${safeTitle}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;">` : ""}
+              <h3 style="margin: 0 0 8px 0; color: #333;">${safeTitle}</h3>
+              <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">${safeDescription}</p>
+              <span style="display: inline-block; background: #e0e0e0; padding: 2px 8px; border-radius: 4px; font-size: 12px; color: #555;">${safeCatNames}</span>
             </div>
           `;
         })
@@ -166,17 +219,19 @@ serve(async (req: Request): Promise<Response> => {
 
       const bulletinUrl = `https://wcmfpcejlldihchyaavn.lovable.app/bulletin/${bulletinId}`;
 
+      const safeBulletinTitle = escapeHtml(bulletin.title || "");
+      const safeBulletinNumber = escapeHtml(bulletin.bulletin_number || "");
       const emailHtml = `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
-          <title>${bulletin.title}</title>
+          <title>${safeBulletinTitle}</title>
         </head>
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #c71b1b, #8b0000); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">📰 ${bulletin.title}</h1>
-            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">${bulletin.bulletin_number}</p>
+            <h1 style="color: white; margin: 0; font-size: 24px;">📰 ${safeBulletinTitle}</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">${safeBulletinNumber}</p>
           </div>
           
           <p style="color: #666; margin-bottom: 20px;">
@@ -232,9 +287,13 @@ serve(async (req: Request): Promise<Response> => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
+    // Log full error server-side but only expose safe message to client
     console.error("Error sending bulletin emails:", error);
+    const safeMessage = error.message?.includes("not configured") || error.message?.includes("required") || error.message?.includes("Invalid")
+      ? error.message
+      : "Failed to send bulletin";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: safeMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

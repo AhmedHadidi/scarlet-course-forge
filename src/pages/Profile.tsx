@@ -8,11 +8,21 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Mail, Lock, Newspaper, Building2 } from "lucide-react";
+import { User, Mail, Lock, Newspaper, Building2, Check, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import UserNav from "@/components/UserNav";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { z } from "zod";
+
+const strongPasswordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(100, "Password must be less than 100 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character");
 
 interface Category {
   id: string;
@@ -169,6 +179,17 @@ const Profile = () => {
       return;
     }
 
+    // Validate password strength (same rules as signup)
+    const parsed = strongPasswordSchema.safeParse(passwordData.newPassword);
+    if (!parsed.success) {
+      toast({
+        title: "Weak Password",
+        description: parsed.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.updateUser({
         password: passwordData.newPassword,
@@ -180,6 +201,8 @@ const Profile = () => {
           description: t("profile.passwordChangedDesc"),
         });
         setPasswordData({ newPassword: "", confirmPassword: "" });
+      } else {
+        throw error;
       }
     } catch (error) {
       console.error("Error changing password:", error);

@@ -1,10 +1,23 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { z } from 'https://esm.sh/zod@3.23.8';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Restrict CORS to known origins — never use '*' in production
+const ALLOWED_ORIGINS = [
+  "https://wcmfpcejlldihchyaavn.lovable.app",
+  "https://scarlet-course-forge.lovable.app",
+  "http://localhost:8080",
+  "http://localhost:5173",
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 
 // Validation schemas for each operation
 const emailSchema = z.string()
@@ -79,6 +92,9 @@ function formatZodError(error: z.ZodError): string {
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -328,8 +344,18 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     console.error('Error in admin-operations:', error);
+    // Only expose safe, user-friendly error messages — hide internal DB details
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const safeMessage = [
+      'No authorization header', 'Unauthorized', 'Insufficient permissions',
+      'Invalid operation type', 'Invalid operation'
+    ].includes(message) || message.startsWith('Email') || message.startsWith('Password')
+      || message.startsWith('Name') || message.startsWith('At least') || message.startsWith('Role')
+      || message.startsWith('Invalid user') || message.startsWith('User ID')
+      ? message
+      : 'Operation failed';
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: safeMessage }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

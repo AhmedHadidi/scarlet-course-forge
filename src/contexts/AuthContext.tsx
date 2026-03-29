@@ -53,14 +53,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener
+    // Set up auth state listener FIRST (Supabase v2 best practice)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          // Defer role and approval fetching to avoid blocking
+          // Defer DB calls with setTimeout to avoid Supabase internal deadlock
           setTimeout(async () => {
             const [roleData, status] = await Promise.all([
               supabase
@@ -68,11 +68,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 .select("role")
                 .eq("user_id", session.user.id)
                 .order("role", { ascending: true }),
-              fetchApprovalStatus(session.user.id)
+              fetchApprovalStatus(session.user.id),
             ]);
-            
-            // Prioritize admin role if user has multiple roles
-            const role = roleData.data?.find(r => r.role === 'admin')?.role || roleData.data?.[0]?.role || null;
+            const role =
+              roleData.data?.find((r) => r.role === "admin")?.role ||
+              roleData.data?.[0]?.role ||
+              null;
             setUserRole(role);
             setApprovalStatus(status);
           }, 0);
@@ -83,26 +84,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Check existing session — controls the initial loading state
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
-        const [roleData, status] = await Promise.all([
-          supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", session.user.id)
-            .order("role", { ascending: true }),
-          fetchApprovalStatus(session.user.id)
-        ]);
-        
-        // Prioritize admin role if user has multiple roles
-        const role = roleData.data?.find(r => r.role === 'admin')?.role || roleData.data?.[0]?.role || null;
-        setUserRole(role);
-        setApprovalStatus(status);
-        setLoading(false);
+        setTimeout(async () => {
+          const [roleData, status] = await Promise.all([
+            supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", session.user.id)
+              .order("role", { ascending: true }),
+            fetchApprovalStatus(session.user.id),
+          ]);
+          const role =
+            roleData.data?.find((r) => r.role === "admin")?.role ||
+            roleData.data?.[0]?.role ||
+            null;
+          setUserRole(role);
+          setApprovalStatus(status);
+          setLoading(false);
+        }, 0);
       } else {
         setLoading(false);
       }
@@ -126,7 +130,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, userRole, approvalStatus, loading, signOut, refreshApprovalStatus }}>
+    <AuthContext.Provider
+      value={{ user, session, userRole, approvalStatus, loading, signOut, refreshApprovalStatus }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -153,7 +153,7 @@ const PdfHeader = ({ bulletin, titleText }: { bulletin: Bulletin; titleText: str
     </View>
 
     <Text style={s.subtitle}>
-      نشرة شهرية من فريق الذكاء الاصطناعي لمتابعة أحدث التطورات في مجال الذكاء الاصطناعي وأخبار الوزارة في هذا المجال
+      نشرة شهرية من فريق الذكاء الاصطناعي لمتابعة أحدث التطورات في مجال الذكاء الاصطناعي
     </Text>
     <Text style={s.pageTitle}>{titleText}</Text>
     <View style={s.titleUnderline} />

@@ -84,7 +84,7 @@ const Auth = () => {
         const { data: roleData } = await supabase
           .from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "admin").maybeSingle();
         if (roleData) {
-          window.location.href = "https://scarlet-course-forge.lovable.app/admin";
+          navigate("/admin", { replace: true });
         } else {
           navigate("/dashboard", { replace: true });
         }
@@ -108,7 +108,7 @@ const Auth = () => {
       const userName = profileData?.full_name || "User";
       toast.success(t("auth.welcomeBack", { name: userName }));
       if (roleData) {
-        window.location.href = "https://scarlet-course-forge.lovable.app/admin";
+        navigate("/admin");
       } else {
         navigate("/dashboard");
       }
@@ -163,7 +163,7 @@ const Auth = () => {
     if (newUserId) {
       const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", newUserId).eq("role", "admin").maybeSingle();
       if (roleData) {
-        window.location.href = "https://scarlet-course-forge.lovable.app/admin";
+        navigate("/admin");
       } else {
         navigate("/dashboard");
       }
