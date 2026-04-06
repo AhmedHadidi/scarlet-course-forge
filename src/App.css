@@ -40,3 +40,26 @@
 .read-the-docs {
   color: #888;
 }
+
+@font-face {
+  font-family: 'IBMPLEX';
+  src: url('/fonts/IBMPLEXSANSARABIC-BOLD.TTF') format('truetype');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'IBMPLEX';
+  src: url('/fonts/IBMPLEXSANSARABIC-BOLD.TTF') format('truetype');
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: 'IBMPLEX';
+  src: url('/fonts/IBMPLEXSANSARABIC-BOLD.TTF') format('truetype');
+  font-weight: 900;
+}
+
+/* فرض الخط على كل عناصر PDF */
+.pdf-root * {
+  font-family: 'IBMPLEX', sans-serif !important;
+}

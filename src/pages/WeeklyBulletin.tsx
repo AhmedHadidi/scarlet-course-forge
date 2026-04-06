@@ -50,28 +50,28 @@ const CommonHeader = ({ titleText, bulletin }: { titleText?: string, bulletin: B
       </div>
 
       {/* وسط: شعار ذكاء */}
-      <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '-5px' }}>
+      <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '-20px' }}>
         <ZakaaLogo />
       </div>
      
       {/* يسار: رقم الإصدار */}
-      <div style={{ textAlign: 'center', color: '#333', minWidth: '90px', marginTop: '40px' }}>
-         <div style={{ fontSize: '20px', fontWeight: '900', lineHeight: 1, color: '#222' }}>{bulletin.bulletin_number || "—"}</div>
-         <div style={{ fontSize: '10px', marginTop: '3px', fontWeight: '600', color: '#444' }}>
+      <div style={{ textAlign: 'center', color: '#333', minWidth: '90px', marginTop: '30px' }}>
+         <div style={{ fontSize: '25px', fontWeight: '900', lineHeight: 1, color: '#222' }}>{bulletin.bulletin_number || "—"}</div>
+         <div style={{ fontSize: '10px', marginTop: '8px', fontWeight: '600', color: '#444' }}>
            {bulletin.title || "نشرة الذكاء الاصطناعي"}
          </div>
       </div>
     </div>
     
-    <div style={{ textAlign: 'center', marginTop: '15px', borderBottom: titleText ? 'none' : '1px solid transparent' }}>
-       <div style={{ fontSize: '15px', fontWeight: '800', color: '#222', maxWidth: '600px', margin: '0 auto', lineHeight: 1.4 }}>
+    <div style={{ textAlign: 'center', marginTop: '30px', borderBottom: titleText ? 'none' : '1px solid transparent' }}>
+       <div style={{ fontSize: '15px', fontWeight: '800', color: '#222', maxWidth: '700px', margin: '0 auto', lineHeight: 1.4 }}>
          نشرة شهرية من فريق الذكاء الاصطناعي لمتابعة أحدث التطورات في مجال الذكاء الاصطناعي وأخبار الوزارة في هذا المجال
        </div>
     </div>
     
     {titleText && (
-      <div style={{ textAlign: 'center', marginTop: '10px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#222', margin: 0 }}>{titleText}</h2>
+      <div style={{ textAlign: 'center', marginTop: '15px', marginBottom: '10px', borderBottom: '2px solid #00b0ff', paddingBottom: '20px'}}>
+        <h2 style={{ fontSize: '22px', fontWeight: '900', color: '#222', margin: 0 }}>{titleText}</h2>
       </div>
     )}
   </div>
@@ -84,7 +84,7 @@ const ZakaaLogo = () => (
     <img
       src="/logo-zakaa.png"
       alt="ذكاء"
-      style={{ width: '140px', height: '140px', objectFit: 'contain' }}
+      style={{ width: '180px', height: '160px', objectFit: 'contain' }}
       crossOrigin="anonymous"
     />
   </div>
@@ -95,7 +95,7 @@ const OmanEmblemRed = () => (
   <img
     src="/logo-ministry.png"
     alt="وزارة الإعلام"
-    style={{ width: '140px', height: '140px', objectFit: 'contain' }}
+    style={{ width: '80px', height: '80px', objectFit: 'contain' }}
     crossOrigin="anonymous"
   />
 );
@@ -114,7 +114,7 @@ const PdfFooter = ({ pageNum }: { pageNum: number }) => (
 );
 
 const PdfFooter3Names = () => (
-  <div style={{ marginTop: 'auto', marginBottom: 'auto', padding: '10px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px', border: '1px solid #ccc', borderRadius: '8px' , color: '#222', fontSize: '10px', textAlign: 'center' }}>
+  <div style={{ marginTop: 'auto', marginBottom: 'auto', padding: '10px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px', border: '1px solid #9b9a9a', borderRadius: '8px' , color: '#222', fontSize: '10px', textAlign: 'center' }}>
      <div style={{ flex: '1 1 auto', minWidth: '100px' }}>
        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>الإشراف العام</div>
        <div>المديرية العامة للإعلام الإلكتروني</div>
@@ -145,7 +145,7 @@ const PdfFooter3Names = () => (
 const NewsCard = ({ article, headerColor, headerHeight = 50, imageHeight = 150, titleFontSize = 14, isFeatured = false }: any) => {
   if (!article) {
     return (
-      <div style={{ flex: 1, border: `1px solid ${headerColor}`, background: '#fdfdfd', display: 'flex', flexDirection: 'column', height: '100%', minHeight: isFeatured ? 360 : 320 }}>
+      <div style={{ flex: 1, background: '#fdfdfd', display: 'flex', flexDirection: 'column', height: '100%', minHeight: isFeatured ? 360 : 320 }}>
         <div style={{ background: headerColor, height: headerHeight }} />
       </div>
     );
@@ -154,30 +154,30 @@ const NewsCard = ({ article, headerColor, headerHeight = 50, imageHeight = 150, 
   const shortDesc = article.short_description || article.full_content?.slice(0, 200) || "";
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', border: '1px solid #e0e0e0', background: 'white', overflow: 'hidden', height: '100%' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column',  background: 'white', overflow: 'hidden', height: '100%' }}>
       {/* Header */}
       <div style={{
         background: headerColor,
         color: 'white',
         textAlign: 'center',
-        padding: "8px 12px",
+        padding: "15px 5px",
         fontSize: titleFontSize,
         fontWeight: "bold",
         minHeight: headerHeight,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center'
       }}>
         {article.title}
       </div>
       {/* Image */}
       {article.image_url && (
         <div style={{ position: 'relative' }}>
-          <img src={article.image_url} style={{ width: '100%', height: imageHeight, objectFit: 'cover', display: 'block' }} crossOrigin="anonymous" />
+          <img src={article.image_url} style={{ width: '100%', height: imageHeight, borderRadius: '0 0 5px 5px', objectFit: 'cover', display: 'block' }} crossOrigin="anonymous" />
         </div>
       )}
       {/* Content */}
-      <div style={{ padding: "10px 12px", fontSize: isFeatured ? '13px' : '11px', color: '#222', textAlign: 'justify', lineHeight: 1.65, flex: 1, overflow: 'hidden' }}>
+      <div style={{ padding: "10px 12px", fontSize: isFeatured ? '13px' : '11px', color: '#222', textAlign: 'justify', lineHeight: 1.5, flex: 1, overflow: 'hidden' }}>
         <p style={{ margin: 0 }}>
            {shortDesc}
         </p>
@@ -415,16 +415,16 @@ const WeeklyBulletin = () => {
         }}
       >
         {/* Page 1: الأخبار العالمية */}
-        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '20px 30px', boxSizing: 'border-box' }} dir="rtl">
+        <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '20px 30px', boxSizing: 'border-box'}} dir="rtl">
           <CommonHeader bulletin={bulletin} titleText="أخبار عالمية" />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-            <div style={{ height: '380px' }}>
-              <NewsCard article={globalNewsArticles[0]} headerColor="#1A67B5" headerHeight={55} imageHeight={180} titleFontSize={20} isFeatured={true} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '25px'}}>
+            <div style={{ height: '380px'}}>
+              <NewsCard article={globalNewsArticles[0]} headerColor="#0082ed" headerHeight={55} imageHeight={180} titleFontSize={26} isFeatured={true} />
             </div>
             <div style={{ display: 'flex', gap: '15px', height: '340px' }}>
-              <NewsCard article={globalNewsArticles[1]} headerColor="#59A6A8" headerHeight={45} imageHeight={130} titleFontSize={13} />
+              <NewsCard article={globalNewsArticles[1]} headerColor="#3dc1c5" headerHeight={45} imageHeight={130} titleFontSize={13} />
               <NewsCard article={globalNewsArticles[2]} headerColor="#22589D" headerHeight={45} imageHeight={130} titleFontSize={13} />
-              <NewsCard article={globalNewsArticles[3]} headerColor="#59A6A8" headerHeight={45} imageHeight={130} titleFontSize={13} />
+              <NewsCard article={globalNewsArticles[3]} headerColor="#3dc1c5" headerHeight={45} imageHeight={130} titleFontSize={13} />
             </div>
           </div>
           <PdfFooter pageNum={1} />
@@ -432,16 +432,16 @@ const WeeklyBulletin = () => {
 
         {/* Page 2: أخبار الوزارة */}
         <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '20px 30px', boxSizing: 'border-box' }} dir="rtl">
-          <CommonHeader bulletin={bulletin} titleText="أخبار الوزارة" />
+          <CommonHeader bulletin={bulletin} titleText="نماذج من الجهود التي قامت بها المديريات في توظيف تقنيات الذكاء الاصطناعي" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
             <div style={{ display: 'flex', gap: '20px', height: '360px' }}>
-              <NewsCard article={ministryNewsArticles[0]} headerColor="#1A67B5" headerHeight={50} imageHeight={160} titleFontSize={14} />
-              <NewsCard article={ministryNewsArticles[1]} headerColor="#1A67B5" headerHeight={50} imageHeight={160} titleFontSize={14} />
+              <NewsCard article={ministryNewsArticles[0]} headerColor="#0082ed" headerHeight={50} imageHeight={160} titleFontSize={14} />
+              <NewsCard article={ministryNewsArticles[1]} headerColor="#0082ed" headerHeight={50} imageHeight={160} titleFontSize={14} />
             </div>
             <div style={{ display: 'flex', gap: '15px', height: '360px' }}>
-              <NewsCard article={ministryNewsArticles[2]} headerColor="#59A6A8" headerHeight={50} imageHeight={140} titleFontSize={14} />
+              <NewsCard article={ministryNewsArticles[2]} headerColor="#3dc1c5" headerHeight={50} imageHeight={140} titleFontSize={14} />
               <NewsCard article={ministryNewsArticles[3]} headerColor="#22589D" headerHeight={50} imageHeight={140} titleFontSize={14} />
-              <NewsCard article={ministryNewsArticles[4]} headerColor="#59A6A8" headerHeight={50} imageHeight={140} titleFontSize={14} />
+              <NewsCard article={ministryNewsArticles[4]} headerColor="#3dc1c5" headerHeight={50} imageHeight={140} titleFontSize={14} />
             </div>
           </div>
           <PdfFooter pageNum={2} />
