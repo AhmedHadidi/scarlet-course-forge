@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Loader2, Newspaper, ImagePlus, Globe, Building2, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Newspaper, ImagePlus, Globe, Building2, Users, ChevronUp, ChevronDown, Link } from "lucide-react";
 
 interface Category {
   id: string;
@@ -56,6 +56,8 @@ interface Article {
   bulletin_id: string | null;
   is_published: boolean;
   created_at: string;
+  sort_order: number | null;
+  source_url: string | null;
   categories: Category[];
 }
 
@@ -99,9 +101,10 @@ export const NewsArticleManagement = () => {
     short_description: "",
     full_content: "",
     image_url: "",
-    image_caption: "",   // اسم الموظف أو تعليق الصورة
+    image_caption: "",
+    source_url: "",      // رابط الخبر الأصلي → QR Code
     article_type: "standard",
-    pdf_position: "",    // global_news | ministry_news | employee_work
+    pdf_position: "",
     bulletin_id: "",
     is_published: false,
     category_ids: [] as string[],
@@ -118,7 +121,7 @@ export const NewsArticleManagement = () => {
   const fetchData = async () => {
     try {
       const [articlesRes, categoriesRes, bulletinsRes] = await Promise.all([
-        supabase.from("news_articles").select("*").order("created_at", { ascending: false }),
+        supabase.from("news_articles").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false }),
         supabase.from("news_categories").select("*").order("name"),
         supabase.from("news_bulletins").select("id, bulletin_number, title").order("week_start_date", { ascending: false }),
       ]);
@@ -144,6 +147,8 @@ export const NewsArticleManagement = () => {
             article_type: (article as any).article_type || "standard",
             pdf_position: (article as any).pdf_position || null,
             image_caption: (article as any).image_caption || null,
+            sort_order: (article as any).sort_order ?? null,
+            source_url: (article as any).source_url || null,
             categories: articleCategories,
           };
         })
@@ -156,6 +161,32 @@ export const NewsArticleManagement = () => {
       toast.error("Error fetching data: " + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const moveArticle = async (index: number, direction: "up" | "down") => {
+    const newArticles = [...articles];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newArticles.length) return;
+
+    // Swap in local state first for immediate UI feedback
+    [newArticles[index], newArticles[targetIndex]] = [newArticles[targetIndex], newArticles[index]];
+
+    // Assign new sort_order values based on position
+    const updatedA = { ...newArticles[index], sort_order: index + 1 };
+    const updatedB = { ...newArticles[targetIndex], sort_order: targetIndex + 1 };
+    newArticles[index] = updatedA;
+    newArticles[targetIndex] = updatedB;
+    setArticles(newArticles);
+
+    try {
+      await Promise.all([
+        supabase.from("news_articles").update({ sort_order: updatedA.sort_order } as any).eq("id", updatedA.id),
+        supabase.from("news_articles").update({ sort_order: updatedB.sort_order } as any).eq("id", updatedB.id),
+      ]);
+    } catch (error: any) {
+      toast.error("خطأ في تحديث الترتيب: " + error.message);
+      fetchData(); // rollback on error
     }
   };
 
@@ -199,6 +230,7 @@ export const NewsArticleManagement = () => {
         full_content: isEmployeePage ? "" : formData.full_content,
         image_url: formData.image_url || null,
         image_caption: formData.image_caption || null,
+        source_url: formData.source_url || null,
         article_type: isEmployeePage ? "image_caption" : "standard",
         pdf_position: formData.pdf_position || null,
         bulletin_id: formData.bulletin_id || null,
@@ -256,6 +288,7 @@ export const NewsArticleManagement = () => {
       full_content: article.full_content || "",
       image_url: article.image_url || "",
       image_caption: article.image_caption || "",
+      source_url: article.source_url || "",
       article_type: article.article_type || "standard",
       pdf_position: article.pdf_position || "",
       bulletin_id: article.bulletin_id || "",
@@ -285,6 +318,7 @@ export const NewsArticleManagement = () => {
       full_content: "",
       image_url: "",
       image_caption: "",
+      source_url: "",
       article_type: "standard",
       pdf_position: "",
       bulletin_id: "",
@@ -525,6 +559,29 @@ export const NewsArticleManagement = () => {
                     </Select>
                   </div>
 
+                  {/* ─── رابط الخبر → QR Code ─── */}
+                  {!isEmployeePage && (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1.5">
+                        <Link className="w-4 h-4 text-blue-500" />
+                        رابط الخبر الأصلي — سيتحوّل إلى QR Code في PDF
+                      </Label>
+                      <Input
+                        type="url"
+                        placeholder="https://example.com/article"
+                        value={formData.source_url}
+                        onChange={(e) => setFormData({ ...formData, source_url: e.target.value })}
+                        dir="ltr"
+                        className="font-mono text-sm"
+                      />
+                      {formData.source_url && (
+                        <p className="text-xs text-green-600">
+                          ✅ سيتم إنشاء QR Code تلقائياً عند تصدير PDF
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {/* ─── النشر ─── */}
                   <div className="flex items-center gap-2 pt-1">
                     <Switch
@@ -560,17 +617,43 @@ export const NewsArticleManagement = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px] text-center">الترتيب</TableHead>
               <TableHead>العنوان</TableHead>
               <TableHead>الصفحة</TableHead>
               <TableHead>التصنيفات</TableHead>
               <TableHead>النشرة</TableHead>
               <TableHead>الحالة</TableHead>
-              <TableHead className="w-[100px]">إجراءات</TableHead>
+              <TableHead className="w-[120px]">إجراءات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {articles.map((article) => (
+            {articles.map((article, index) => (
               <TableRow key={article.id}>
+                <TableCell className="text-center">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      disabled={index === 0}
+                      onClick={() => moveArticle(index, "up")}
+                      title="تحريك للأعلى"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground font-mono">{index + 1}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      disabled={index === articles.length - 1}
+                      onClick={() => moveArticle(index, "down")}
+                      title="تحريك للأسفل"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </TableCell>
                 <TableCell className="font-medium">{article.title}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   {getPageLabel(article.pdf_position)}

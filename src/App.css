@@ -43,19 +43,19 @@
 
 @font-face {
   font-family: 'IBMPLEX';
-  src: url('/fonts/IBMPLEXSANSARABIC-BOLD.TTF') format('truetype');
+  src: url('/fonts/THEYEAROFHANDICRAFTS-REGULAR.OTF') format('truetype');
   font-weight: 400;
 }
 
 @font-face {
   font-family: 'IBMPLEX';
-  src: url('/fonts/IBMPLEXSANSARABIC-BOLD.TTF') format('truetype');
+  src: url('/fonts/THEYEAROFHANDICRAFTS-BOLD.OTF') format('truetype');
   font-weight: 700;
 }
 
 @font-face {
   font-family: 'IBMPLEX';
-  src: url('/fonts/IBMPLEXSANSARABIC-BOLD.TTF') format('truetype');
+  src: url('/fonts/THEYEAROFHANDICRAFTS-BOLD.OTF') format('truetype');
   font-weight: 900;
 }
 

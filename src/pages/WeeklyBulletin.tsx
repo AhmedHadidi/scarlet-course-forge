@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import React from "react";
+import QRCode from "qrcode";
 
 /* ─────────────────────────── Types ──────────────────────────────── */
 interface Category { id: string; name: string; }
@@ -18,9 +19,11 @@ interface Article {
   short_description: string;
   full_content: string;
   image_url: string | null;
-  image_caption: string | null;   // اسم الموظف / تعليق الصورة
+  image_caption: string | null;
   article_type: string;
-  pdf_position: string | null;    // global_news | ministry_news | employee_work
+  pdf_position: string | null;
+  sort_order: number | null;
+  source_url: string | null;   // رابط الخبر → QR Code
   categories: Category[];
 }
 interface Bulletin {
@@ -55,9 +58,9 @@ const CommonHeader = ({ titleText, bulletin }: { titleText?: string, bulletin: B
       </div>
      
       {/* يسار: رقم الإصدار */}
-      <div style={{ textAlign: 'center', color: '#333', minWidth: '90px', marginTop: '30px' }}>
-         <div style={{ fontSize: '25px', fontWeight: '900', lineHeight: 1, color: '#222' }}>{bulletin.bulletin_number || "—"}</div>
-         <div style={{ fontSize: '10px', marginTop: '8px', fontWeight: '600', color: '#444' }}>
+      <div style={{ textAlign: 'center', color: '#333', minWidth: '90px', marginTop: '10px' }}>
+         <div style={{ fontSize: '25px', fontWeight: '900', lineHeight: 1, justifyContent: 'center', alignItems: 'center', textAlign: 'center',  color: '#222' }}>{(bulletin.bulletin_number || "—").split(" ").map((word, i) => (<span key={i}>{word}<br /></span>))}</div>
+         <div style={{ fontSize: '10px', marginTop: '12px', fontWeight: '600', color: '#444' }}>
            {bulletin.title || "نشرة الذكاء الاصطناعي"}
          </div>
       </div>
@@ -142,6 +145,31 @@ const PdfFooter3Names = () => (
   </div>
 );
 
+/* ─── QR Code component — يولّد Data URL عند mount ─── */
+const QRCodeImg = ({ url, size = 70 }: { url: string; size?: number }) => {
+  const [dataUrl, setDataUrl] = React.useState<string>('');
+  React.useEffect(() => {
+    if (!url) return;
+    QRCode.toDataURL(url, {
+      width: size * 2,   // ضعف الجودة للطباعة
+      margin: 1,
+      color: { dark: '#000000', light: '#ffffff' },
+    }).then(setDataUrl).catch(() => {});
+  }, [url, size]);
+  if (!dataUrl) return null;
+  return (
+    <img
+      src={dataUrl}
+      style={{
+        width: size,
+        height: size,
+        display: 'block',
+        imageRendering: 'pixelated',
+      }}
+      alt="QR"
+    />
+  );
+};
 const NewsCard = ({ article, headerColor, headerHeight = 50, imageHeight = 150, titleFontSize = 14, isFeatured = false }: any) => {
   if (!article) {
     return (
@@ -151,33 +179,48 @@ const NewsCard = ({ article, headerColor, headerHeight = 50, imageHeight = 150, 
     );
   }
 
-  const shortDesc = article.short_description || article.full_content?.slice(0, 200) || "";
+  const shortDesc = article.short_description || article.full_content || "";
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column',  background: 'white', overflow: 'hidden', height: '100%' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'white', height: '100%' }}>
       {/* Header */}
       <div style={{
         background: headerColor,
         color: 'white',
         textAlign: 'center',
-        padding: "15px 5px",
+        padding: "0 1px 10px 1px",
         fontSize: titleFontSize,
         fontWeight: "bold",
         minHeight: headerHeight,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        flexShrink: 0,
       }}>
         {article.title}
       </div>
-      {/* Image */}
+      {/* Image + QR Code overlay */}
       {article.image_url && (
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
           <img src={article.image_url} style={{ width: '100%', height: imageHeight, borderRadius: '0 0 5px 5px', objectFit: 'cover', display: 'block' }} crossOrigin="anonymous" />
+          {/* QR Code — أسفل يسار على الصورة */}
+          {article.source_url && (
+            <div style={{
+              position: 'absolute',
+              bottom: '6px',
+              left: '6px',
+              background: 'white',
+              borderRadius: '4px',
+              padding: '3px',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+            }}>
+              <QRCodeImg url={article.source_url} size={isFeatured ? 60 : 40} />
+            </div>
+          )}
         </div>
       )}
       {/* Content */}
-      <div style={{ padding: "10px 12px", fontSize: isFeatured ? '13px' : '11px', color: '#222', textAlign: 'justify', lineHeight: 1.5, flex: 1, overflow: 'hidden' }}>
+      <div style={{ fontSize: isFeatured ? '16px' : '11px', fontWeight: '500', color: '#222', textAlign: 'justify', lineHeight: 1.8, overflow: 'visible' }}>
         <p style={{ margin: 0 }}>
            {shortDesc}
         </p>
@@ -186,14 +229,29 @@ const NewsCard = ({ article, headerColor, headerHeight = 50, imageHeight = 150, 
   );
 };
 
-const ImageCard = ({ article, authorName }: any) => {
-  if (!article) return <div style={{ flex: 1, minHeight: 300, background: '#f9f9f9', border: '1px solid #ddd', borderRadius: 8 }} />;
+const ImageCard = ({ article, authorName, imageHeight = 280, flexVal = 1 }: any) => {
+  if (!article) return (
+    <div style={{ flex: flexVal, height: imageHeight + 20, background: '#f0f0f0', borderRadius: 8, border: '1px solid #ddd' }} />
+  );
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0px' }}>
-       {article.image_url && (
-         <img src={article.image_url} style={{ width: '100%', height: '330px', borderRadius: '8px', objectFit: 'cover', display: 'block' }} crossOrigin="anonymous"/>
-       )}
-       <div style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '13px', color: '#222' }}>{authorName || article.title}</div>
+    <div style={{ flex: flexVal, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+      {article.image_url && (
+        /* objectFit:cover = تملإ الخلية بالكامل وتحافظ على النسبة دون تمطيط — فقط اقتصاص الأطراف الزائدة */
+        <div style={{ width: '100%', height: imageHeight, borderRadius: '8px', overflow: 'hidden' }}>
+          <img
+            src={article.image_url}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center top',
+              display: 'block',
+            }}
+            crossOrigin="anonymous"
+          />
+        </div>
+      )}
+      <div style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '13px', color: '#222' }}>{authorName || article.title}</div>
     </div>
   );
 };
@@ -275,6 +333,7 @@ const WeeklyBulletin = () => {
 
       const { data: articlesData, error: articlesError } = await supabase
         .from("news_articles").select("*").eq("bulletin_id", id).eq("is_published", true)
+        .order("sort_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
       if (articlesError) throw articlesError;
 
@@ -291,6 +350,8 @@ const WeeklyBulletin = () => {
             article_type: (article as any).article_type || 'standard',
             pdf_position: (article as any).pdf_position || null,
             image_caption: (article as any).image_caption || null,
+            sort_order: (article as any).sort_order ?? null,
+            source_url: (article as any).source_url || null,
             categories: articleCategories,
           };
         })
@@ -450,11 +511,40 @@ const WeeklyBulletin = () => {
         {/* Page 3: نماذج أعمال الموظفين */}
         <div data-pdf-page style={{ width: PDF_W, height: PDF_H, background: 'white', position: 'relative', overflow: 'hidden', padding: '20px 30px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} dir="rtl">
           <CommonHeader bulletin={bulletin} titleText="نماذج من أعمال توليد الصور لموظفي الوزارة" />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '2px' }}>
-            <ImageCard article={employeeWorkArticles[0]} authorName={employeeWorkArticles[0]?.image_caption || employeeWorkArticles[0]?.title} />
-            <ImageCard article={employeeWorkArticles[1]} authorName={employeeWorkArticles[1]?.image_caption || employeeWorkArticles[1]?.title} />
-            <ImageCard article={employeeWorkArticles[2]} authorName={employeeWorkArticles[2]?.image_caption || employeeWorkArticles[2]?.title} />
-            <ImageCard article={employeeWorkArticles[3]} authorName={employeeWorkArticles[3]?.image_caption || employeeWorkArticles[3]?.title} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '8px' }}>
+
+            {/* الصف الأول: يسار أضيق (0.72) — يمين أعرض (1.28) */}
+            <div style={{ display: 'flex', gap: '14px' }}>
+              <ImageCard
+                article={employeeWorkArticles[0]}
+                authorName={employeeWorkArticles[0]?.image_caption || employeeWorkArticles[0]?.title}
+                imageHeight={300}
+                flexVal={0.72}
+              />
+              <ImageCard
+                article={employeeWorkArticles[1]}
+                authorName={employeeWorkArticles[1]?.image_caption || employeeWorkArticles[1]?.title}
+                imageHeight={300}
+                flexVal={1.28}
+              />
+            </div>
+
+            {/* الصف الثاني: يسار أعرض (1.2) — يمين أضيق (0.8) */}
+            <div style={{ display: 'flex', gap: '14px' }}>
+              <ImageCard
+                article={employeeWorkArticles[2]}
+                authorName={employeeWorkArticles[2]?.image_caption || employeeWorkArticles[2]?.title}
+                imageHeight={340}
+                flexVal={1.2}
+              />
+              <ImageCard
+                article={employeeWorkArticles[3]}
+                authorName={employeeWorkArticles[3]?.image_caption || employeeWorkArticles[3]?.title}
+                imageHeight={340}
+                flexVal={0.8}
+              />
+            </div>
+
           </div>
           <PdfFooter3Names />
           <PdfFooter pageNum={3} />
