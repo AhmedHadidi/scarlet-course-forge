@@ -311,35 +311,50 @@ export type Database = {
       }
       news_articles: {
         Row: {
+          article_type: string
           bulletin_id: string | null
           created_at: string
           full_content: string
           id: string
+          image_caption: string | null
           image_url: string | null
           is_published: boolean
+          pdf_position: string | null
           short_description: string
+          sort_order: number | null
+          source_url: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          article_type?: string
           bulletin_id?: string | null
           created_at?: string
           full_content: string
           id?: string
+          image_caption?: string | null
           image_url?: string | null
           is_published?: boolean
+          pdf_position?: string | null
           short_description: string
+          sort_order?: number | null
+          source_url?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          article_type?: string
           bulletin_id?: string | null
           created_at?: string
           full_content?: string
           id?: string
+          image_caption?: string | null
           image_url?: string | null
           is_published?: boolean
+          pdf_position?: string | null
           short_description?: string
+          sort_order?: number | null
+          source_url?: string | null
           title?: string
           updated_at?: string
         }
