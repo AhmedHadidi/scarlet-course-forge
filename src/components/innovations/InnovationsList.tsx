@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Lightbulb, Plus, Pencil, Trash2, Clock, Coins } from "lucide-react";
+import { Lightbulb, Plus, Pencil, Trash2, Clock, Coins, Users } from "lucide-react";
 import { InnovationDialog } from "./InnovationDialog";
 import { CATEGORY_COLORS, STATUS_COLORS, Innovation } from "./innovationUtils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
