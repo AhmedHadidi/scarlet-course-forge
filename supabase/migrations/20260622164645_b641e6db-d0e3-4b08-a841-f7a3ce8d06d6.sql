@@ -1,0 +1,1 @@
+ALTER TABLE public.innovations ADD COLUMN IF NOT EXISTS collaborators text[] NOT NULL DEFAULT '{}';

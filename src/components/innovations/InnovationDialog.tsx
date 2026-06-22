@@ -37,6 +37,7 @@ export const InnovationDialog = ({ open, onOpenChange, initial, onSaved }: Props
     time_saved_hours: "",
     cost_saved: "",
     tools_used: "",
+    collaborators: "",
     start_date: "",
     completion_date: "",
   });
@@ -62,6 +63,7 @@ export const InnovationDialog = ({ open, onOpenChange, initial, onSaved }: Props
         time_saved_hours: initial.time_saved_hours?.toString() || "",
         cost_saved: initial.cost_saved?.toString() || "",
         tools_used: (initial.tools_used || []).join(", "),
+        collaborators: (initial.collaborators || []).join(", "),
         start_date: initial.start_date || "",
         completion_date: initial.completion_date || "",
       });
@@ -69,7 +71,7 @@ export const InnovationDialog = ({ open, onOpenChange, initial, onSaved }: Props
       setForm({
         title: "", description: "", category: "time_saving", status: "idea",
         progress_percentage: 0, impact_description: "", time_saved_hours: "",
-        cost_saved: "", tools_used: "", start_date: "", completion_date: "",
+        cost_saved: "", tools_used: "", collaborators: "", start_date: "", completion_date: "",
       });
     }
   }, [initial, open]);
@@ -93,6 +95,7 @@ export const InnovationDialog = ({ open, onOpenChange, initial, onSaved }: Props
       time_saved_hours: form.time_saved_hours ? Number(form.time_saved_hours) : null,
       cost_saved: form.cost_saved ? Number(form.cost_saved) : null,
       tools_used: form.tools_used ? form.tools_used.split(",").map(s => s.trim()).filter(Boolean) : [],
+      collaborators: form.collaborators ? form.collaborators.split(",").map(s => s.trim()).filter(Boolean) : [],
       start_date: form.start_date || null,
       completion_date: form.completion_date || null,
     };
@@ -185,6 +188,12 @@ export const InnovationDialog = ({ open, onOpenChange, initial, onSaved }: Props
             <Label>{t("innovations.fields.tools")}</Label>
             <Input value={form.tools_used} onChange={(e) => setForm({ ...form, tools_used: e.target.value })}
               placeholder="Excel, Power Automate, ChatGPT" dir={dir} />
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("innovations.fields.collaborators")}</Label>
+            <Input value={form.collaborators} onChange={(e) => setForm({ ...form, collaborators: e.target.value })}
+              placeholder={t("innovations.fields.collaboratorsPlaceholder")} dir={dir} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

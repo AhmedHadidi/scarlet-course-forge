@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Lightbulb, Plus, Pencil, Trash2, Clock, Coins } from "lucide-react";
+import { Lightbulb, Plus, Pencil, Trash2, Clock, Coins, Users } from "lucide-react";
 import { InnovationDialog } from "./InnovationDialog";
 import { CATEGORY_COLORS, STATUS_COLORS, Innovation } from "./innovationUtils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -117,6 +117,13 @@ export const InnovationsList = () => {
                   </Badge>
                 ) : null}
               </div>
+
+              {it.collaborators && it.collaborators.length > 0 && (
+                <div className="flex items-start gap-2 mb-3 text-sm text-muted-foreground">
+                  <Users className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>{it.collaborators.join("، ")}</span>
+                </div>
+              )}
 
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
