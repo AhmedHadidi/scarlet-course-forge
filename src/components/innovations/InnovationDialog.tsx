@@ -63,6 +63,7 @@ export const InnovationDialog = ({ open, onOpenChange, initial, onSaved }: Props
         time_saved_hours: initial.time_saved_hours?.toString() || "",
         cost_saved: initial.cost_saved?.toString() || "",
         tools_used: (initial.tools_used || []).join(", "),
+        collaborators: (initial.collaborators || []).join(", "),
         start_date: initial.start_date || "",
         completion_date: initial.completion_date || "",
       });
@@ -70,7 +71,7 @@ export const InnovationDialog = ({ open, onOpenChange, initial, onSaved }: Props
       setForm({
         title: "", description: "", category: "time_saving", status: "idea",
         progress_percentage: 0, impact_description: "", time_saved_hours: "",
-        cost_saved: "", tools_used: "", start_date: "", completion_date: "",
+        cost_saved: "", tools_used: "", collaborators: "", start_date: "", completion_date: "",
       });
     }
   }, [initial, open]);
