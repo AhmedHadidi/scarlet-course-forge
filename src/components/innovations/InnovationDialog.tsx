@@ -95,6 +95,7 @@ export const InnovationDialog = ({ open, onOpenChange, initial, onSaved }: Props
       time_saved_hours: form.time_saved_hours ? Number(form.time_saved_hours) : null,
       cost_saved: form.cost_saved ? Number(form.cost_saved) : null,
       tools_used: form.tools_used ? form.tools_used.split(",").map(s => s.trim()).filter(Boolean) : [],
+      collaborators: form.collaborators ? form.collaborators.split(",").map(s => s.trim()).filter(Boolean) : [],
       start_date: form.start_date || null,
       completion_date: form.completion_date || null,
     };
