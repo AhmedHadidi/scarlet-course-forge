@@ -278,6 +278,7 @@ export type Database = {
           admin_notes: string | null
           attachments_urls: string[] | null
           category: Database["public"]["Enums"]["innovation_category"]
+          collaborators: string[]
           completion_date: string | null
           cost_saved: number | null
           created_at: string
@@ -298,6 +299,7 @@ export type Database = {
           admin_notes?: string | null
           attachments_urls?: string[] | null
           category: Database["public"]["Enums"]["innovation_category"]
+          collaborators?: string[]
           completion_date?: string | null
           cost_saved?: number | null
           created_at?: string
@@ -318,6 +320,7 @@ export type Database = {
           admin_notes?: string | null
           attachments_urls?: string[] | null
           category?: Database["public"]["Enums"]["innovation_category"]
+          collaborators?: string[]
           completion_date?: string | null
           cost_saved?: number | null
           created_at?: string
