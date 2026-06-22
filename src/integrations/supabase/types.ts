@@ -273,6 +273,77 @@ export type Database = {
         }
         Relationships: []
       }
+      innovations: {
+        Row: {
+          admin_notes: string | null
+          attachments_urls: string[] | null
+          category: Database["public"]["Enums"]["innovation_category"]
+          completion_date: string | null
+          cost_saved: number | null
+          created_at: string
+          department_id: string | null
+          description: string
+          id: string
+          impact_description: string | null
+          progress_percentage: number
+          start_date: string | null
+          status: Database["public"]["Enums"]["innovation_status"]
+          time_saved_hours: number | null
+          title: string
+          tools_used: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          attachments_urls?: string[] | null
+          category: Database["public"]["Enums"]["innovation_category"]
+          completion_date?: string | null
+          cost_saved?: number | null
+          created_at?: string
+          department_id?: string | null
+          description: string
+          id?: string
+          impact_description?: string | null
+          progress_percentage?: number
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["innovation_status"]
+          time_saved_hours?: number | null
+          title: string
+          tools_used?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          attachments_urls?: string[] | null
+          category?: Database["public"]["Enums"]["innovation_category"]
+          completion_date?: string | null
+          cost_saved?: number | null
+          created_at?: string
+          department_id?: string | null
+          description?: string
+          id?: string
+          impact_description?: string | null
+          progress_percentage?: number
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["innovation_status"]
+          time_saved_hours?: number | null
+          title?: string
+          tools_used?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "innovations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_article_categories: {
         Row: {
           article_id: string
@@ -882,6 +953,12 @@ export type Database = {
       app_role: "admin" | "user" | "sub_admin"
       approval_status: "pending" | "approved" | "rejected"
       difficulty_level: "beginner" | "intermediate" | "advanced"
+      innovation_category:
+        | "time_saving"
+        | "performance"
+        | "automation"
+        | "quality"
+      innovation_status: "idea" | "in_progress" | "implemented" | "evaluated"
       video_source: "youtube_single" | "youtube_playlist" | "uploaded"
     }
     CompositeTypes: {
@@ -1013,6 +1090,13 @@ export const Constants = {
       app_role: ["admin", "user", "sub_admin"],
       approval_status: ["pending", "approved", "rejected"],
       difficulty_level: ["beginner", "intermediate", "advanced"],
+      innovation_category: [
+        "time_saving",
+        "performance",
+        "automation",
+        "quality",
+      ],
+      innovation_status: ["idea", "in_progress", "implemented", "evaluated"],
       video_source: ["youtube_single", "youtube_playlist", "uploaded"],
     },
   },
