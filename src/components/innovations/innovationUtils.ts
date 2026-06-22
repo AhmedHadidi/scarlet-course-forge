@@ -31,6 +31,7 @@ export interface Innovation {
   time_saved_hours: number | null;
   cost_saved: number | null;
   tools_used: string[] | null;
+  collaborators: string[] | null;
   start_date: string | null;
   completion_date: string | null;
   attachments_urls: string[] | null;
