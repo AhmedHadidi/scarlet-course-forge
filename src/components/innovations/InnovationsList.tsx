@@ -118,6 +118,13 @@ export const InnovationsList = () => {
                 ) : null}
               </div>
 
+              {it.collaborators && it.collaborators.length > 0 && (
+                <div className="flex items-start gap-2 mb-3 text-sm text-muted-foreground">
+                  <Users className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>{it.collaborators.join("، ")}</span>
+                </div>
+              )}
+
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{t("innovations.tracker.progress")}</span>
