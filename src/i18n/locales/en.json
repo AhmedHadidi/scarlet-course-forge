@@ -586,6 +586,8 @@
             "timeSaved": "Time saved (hours / week)",
             "costSaved": "Cost saved",
             "tools": "Tools / technologies used (comma separated)",
+            "collaborators": "Collaborators (names of employees who helped, comma separated)",
+            "collaboratorsPlaceholder": "Ahmed Ali, Sara Mohammed",
             "startDate": "Start date",
             "completionDate": "Completion date"
         },
