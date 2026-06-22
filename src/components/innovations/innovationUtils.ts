@@ -1,19 +1,8 @@
 export type InnovationCategory = "time_saving" | "performance" | "automation" | "quality";
 export type InnovationStatus = "idea" | "in_progress" | "implemented" | "evaluated";
 
-export const CATEGORY_LABELS: Record<InnovationCategory, string> = {
-  time_saving: "توفير الوقت",
-  performance: "تحسين الأداء",
-  automation: "أتمتة العمليات",
-  quality: "رفع الجودة",
-};
-
-export const STATUS_LABELS: Record<InnovationStatus, string> = {
-  idea: "فكرة",
-  in_progress: "قيد التنفيذ",
-  implemented: "منفّذة",
-  evaluated: "تم تقييمها",
-};
+export const CATEGORY_KEYS: InnovationCategory[] = ["time_saving", "performance", "automation", "quality"];
+export const STATUS_KEYS: InnovationStatus[] = ["idea", "in_progress", "implemented", "evaluated"];
 
 export const CATEGORY_COLORS: Record<InnovationCategory, string> = {
   time_saving: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",

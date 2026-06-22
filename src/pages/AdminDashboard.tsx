@@ -64,7 +64,7 @@ const AdminDashboard = () => {
     { id: "departments", label: t("admin.departments"), icon: Building2 },
     { id: "courses", label: t("admin.courses"), icon: BookOpen },
     { id: "quizzes", label: t("admin.quizzes"), icon: FileText },
-    { id: "innovations", label: "الابتكارات", icon: Lightbulb },
+    { id: "innovations", label: t("innovations.tracker.menuLabel"), icon: Lightbulb },
     { id: "news", label: t("admin.news"), icon: Newspaper },
     { id: "features", label: t("admin.features"), icon: Award },
   ];
