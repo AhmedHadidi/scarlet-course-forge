@@ -190,6 +190,12 @@ export const InnovationDialog = ({ open, onOpenChange, initial, onSaved }: Props
               placeholder="Excel, Power Automate, ChatGPT" dir={dir} />
           </div>
 
+          <div className="space-y-2">
+            <Label>{t("innovations.fields.collaborators")}</Label>
+            <Input value={form.collaborators} onChange={(e) => setForm({ ...form, collaborators: e.target.value })}
+              placeholder={t("innovations.fields.collaboratorsPlaceholder")} dir={dir} />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{t("innovations.fields.startDate")}</Label>
