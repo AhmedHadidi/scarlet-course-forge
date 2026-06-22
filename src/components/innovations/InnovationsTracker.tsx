@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Lightbulb, TrendingUp, CheckCircle2, Clock, Search } from "lucide-react";
-import { CATEGORY_LABELS, CATEGORY_COLORS, STATUS_LABELS, STATUS_COLORS, Innovation } from "./innovationUtils";
+import { CATEGORY_KEYS, STATUS_KEYS, CATEGORY_COLORS, STATUS_COLORS, Innovation } from "./innovationUtils";
 
 interface Props {
   scope: "department" | "all";
@@ -24,6 +25,8 @@ interface Row extends Innovation {
 
 export const InnovationsTracker = ({ scope, departmentId }: Props) => {
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
+  const dir = i18n.language === "ar" ? "rtl" : "ltr";
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -41,7 +44,7 @@ export const InnovationsTracker = ({ scope, departmentId }: Props) => {
     if (scope === "department" && departmentId) q = q.eq("department_id", departmentId);
     const { data: innovations, error } = await q;
     if (error) {
-      toast({ title: "خطأ", description: error.message, variant: "destructive" });
+      toast({ title: t("innovations.loadError"), description: error.message, variant: "destructive" });
       setLoading(false);
       return;
     }
@@ -95,23 +98,26 @@ export const InnovationsTracker = ({ scope, departmentId }: Props) => {
     const { error } = await supabase.from("innovations").update({ admin_notes: notesDraft }).eq("id", selected.id);
     setSavingNotes(false);
     if (error) {
-      toast({ title: "فشل الحفظ", description: error.message, variant: "destructive" });
+      toast({ title: t("innovations.saveFailed"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "تم حفظ الملاحظات" });
+      toast({ title: t("innovations.tracker.notesSaved") });
       setSelected(null);
       fetchData();
     }
   };
 
   const kpis = [
-    { label: "إجمالي المبادرات", value: stats.total, icon: Lightbulb },
-    { label: "المنفّذة", value: stats.implemented, icon: CheckCircle2 },
-    { label: "ساعات موفّرة / أسبوع", value: stats.totalHours, icon: Clock },
-    { label: "متوسط نسبة الإنجاز", value: `${stats.avgProgress}%`, icon: TrendingUp },
+    { label: t("innovations.tracker.kpiTotal"), value: stats.total, icon: Lightbulb },
+    { label: t("innovations.tracker.kpiImplemented"), value: stats.implemented, icon: CheckCircle2 },
+    { label: t("innovations.tracker.kpiHours"), value: stats.totalHours, icon: Clock },
+    { label: t("innovations.tracker.kpiAvgProgress"), value: `${stats.avgProgress}%`, icon: TrendingUp },
   ];
 
+  const searchIconSide = dir === "rtl" ? "right-3" : "left-3";
+  const searchPad = dir === "rtl" ? "pr-9" : "pl-9";
+
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6" dir={dir}>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((k, i) => {
           const Icon = k.icon;
@@ -134,34 +140,34 @@ export const InnovationsTracker = ({ scope, departmentId }: Props) => {
       <Card className="border-border">
         <CardHeader>
           <CardTitle>
-            {scope === "all" ? "كل ابتكارات المؤسسة" : "ابتكارات قسمي"}
+            {scope === "all" ? t("innovations.tracker.allTitle") : t("innovations.tracker.departmentTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input className="pr-9" placeholder="بحث بالعنوان أو الموظف" value={search} onChange={(e) => setSearch(e.target.value)} dir="rtl" />
+              <Search className={`absolute ${searchIconSide} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
+              <Input className={searchPad} placeholder={t("innovations.tracker.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} dir={dir} />
             </div>
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger><SelectValue placeholder="الفئة" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("innovations.tracker.filterCategory")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">كل الفئات</SelectItem>
-                {Object.entries(CATEGORY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                <SelectItem value="all">{t("innovations.tracker.allCategories")}</SelectItem>
+                {CATEGORY_KEYS.map((k) => <SelectItem key={k} value={k}>{t(`innovations.categories.${k}`)}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger><SelectValue placeholder="الحالة" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("innovations.tracker.filterStatus")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">كل الحالات</SelectItem>
-                {Object.entries(STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                <SelectItem value="all">{t("innovations.tracker.allStatuses")}</SelectItem>
+                {STATUS_KEYS.map((k) => <SelectItem key={k} value={k}>{t(`innovations.statuses.${k}`)}</SelectItem>)}
               </SelectContent>
             </Select>
             {scope === "all" && (
               <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-                <SelectTrigger><SelectValue placeholder="القسم" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("innovations.tracker.filterDepartment")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">كل الأقسام</SelectItem>
+                  <SelectItem value="all">{t("innovations.tracker.allDepartments")}</SelectItem>
                   {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -169,14 +175,14 @@ export const InnovationsTracker = ({ scope, departmentId }: Props) => {
           </div>
 
           {loading ? (
-            <p className="text-center text-sm text-muted-foreground py-8">جارٍ التحميل...</p>
+            <p className="text-center text-sm text-muted-foreground py-8">{t("innovations.tracker.loading")}</p>
           ) : filtered.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-8">لا توجد مبادرات</p>
+            <p className="text-center text-sm text-muted-foreground py-8">{t("innovations.tracker.noResults")}</p>
           ) : (
             <div className="space-y-2">
               {filtered.map(r => (
                 <button key={r.id} onClick={() => { setSelected(r); setNotesDraft(r.admin_notes || ""); }}
-                  className="w-full text-right p-4 rounded-lg border border-border hover:bg-accent/40 transition-colors"
+                  className={`w-full ${dir === "rtl" ? "text-right" : "text-left"} p-4 rounded-lg border border-border hover:bg-accent/40 transition-colors`}
                   style={{ unicodeBidi: "plaintext" }}>
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex-1 min-w-0">
@@ -186,13 +192,13 @@ export const InnovationsTracker = ({ scope, departmentId }: Props) => {
                       </p>
                     </div>
                     <div className="flex gap-1 flex-wrap justify-end">
-                      <Badge variant="outline" className={CATEGORY_COLORS[r.category]}>{CATEGORY_LABELS[r.category]}</Badge>
-                      <Badge className={STATUS_COLORS[r.status]}>{STATUS_LABELS[r.status]}</Badge>
+                      <Badge variant="outline" className={CATEGORY_COLORS[r.category]}>{t(`innovations.categories.${r.category}`)}</Badge>
+                      <Badge className={STATUS_COLORS[r.status]}>{t(`innovations.statuses.${r.status}`)}</Badge>
                     </div>
                   </div>
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>نسبة الإنجاز</span>
+                      <span>{t("innovations.tracker.progress")}</span>
                       <span>{r.progress_percentage}%</span>
                     </div>
                     <Progress value={r.progress_percentage} className="h-1.5" />
@@ -205,7 +211,7 @@ export const InnovationsTracker = ({ scope, departmentId }: Props) => {
       </Card>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir={dir}>
           {selected && (
             <>
               <DialogHeader>
@@ -213,51 +219,51 @@ export const InnovationsTracker = ({ scope, departmentId }: Props) => {
               </DialogHeader>
               <div className="space-y-4 text-sm" style={{ unicodeBidi: "plaintext" }}>
                 <div className="flex gap-2 flex-wrap">
-                  <Badge variant="outline" className={CATEGORY_COLORS[selected.category]}>{CATEGORY_LABELS[selected.category]}</Badge>
-                  <Badge className={STATUS_COLORS[selected.status]}>{STATUS_LABELS[selected.status]}</Badge>
+                  <Badge variant="outline" className={CATEGORY_COLORS[selected.category]}>{t(`innovations.categories.${selected.category}`)}</Badge>
+                  <Badge className={STATUS_COLORS[selected.status]}>{t(`innovations.statuses.${selected.status}`)}</Badge>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs mb-1">صاحب المبادرة</p>
+                  <p className="text-muted-foreground text-xs mb-1">{t("innovations.tracker.owner")}</p>
                   <p>{selected.userName} — {selected.departmentName}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs mb-1">الوصف</p>
+                  <p className="text-muted-foreground text-xs mb-1">{t("innovations.tracker.description")}</p>
                   <p className="whitespace-pre-wrap">{selected.description}</p>
                 </div>
                 {selected.impact_description && (
                   <div>
-                    <p className="text-muted-foreground text-xs mb-1">الأثر المحقق</p>
+                    <p className="text-muted-foreground text-xs mb-1">{t("innovations.tracker.impact")}</p>
                     <p className="whitespace-pre-wrap">{selected.impact_description}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
-                  <div><p className="text-muted-foreground text-xs">الوقت الموفر</p><p>{selected.time_saved_hours || 0} ساعة/أسبوع</p></div>
-                  <div><p className="text-muted-foreground text-xs">التكلفة الموفرة</p><p>{selected.cost_saved || 0}</p></div>
-                  <div><p className="text-muted-foreground text-xs">تاريخ البدء</p><p>{selected.start_date || "—"}</p></div>
-                  <div><p className="text-muted-foreground text-xs">تاريخ الإنجاز</p><p>{selected.completion_date || "—"}</p></div>
+                  <div><p className="text-muted-foreground text-xs">{t("innovations.tracker.timeSaved")}</p><p>{selected.time_saved_hours || 0} {t("innovations.perWeek")}</p></div>
+                  <div><p className="text-muted-foreground text-xs">{t("innovations.tracker.costSaved")}</p><p>{selected.cost_saved || 0}</p></div>
+                  <div><p className="text-muted-foreground text-xs">{t("innovations.tracker.startDate")}</p><p>{selected.start_date || "—"}</p></div>
+                  <div><p className="text-muted-foreground text-xs">{t("innovations.tracker.completionDate")}</p><p>{selected.completion_date || "—"}</p></div>
                 </div>
                 {selected.tools_used && selected.tools_used.length > 0 && (
                   <div>
-                    <p className="text-muted-foreground text-xs mb-1">الأدوات المستخدمة</p>
+                    <p className="text-muted-foreground text-xs mb-1">{t("innovations.tracker.toolsUsed")}</p>
                     <div className="flex gap-1 flex-wrap">
-                      {selected.tools_used.map((t, i) => <Badge key={i} variant="secondary">{t}</Badge>)}
+                      {selected.tools_used.map((tool, i) => <Badge key={i} variant="secondary">{tool}</Badge>)}
                     </div>
                   </div>
                 )}
                 <div className="space-y-1">
-                  <div className="flex justify-between text-xs"><span>نسبة الإنجاز</span><span>{selected.progress_percentage}%</span></div>
+                  <div className="flex justify-between text-xs"><span>{t("innovations.tracker.progress")}</span><span>{selected.progress_percentage}%</span></div>
                   <Progress value={selected.progress_percentage} />
                 </div>
                 <div className="space-y-2 pt-2 border-t border-border">
-                  <p className="font-medium">ملاحظات الإدارة</p>
-                  <Textarea rows={3} value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} dir="rtl"
-                    placeholder="اكتب ملاحظاتك حول هذه المبادرة..." />
+                  <p className="font-medium">{t("innovations.tracker.adminNotes")}</p>
+                  <Textarea rows={3} value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} dir={dir}
+                    placeholder={t("innovations.tracker.adminNotesPlaceholder")} />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setSelected(null)}>إغلاق</Button>
+                <Button variant="outline" onClick={() => setSelected(null)}>{t("innovations.tracker.close")}</Button>
                 <Button onClick={handleSaveNotes} disabled={savingNotes} className="gradient-crimson">
-                  {savingNotes ? "جارٍ الحفظ..." : "حفظ الملاحظات"}
+                  {savingNotes ? t("innovations.tracker.savingNotes") : t("innovations.tracker.saveNotes")}
                 </Button>
               </DialogFooter>
             </>
