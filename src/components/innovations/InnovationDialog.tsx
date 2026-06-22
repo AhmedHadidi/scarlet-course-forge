@@ -37,6 +37,7 @@ export const InnovationDialog = ({ open, onOpenChange, initial, onSaved }: Props
     time_saved_hours: "",
     cost_saved: "",
     tools_used: "",
+    collaborators: "",
     start_date: "",
     completion_date: "",
   });
