@@ -3,10 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, Building2, UserCheck } from "lucide-react";
+import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, Building2, UserCheck, Lightbulb } from "lucide-react";
 import { SubAdminUserManagement } from "@/components/subadmin/SubAdminUserManagement";
 import { SubAdminAnalytics } from "@/components/subadmin/SubAdminAnalytics";
 import { SubAdminPendingRegistrations } from "@/components/subadmin/SubAdminPendingRegistrations";
+import { InnovationsTracker } from "@/components/innovations/InnovationsTracker";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -148,6 +149,7 @@ const SubAdminDashboard = () => {
     { id: "overview", label: t("admin.dashboard"), icon: BarChart },
     { id: "registrations", label: t("admin.registrations"), icon: UserCheck },
     { id: "users", label: t("admin.departmentUsers"), icon: Users },
+    { id: "innovations", label: "الابتكارات", icon: Lightbulb },
     { id: "analytics", label: t("admin.analytics"), icon: TrendingUp },
   ];
 
@@ -358,6 +360,9 @@ const SubAdminDashboard = () => {
 
           {/* Users View */}
           {activeView === "users" && <SubAdminUserManagement departmentId={department.id} />}
+
+          {/* Innovations View */}
+          {activeView === "innovations" && <InnovationsTracker scope="department" departmentId={department.id} />}
 
           {/* Analytics View */}
           {activeView === "analytics" && <SubAdminAnalytics departmentId={department.id} />}
