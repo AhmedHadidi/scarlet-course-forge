@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import UserNav from "@/components/UserNav";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { InnovationsList } from "@/components/innovations/InnovationsList";
 import { z } from "zod";
 
 const strongPasswordSchema = z
@@ -447,6 +448,10 @@ const Profile = () => {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Innovations */}
+            <InnovationsList />
+
 
             {/* Change Password */}
             <Card className="border-border">
