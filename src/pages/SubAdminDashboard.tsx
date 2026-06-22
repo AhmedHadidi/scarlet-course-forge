@@ -149,7 +149,7 @@ const SubAdminDashboard = () => {
     { id: "overview", label: t("admin.dashboard"), icon: BarChart },
     { id: "registrations", label: t("admin.registrations"), icon: UserCheck },
     { id: "users", label: t("admin.departmentUsers"), icon: Users },
-    { id: "innovations", label: "الابتكارات", icon: Lightbulb },
+    { id: "innovations", label: t("innovations.tracker.menuLabel"), icon: Lightbulb },
     { id: "analytics", label: t("admin.analytics"), icon: TrendingUp },
   ];
 
