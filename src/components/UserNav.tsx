@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, BookOpen, TrendingUp, Award, User, Bell, LogOut, GraduationCap, BarChart, Newspaper } from "lucide-react";
+import { Home, BookOpen, TrendingUp, Award, User, Bell, LogOut, GraduationCap, BarChart, Newspaper, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ const UserNav = () => {
   const adminNavItems = [
     { path: "/dashboard", icon: Home, label: t("nav.courses") },
     { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
+    { path: "/prompts", icon: Sparkles, label: t("nav.promptLibrary") },
     { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
     { path: "/admin", icon: BarChart, label: t("nav.adminDashboard") },
     { path: "/profile", icon: User, label: t("nav.myProfile") },
@@ -27,6 +28,7 @@ const UserNav = () => {
   const subAdminNavItems = [
     { path: "/dashboard", icon: Home, label: t("nav.courses") },
     { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
+    { path: "/prompts", icon: Sparkles, label: t("nav.promptLibrary") },
     { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
     { path: "/subadmin", icon: BarChart, label: t("nav.myDashboard") },
     { path: "/profile", icon: User, label: t("nav.myProfile") },
@@ -35,6 +37,7 @@ const UserNav = () => {
   const userNavItems: Array<{ path: string; icon: any; label: string; feature?: string }> = [
     { path: "/dashboard", icon: BookOpen, label: t("nav.courses") },
     { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
+    { path: "/prompts", icon: Sparkles, label: t("nav.promptLibrary") },
     { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
     { path: "/certificates", icon: Award, label: t("nav.certificates"), feature: "certificates" },
     { path: "/profile", icon: User, label: t("nav.profile") },
