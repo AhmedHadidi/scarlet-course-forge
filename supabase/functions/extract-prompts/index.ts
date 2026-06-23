@@ -182,7 +182,7 @@ Rules:
     }
 
     if (replaceExisting) {
-      await supabaseAdmin.from('prompts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseAdmin.from('prompts').delete().eq('language', lang);
     }
 
     const rows = prompts
@@ -191,7 +191,7 @@ Rules:
         title: p.title?.trim() || null,
         content: p.content.trim(),
         category: p.category?.trim() || null,
-        language: 'ar',
+        language: lang,
         source_file: fileName,
         order_index: idx,
         created_by: user.id,
