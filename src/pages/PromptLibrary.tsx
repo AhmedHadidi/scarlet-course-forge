@@ -17,24 +17,27 @@ interface Prompt {
   title: string | null;
   content: string;
   category: string | null;
+  language: string | null;
 }
 
 const PromptLibrary = () => {
   const { t } = useTranslation();
-  const { isRTL } = useLanguage();
+  const { isRTL, lang } = useLanguage();
+  const contentDir = lang === "ar" ? "rtl" : "ltr";
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  useEffect(() => { fetchPrompts(); }, []);
+  useEffect(() => { fetchPrompts(); /* eslint-disable-next-line */ }, [lang]);
 
   const fetchPrompts = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("prompts")
-      .select("id, title, content, category")
+      .select("id, title, content, category, language")
+      .eq("language", lang)
       .order("order_index", { ascending: true });
     if (error) {
       console.error(error);
@@ -130,7 +133,7 @@ const PromptLibrary = () => {
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
                       {p.title && (
-                        <h3 className="font-semibold text-lg mb-1" dir="rtl" style={{ unicodeBidi: "plaintext" }}>
+                        <h3 className="font-semibold text-lg mb-1" dir={contentDir} style={{ unicodeBidi: "plaintext" }}>
                           {p.title}
                         </h3>
                       )}
@@ -153,7 +156,7 @@ const PromptLibrary = () => {
                   </div>
                   <p
                     className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90"
-                    dir="rtl"
+                    dir={contentDir}
                     style={{ unicodeBidi: "plaintext" }}
                   >
                     {p.content}
