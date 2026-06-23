@@ -83,11 +83,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { fileBase64, fileName, replaceExisting } = body as {
+    const { fileBase64, fileName, replaceExisting, language } = body as {
       fileBase64: string;
       fileName: string;
       replaceExisting?: boolean;
+      language?: "ar" | "en";
     };
+    const lang: "ar" | "en" = language === "en" ? "en" : "ar";
+    const langName = lang === "ar" ? "Arabic" : "English";
 
     if (!fileBase64 || !fileName) {
       return new Response(JSON.stringify({ error: 'fileBase64 and fileName are required' }), {
@@ -109,7 +112,7 @@ Deno.serve(async (req) => {
           {
             role: 'system',
             content:
-              'You extract Arabic AI prompts from PDF documents. Return ONLY valid JSON. Preserve original Arabic text exactly. Do not translate.',
+              `You extract ${langName} AI prompts from PDF documents. Return ONLY valid JSON. Preserve the original ${langName} text exactly. Do not translate.`,
           },
           {
             role: 'user',
@@ -119,10 +122,10 @@ Deno.serve(async (req) => {
                 text: `Extract every distinct AI prompt from this PDF.
 
 Return strictly this JSON shape:
-{"prompts":[{"title":"short Arabic title (optional)","category":"Arabic category name if visible","content":"the full Arabic prompt text exactly as written"}]}
+{"prompts":[{"title":"short ${langName} title (optional)","category":"${langName} category name if visible","content":"the full ${langName} prompt text exactly as written"}]}
 
 Rules:
-- Keep the original Arabic text intact (no translation, no summarization).
+- Keep the original ${langName} text intact (no translation, no summarization).
 - If the PDF groups prompts by section/category, use the section heading as "category".
 - Skip page headers, footers, page numbers, and instructional intro text that is not itself a prompt.
 - If a prompt has no clear title, omit the title field.
@@ -179,7 +182,7 @@ Rules:
     }
 
     if (replaceExisting) {
-      await supabaseAdmin.from('prompts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseAdmin.from('prompts').delete().eq('language', lang);
     }
 
     const rows = prompts
@@ -188,7 +191,7 @@ Rules:
         title: p.title?.trim() || null,
         content: p.content.trim(),
         category: p.category?.trim() || null,
-        language: 'ar',
+        language: lang,
         source_file: fileName,
         order_index: idx,
         created_by: user.id,

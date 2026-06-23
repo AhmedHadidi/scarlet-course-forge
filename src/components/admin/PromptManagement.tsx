@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Trash2, Plus, FileText, Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -17,9 +19,12 @@ interface Prompt {
   title: string | null;
   content: string;
   category: string | null;
+  language: string | null;
   source_file: string | null;
   created_at: string;
 }
+
+type PromptLang = "ar" | "en";
 
 export const PromptManagement = () => {
   const { t } = useTranslation();
@@ -27,9 +32,16 @@ export const PromptManagement = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [replaceExisting, setReplaceExisting] = useState(false);
+  const [uploadLanguage, setUploadLanguage] = useState<PromptLang>("ar");
+  const [viewLanguage, setViewLanguage] = useState<PromptLang>("ar");
   const [editing, setEditing] = useState<Prompt | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", content: "", category: "" });
+  const [form, setForm] = useState<{ title: string; content: string; category: string; language: PromptLang }>({
+    title: "",
+    content: "",
+    category: "",
+    language: "ar",
+  });
 
   useEffect(() => { load(); }, []);
 
@@ -78,7 +90,7 @@ export const PromptManagement = () => {
 
       const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("extract-prompts", {
-        body: { fileBase64: base64, fileName: file.name, replaceExisting },
+        body: { fileBase64: base64, fileName: file.name, replaceExisting, language: uploadLanguage },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (error) throw error;
@@ -94,12 +106,17 @@ export const PromptManagement = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ title: "", content: "", category: "" });
+    setForm({ title: "", content: "", category: "", language: viewLanguage });
     setIsDialogOpen(true);
   };
   const openEdit = (p: Prompt) => {
     setEditing(p);
-    setForm({ title: p.title || "", content: p.content, category: p.category || "" });
+    setForm({
+      title: p.title || "",
+      content: p.content,
+      category: p.category || "",
+      language: (p.language as PromptLang) || "ar",
+    });
     setIsDialogOpen(true);
   };
 
@@ -112,7 +129,7 @@ export const PromptManagement = () => {
       title: form.title.trim() || null,
       content: form.content.trim(),
       category: form.category.trim() || null,
-      language: "ar",
+      language: form.language,
     };
     if (editing) {
       const { error } = await supabase.from("prompts").update(payload).eq("id", editing.id);
@@ -140,14 +157,16 @@ export const PromptManagement = () => {
   };
 
   const deleteAll = async () => {
-    if (!confirm(t("prompts.admin.confirmDeleteAll"))) return;
+    if (!confirm(t("prompts.admin.confirmDeleteAllLang", { lang: viewLanguage.toUpperCase() }))) return;
     const { error } = await supabase
       .from("prompts")
       .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000");
+      .eq("language", viewLanguage);
     if (error) return toast.error(error.message);
     await load();
   };
+
+  const visiblePrompts = prompts.filter((p) => (p.language || "ar") === viewLanguage);
 
   return (
     <div className="space-y-6">
@@ -160,9 +179,19 @@ export const PromptManagement = () => {
           <CardDescription>{t("prompts.admin.uploadDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Label className="text-sm">{t("prompts.admin.pdfLanguage")}</Label>
+            <Select value={uploadLanguage} onValueChange={(v) => setUploadLanguage(v as PromptLang)}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ar">{t("prompts.admin.langAr")}</SelectItem>
+                <SelectItem value="en">{t("prompts.admin.langEn")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center gap-3">
             <Switch id="replace" checked={replaceExisting} onCheckedChange={setReplaceExisting} />
-            <Label htmlFor="replace" className="cursor-pointer">{t("prompts.admin.replaceExisting")}</Label>
+            <Label htmlFor="replace" className="cursor-pointer">{t("prompts.admin.replaceExistingLang", { lang: uploadLanguage.toUpperCase() })}</Label>
           </div>
           <div className="flex flex-wrap gap-3">
             <label>
@@ -178,10 +207,10 @@ export const PromptManagement = () => {
               <Plus className="h-4 w-4 mr-2" />
               {t("prompts.admin.addManual")}
             </Button>
-            {prompts.length > 0 && (
+            {visiblePrompts.length > 0 && (
               <Button variant="destructive" onClick={deleteAll}>
                 <Trash2 className="h-4 w-4 mr-2" />
-                {t("prompts.admin.deleteAll")}
+                {t("prompts.admin.deleteAllLang", { lang: viewLanguage.toUpperCase() })}
               </Button>
             )}
           </div>
@@ -190,38 +219,52 @@ export const PromptManagement = () => {
 
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            {t("prompts.admin.listTitle")} ({prompts.length})
-          </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              {t("prompts.admin.listTitle")} ({visiblePrompts.length})
+            </CardTitle>
+            <Tabs value={viewLanguage} onValueChange={(v) => setViewLanguage(v as PromptLang)}>
+              <TabsList>
+                <TabsTrigger value="ar">{t("prompts.admin.langAr")}</TabsTrigger>
+                <TabsTrigger value="en">{t("prompts.admin.langEn")}</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {loading ? (
             <p className="text-muted-foreground">{t("common.loading")}</p>
-          ) : prompts.length === 0 ? (
+          ) : visiblePrompts.length === 0 ? (
             <p className="text-muted-foreground">{t("prompts.admin.empty")}</p>
           ) : (
-            prompts.map((p) => (
-              <div key={p.id} className="border border-border/50 rounded-lg p-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex-1 min-w-0">
-                    {p.title && <h4 className="font-semibold" dir="rtl" style={{ unicodeBidi: "plaintext" }}>{p.title}</h4>}
-                    {p.category && <Badge variant="secondary" className="mt-1">{p.category}</Badge>}
+            visiblePrompts.map((p) => {
+              const promptDir = (p.language || "ar") === "ar" ? "rtl" : "ltr";
+              return (
+                <div key={p.id} className="border border-border/50 rounded-lg p-4">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      {p.title && <h4 className="font-semibold" dir={promptDir} style={{ unicodeBidi: "plaintext" }}>{p.title}</h4>}
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <Badge variant="outline">{(p.language || "ar").toUpperCase()}</Badge>
+                        {p.category && <Badge variant="secondary">{p.category}</Badge>}
+                      </div>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => remove(p.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => remove(p.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
+                  <p className="text-sm whitespace-pre-wrap text-muted-foreground line-clamp-4" dir={promptDir} style={{ unicodeBidi: "plaintext" }}>
+                    {p.content}
+                  </p>
                 </div>
-                <p className="text-sm whitespace-pre-wrap text-muted-foreground line-clamp-4" dir="rtl" style={{ unicodeBidi: "plaintext" }}>
-                  {p.content}
-                </p>
-              </div>
-            ))
+              );
+            })
           )}
         </CardContent>
       </Card>
@@ -232,6 +275,16 @@ export const PromptManagement = () => {
             <DialogTitle>{editing ? t("prompts.admin.editPrompt") : t("prompts.admin.addPrompt")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label>{t("prompts.admin.fieldLanguage")}</Label>
+              <Select value={form.language} onValueChange={(v) => setForm({ ...form, language: v as PromptLang })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ar">{t("prompts.admin.langAr")}</SelectItem>
+                  <SelectItem value="en">{t("prompts.admin.langEn")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>{t("prompts.admin.fieldTitle")}</Label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} dir="auto" />
@@ -246,7 +299,7 @@ export const PromptManagement = () => {
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
                 rows={8}
-                dir="rtl"
+                dir={form.language === "ar" ? "rtl" : "ltr"}
                 style={{ unicodeBidi: "plaintext" }}
               />
             </div>

@@ -673,26 +673,33 @@
         "admin": {
             "menuLabel": "مكتبة البرومبتات",
             "uploadTitle": "رفع ملف PDF للبرومبتات",
-            "uploadDescription": "ارفع ملف PDF وسيقوم الذكاء الاصطناعي باستخراج البرومبتات العربية وتصنيفها تلقائياً.",
+            "uploadDescription": "ارفع ملف PDF وسيقوم الذكاء الاصطناعي باستخراج البرومبتات وتصنيفها تلقائياً. اختر لغة الملف أولاً.",
             "uploadPdf": "رفع PDF",
             "processing": "جارٍ استخراج البرومبتات...",
             "replaceExisting": "استبدال جميع البرومبتات الحالية",
+            "replaceExistingLang": "استبدال جميع برومبتات {{lang}} الحالية",
+            "pdfLanguage": "لغة الملف",
+            "langAr": "العربية",
+            "langEn": "الإنجليزية",
             "pdfOnly": "يُسمح بملفات PDF فقط",
             "tooLarge": "حجم الملف كبير جداً (الحد الأقصى 20 ميجابايت)",
             "extractedToast": "تم استيراد {{count}} برومبت",
             "extractFailed": "فشل استخراج البرومبتات",
             "addManual": "إضافة برومبت يدوياً",
             "deleteAll": "حذف الكل",
+            "deleteAllLang": "حذف كل {{lang}}",
             "listTitle": "البرومبتات",
             "empty": "لا توجد برومبتات بعد.",
             "addPrompt": "إضافة برومبت",
             "editPrompt": "تعديل برومبت",
             "fieldTitle": "العنوان",
             "fieldCategory": "الفئة",
+            "fieldLanguage": "اللغة",
             "fieldContent": "نص البرومبت",
             "contentRequired": "نص البرومبت مطلوب",
             "confirmDelete": "حذف هذا البرومبت؟",
-            "confirmDeleteAll": "حذف جميع البرومبتات؟ لا يمكن التراجع عن هذا الإجراء."
+            "confirmDeleteAll": "حذف جميع البرومبتات؟ لا يمكن التراجع عن هذا الإجراء.",
+            "confirmDeleteAllLang": "حذف جميع برومبتات {{lang}}؟ لا يمكن التراجع عن هذا الإجراء."
         }
     }
 }
