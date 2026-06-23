@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Trash2, Plus, FileText, Loader2, Pencil } from "lucide-react";
+import { Upload, Trash2, Plus, FileText, Loader2, Pencil, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -31,6 +31,7 @@ export const PromptManagement = () => {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [uploadLanguage, setUploadLanguage] = useState<PromptLang>("ar");
   const [viewLanguage, setViewLanguage] = useState<PromptLang>("ar");
