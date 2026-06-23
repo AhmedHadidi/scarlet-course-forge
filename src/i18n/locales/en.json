@@ -699,7 +699,13 @@
             "contentRequired": "Prompt content is required",
             "confirmDelete": "Delete this prompt?",
             "confirmDeleteAll": "Delete ALL prompts? This cannot be undone.",
-            "confirmDeleteAllLang": "Delete ALL {{lang}} prompts? This cannot be undone."
+            "confirmDeleteAllLang": "Delete ALL {{lang}} prompts? This cannot be undone.",
+            "translateArToEn": "Translate Arabic → English",
+            "translating": "Translating...",
+            "translatedToast": "Translated {{count}} prompts to English",
+            "translateFailed": "Failed to translate prompts",
+            "translateNoSource": "No Arabic prompts to translate",
+            "translateReplaceConfirm": "Replace existing English prompts with the new translations? Click OK to replace, Cancel to add alongside."
         }
     }
 }

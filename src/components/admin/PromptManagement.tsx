@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Trash2, Plus, FileText, Loader2, Pencil } from "lucide-react";
+import { Upload, Trash2, Plus, FileText, Loader2, Pencil, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -31,6 +31,7 @@ export const PromptManagement = () => {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [uploadLanguage, setUploadLanguage] = useState<PromptLang>("ar");
   const [viewLanguage, setViewLanguage] = useState<PromptLang>("ar");
@@ -167,6 +168,32 @@ export const PromptManagement = () => {
   };
 
   const visiblePrompts = prompts.filter((p) => (p.language || "ar") === viewLanguage);
+  const arabicCount = prompts.filter((p) => (p.language || "ar") === "ar").length;
+
+  const translateArToEn = async () => {
+    if (arabicCount === 0) {
+      toast.error(t("prompts.admin.translateNoSource"));
+      return;
+    }
+    const replace = confirm(t("prompts.admin.translateReplaceConfirm"));
+    setTranslating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("translate-prompts", {
+        body: { replaceExisting: replace },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw error;
+      toast.success(t("prompts.admin.translatedToast", { count: (data as any)?.inserted ?? 0 }));
+      setViewLanguage("en");
+      await load();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || t("prompts.admin.translateFailed"));
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -206,6 +233,10 @@ export const PromptManagement = () => {
             <Button variant="outline" onClick={openCreate}>
               <Plus className="h-4 w-4 mr-2" />
               {t("prompts.admin.addManual")}
+            </Button>
+            <Button variant="secondary" onClick={translateArToEn} disabled={translating || arabicCount === 0}>
+              {translating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Languages className="h-4 w-4 mr-2" />}
+              {translating ? t("prompts.admin.translating") : t("prompts.admin.translateArToEn")}
             </Button>
             {visiblePrompts.length > 0 && (
               <Button variant="destructive" onClick={deleteAll}>
