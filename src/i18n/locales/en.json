@@ -673,26 +673,33 @@
         "admin": {
             "menuLabel": "Prompt Library",
             "uploadTitle": "Upload prompts PDF",
-            "uploadDescription": "Upload a PDF and the AI will extract Arabic prompts and group them by category automatically.",
+            "uploadDescription": "Upload a PDF and the AI will extract prompts and group them by category automatically. Choose the PDF's language first.",
             "uploadPdf": "Upload PDF",
             "processing": "Extracting prompts...",
             "replaceExisting": "Replace all existing prompts",
+            "replaceExistingLang": "Replace all existing {{lang}} prompts",
+            "pdfLanguage": "PDF language",
+            "langAr": "Arabic",
+            "langEn": "English",
             "pdfOnly": "Only PDF files are supported",
             "tooLarge": "File is too large (max 20MB)",
             "extractedToast": "Imported {{count}} prompts",
             "extractFailed": "Failed to extract prompts",
             "addManual": "Add prompt manually",
             "deleteAll": "Delete all",
+            "deleteAllLang": "Delete all {{lang}}",
             "listTitle": "Prompts",
             "empty": "No prompts yet.",
             "addPrompt": "Add prompt",
             "editPrompt": "Edit prompt",
             "fieldTitle": "Title",
             "fieldCategory": "Category",
+            "fieldLanguage": "Language",
             "fieldContent": "Prompt content",
             "contentRequired": "Prompt content is required",
             "confirmDelete": "Delete this prompt?",
-            "confirmDeleteAll": "Delete ALL prompts? This cannot be undone."
+            "confirmDeleteAll": "Delete ALL prompts? This cannot be undone.",
+            "confirmDeleteAllLang": "Delete ALL {{lang}} prompts? This cannot be undone."
         }
     }
 }
