@@ -106,12 +106,17 @@ export const PromptManagement = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ title: "", content: "", category: "" });
+    setForm({ title: "", content: "", category: "", language: viewLanguage });
     setIsDialogOpen(true);
   };
   const openEdit = (p: Prompt) => {
     setEditing(p);
-    setForm({ title: p.title || "", content: p.content, category: p.category || "" });
+    setForm({
+      title: p.title || "",
+      content: p.content,
+      category: p.category || "",
+      language: (p.language as PromptLang) || "ar",
+    });
     setIsDialogOpen(true);
   };
 
@@ -124,7 +129,7 @@ export const PromptManagement = () => {
       title: form.title.trim() || null,
       content: form.content.trim(),
       category: form.category.trim() || null,
-      language: "ar",
+      language: form.language,
     };
     if (editing) {
       const { error } = await supabase.from("prompts").update(payload).eq("id", editing.id);
