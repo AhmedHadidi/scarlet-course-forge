@@ -90,7 +90,7 @@ export const PromptManagement = () => {
 
       const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("extract-prompts", {
-        body: { fileBase64: base64, fileName: file.name, replaceExisting },
+        body: { fileBase64: base64, fileName: file.name, replaceExisting, language: uploadLanguage },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (error) throw error;
