@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Trash2, Plus, FileText, Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -17,9 +19,12 @@ interface Prompt {
   title: string | null;
   content: string;
   category: string | null;
+  language: string | null;
   source_file: string | null;
   created_at: string;
 }
+
+type PromptLang = "ar" | "en";
 
 export const PromptManagement = () => {
   const { t } = useTranslation();
@@ -27,9 +32,16 @@ export const PromptManagement = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [replaceExisting, setReplaceExisting] = useState(false);
+  const [uploadLanguage, setUploadLanguage] = useState<PromptLang>("ar");
+  const [viewLanguage, setViewLanguage] = useState<PromptLang>("ar");
   const [editing, setEditing] = useState<Prompt | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", content: "", category: "" });
+  const [form, setForm] = useState<{ title: string; content: string; category: string; language: PromptLang }>({
+    title: "",
+    content: "",
+    category: "",
+    language: "ar",
+  });
 
   useEffect(() => { load(); }, []);
 
