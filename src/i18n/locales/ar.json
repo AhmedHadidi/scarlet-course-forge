@@ -44,6 +44,7 @@
         "brand": "المنصة التدريبية (ذكاء+)",
         "courses": "الدورات",
         "aiNews": "أخبار الذكاء الاصطناعي",
+        "promptLibrary": "البرومبتات",
         "myProgress": "تقدمي",
         "adminDashboard": "لوحة الإدارة",
         "myDashboard": "لوحتي",
@@ -656,6 +657,42 @@
             "notesSaved": "تم حفظ الملاحظات",
             "close": "إغلاق",
             "menuLabel": "الابتكارات"
+        }
+    },
+    "prompts": {
+        "title": "مكتبة البرومبتات",
+        "subtitle": "تصفّح وابحث وانسخ البرومبتات الجاهزة للاستخدام مع الذكاء الاصطناعي.",
+        "searchPlaceholder": "ابحث في البرومبتات...",
+        "allCategories": "كل الفئات",
+        "copy": "نسخ",
+        "copied": "تم النسخ",
+        "copyError": "تعذّر النسخ",
+        "loadError": "فشل تحميل البرومبتات",
+        "emptyAll": "لا توجد برومبتات بعد. يجب على المسؤول رفع ملف PDF.",
+        "emptyFiltered": "لا توجد نتائج مطابقة لبحثك.",
+        "admin": {
+            "menuLabel": "مكتبة البرومبتات",
+            "uploadTitle": "رفع ملف PDF للبرومبتات",
+            "uploadDescription": "ارفع ملف PDF وسيقوم الذكاء الاصطناعي باستخراج البرومبتات العربية وتصنيفها تلقائياً.",
+            "uploadPdf": "رفع PDF",
+            "processing": "جارٍ استخراج البرومبتات...",
+            "replaceExisting": "استبدال جميع البرومبتات الحالية",
+            "pdfOnly": "يُسمح بملفات PDF فقط",
+            "tooLarge": "حجم الملف كبير جداً (الحد الأقصى 20 ميجابايت)",
+            "extractedToast": "تم استيراد {{count}} برومبت",
+            "extractFailed": "فشل استخراج البرومبتات",
+            "addManual": "إضافة برومبت يدوياً",
+            "deleteAll": "حذف الكل",
+            "listTitle": "البرومبتات",
+            "empty": "لا توجد برومبتات بعد.",
+            "addPrompt": "إضافة برومبت",
+            "editPrompt": "تعديل برومبت",
+            "fieldTitle": "العنوان",
+            "fieldCategory": "الفئة",
+            "fieldContent": "نص البرومبت",
+            "contentRequired": "نص البرومبت مطلوب",
+            "confirmDelete": "حذف هذا البرومبت؟",
+            "confirmDeleteAll": "حذف جميع البرومبتات؟ لا يمكن التراجع عن هذا الإجراء."
         }
     }
 }

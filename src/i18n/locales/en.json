@@ -44,6 +44,7 @@
         "brand": "Thakaa+ Training Platform",
         "courses": "Courses",
         "aiNews": "AI News",
+        "promptLibrary": "Prompts",
         "myProgress": "My Progress",
         "adminDashboard": "Admin Dashboard",
         "myDashboard": "My Dashboard",
@@ -656,6 +657,42 @@
             "notesSaved": "Notes saved",
             "close": "Close",
             "menuLabel": "Innovations"
+        }
+    },
+    "prompts": {
+        "title": "Prompt Library",
+        "subtitle": "Browse, search, and copy ready-to-use AI prompts.",
+        "searchPlaceholder": "Search prompts...",
+        "allCategories": "All categories",
+        "copy": "Copy",
+        "copied": "Copied",
+        "copyError": "Could not copy",
+        "loadError": "Failed to load prompts",
+        "emptyAll": "No prompts available yet. An admin needs to upload a PDF.",
+        "emptyFiltered": "No prompts match your search.",
+        "admin": {
+            "menuLabel": "Prompt Library",
+            "uploadTitle": "Upload prompts PDF",
+            "uploadDescription": "Upload a PDF and the AI will extract Arabic prompts and group them by category automatically.",
+            "uploadPdf": "Upload PDF",
+            "processing": "Extracting prompts...",
+            "replaceExisting": "Replace all existing prompts",
+            "pdfOnly": "Only PDF files are supported",
+            "tooLarge": "File is too large (max 20MB)",
+            "extractedToast": "Imported {{count}} prompts",
+            "extractFailed": "Failed to extract prompts",
+            "addManual": "Add prompt manually",
+            "deleteAll": "Delete all",
+            "listTitle": "Prompts",
+            "empty": "No prompts yet.",
+            "addPrompt": "Add prompt",
+            "editPrompt": "Edit prompt",
+            "fieldTitle": "Title",
+            "fieldCategory": "Category",
+            "fieldContent": "Prompt content",
+            "contentRequired": "Prompt content is required",
+            "confirmDelete": "Delete this prompt?",
+            "confirmDeleteAll": "Delete ALL prompts? This cannot be undone."
         }
     }
 }

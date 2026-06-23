@@ -21,6 +21,7 @@ import QuizTake from "./pages/QuizTake";
 import WeeklyBulletin from "./pages/WeeklyBulletin";
 import Bulletins from "./pages/Bulletins";
 import PendingApproval from "./pages/PendingApproval";
+import PromptLibrary from "./pages/PromptLibrary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -124,6 +125,14 @@ const AppInner = () => {
                   element={
                     <ProtectedRoute>
                       <WeeklyBulletin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/prompts"
+                  element={
+                    <ProtectedRoute>
+                      <PromptLibrary />
                     </ProtectedRoute>
                   }
                 />

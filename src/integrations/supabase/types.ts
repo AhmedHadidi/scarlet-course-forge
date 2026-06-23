@@ -549,6 +549,45 @@ export type Database = {
           },
         ]
       }
+      prompts: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          language: string
+          order_index: number
+          source_file: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          language?: string
+          order_index?: number
+          source_file?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          language?: string
+          order_index?: number
+          source_file?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       quiz_answers: {
         Row: {
           answer_text: string
