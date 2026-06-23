@@ -168,6 +168,32 @@ export const PromptManagement = () => {
   };
 
   const visiblePrompts = prompts.filter((p) => (p.language || "ar") === viewLanguage);
+  const arabicCount = prompts.filter((p) => (p.language || "ar") === "ar").length;
+
+  const translateArToEn = async () => {
+    if (arabicCount === 0) {
+      toast.error(t("prompts.admin.translateNoSource"));
+      return;
+    }
+    const replace = confirm(t("prompts.admin.translateReplaceConfirm"));
+    setTranslating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("translate-prompts", {
+        body: { replaceExisting: replace },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw error;
+      toast.success(t("prompts.admin.translatedToast", { count: (data as any)?.inserted ?? 0 }));
+      setViewLanguage("en");
+      await load();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || t("prompts.admin.translateFailed"));
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -207,6 +233,10 @@ export const PromptManagement = () => {
             <Button variant="outline" onClick={openCreate}>
               <Plus className="h-4 w-4 mr-2" />
               {t("prompts.admin.addManual")}
+            </Button>
+            <Button variant="secondary" onClick={translateArToEn} disabled={translating || arabicCount === 0}>
+              {translating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Languages className="h-4 w-4 mr-2" />}
+              {translating ? t("prompts.admin.translating") : t("prompts.admin.translateArToEn")}
             </Button>
             {visiblePrompts.length > 0 && (
               <Button variant="destructive" onClick={deleteAll}>
