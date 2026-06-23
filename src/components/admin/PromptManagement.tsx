@@ -157,14 +157,16 @@ export const PromptManagement = () => {
   };
 
   const deleteAll = async () => {
-    if (!confirm(t("prompts.admin.confirmDeleteAll"))) return;
+    if (!confirm(t("prompts.admin.confirmDeleteAllLang", { lang: viewLanguage.toUpperCase() }))) return;
     const { error } = await supabase
       .from("prompts")
       .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000");
+      .eq("language", viewLanguage);
     if (error) return toast.error(error.message);
     await load();
   };
+
+  const visiblePrompts = prompts.filter((p) => (p.language || "ar") === viewLanguage);
 
   return (
     <div className="space-y-6">
