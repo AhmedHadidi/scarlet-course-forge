@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, Building2, UserCheck, Lightbulb } from "lucide-react";
+import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, Building2, UserCheck, Lightbulb, Activity } from "lucide-react";
 import { SubAdminUserManagement } from "@/components/subadmin/SubAdminUserManagement";
 import { SubAdminAnalytics } from "@/components/subadmin/SubAdminAnalytics";
 import { SubAdminPendingRegistrations } from "@/components/subadmin/SubAdminPendingRegistrations";
 import { InnovationsTracker } from "@/components/innovations/InnovationsTracker";
+import { PromptCopyAnalytics } from "@/components/admin/PromptCopyAnalytics";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -151,6 +152,7 @@ const SubAdminDashboard = () => {
     { id: "users", label: t("admin.departmentUsers"), icon: Users },
     { id: "innovations", label: t("innovations.tracker.menuLabel"), icon: Lightbulb },
     { id: "analytics", label: t("admin.analytics"), icon: TrendingUp },
+    { id: "prompt-analytics", label: t("prompts.analytics.menuLabel"), icon: Activity },
   ];
 
   if (loading) {
@@ -366,6 +368,9 @@ const SubAdminDashboard = () => {
 
           {/* Analytics View */}
           {activeView === "analytics" && <SubAdminAnalytics departmentId={department.id} />}
+
+          {/* Prompt Copy Analytics */}
+          {activeView === "prompt-analytics" && <PromptCopyAnalytics departmentId={department.id} />}
         </div>
       </div>
     </div>

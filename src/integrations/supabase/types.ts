@@ -549,6 +549,45 @@ export type Database = {
           },
         ]
       }
+      prompt_copies: {
+        Row: {
+          copied_at: string
+          department_id: string | null
+          id: string
+          prompt_id: string
+          user_id: string
+        }
+        Insert: {
+          copied_at?: string
+          department_id?: string | null
+          id?: string
+          prompt_id: string
+          user_id: string
+        }
+        Update: {
+          copied_at?: string
+          department_id?: string | null
+          id?: string
+          prompt_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompt_copies_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prompt_copies_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "prompts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prompts: {
         Row: {
           category: string | null

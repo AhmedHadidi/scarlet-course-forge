@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, FileText, Newspaper, Building2, UserCheck, Lightbulb, Sparkles } from "lucide-react";
+import { Users, BookOpen, Award, TrendingUp, LogOut, GraduationCap, Home, BarChart, FileText, Newspaper, Building2, UserCheck, Lightbulb, Sparkles, Activity } from "lucide-react";
 import { CourseManagement } from "@/components/admin/CourseManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
@@ -14,6 +14,7 @@ import { DepartmentManagement } from "@/components/admin/DepartmentManagement";
 import { PendingRegistrations } from "@/components/admin/PendingRegistrations";
 import { InnovationsTracker } from "@/components/innovations/InnovationsTracker";
 import { PromptManagement } from "@/components/admin/PromptManagement";
+import { PromptCopyAnalytics } from "@/components/admin/PromptCopyAnalytics";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -67,6 +68,7 @@ const AdminDashboard = () => {
     { id: "quizzes", label: t("admin.quizzes"), icon: FileText },
     { id: "innovations", label: t("innovations.tracker.menuLabel"), icon: Lightbulb },
     { id: "prompts", label: t("prompts.admin.menuLabel"), icon: Sparkles },
+    { id: "prompt-analytics", label: t("prompts.analytics.menuLabel"), icon: Activity },
     { id: "news", label: t("admin.news"), icon: Newspaper },
     { id: "features", label: t("admin.features"), icon: Award },
   ];
@@ -210,6 +212,7 @@ const AdminDashboard = () => {
           {activeView === "quizzes" && <QuizManagement />}
           {activeView === "innovations" && <InnovationsTracker scope="all" />}
           {activeView === "prompts" && <PromptManagement />}
+          {activeView === "prompt-analytics" && <PromptCopyAnalytics />}
           {activeView === "news" && <NewsManagement />}
           {activeView === "features" && <FeatureManagement />}
           {activeView === "analytics" && <AnalyticsDashboard />}

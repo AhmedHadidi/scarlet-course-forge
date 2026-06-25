@@ -84,6 +84,18 @@ const PromptLibrary = () => {
       setCopiedId(p.id);
       toast.success(t("prompts.copied"));
       setTimeout(() => setCopiedId((c) => (c === p.id ? null : c)), 1500);
+      // Log copy event for analytics (best-effort, ignore errors)
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from("prompt_copies").insert({
+            prompt_id: p.id,
+            user_id: user.id,
+          });
+        }
+      } catch (e) {
+        console.warn("Failed to log copy event", e);
+      }
     } catch {
       toast.error(t("prompts.copyError"));
     }
