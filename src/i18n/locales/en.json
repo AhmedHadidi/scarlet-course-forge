@@ -668,6 +668,9 @@
         "copied": "Copied",
         "copyError": "Could not copy",
         "loadError": "Failed to load prompts",
+        "categories": "Categories",
+        "backToCategories": "Back to Categories",
+        "promptsInCategory": "{{category}} Prompts",
         "emptyAll": "No prompts available yet. An admin needs to upload a PDF.",
         "emptyFiltered": "No prompts match your search.",
         "admin": {
