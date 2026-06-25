@@ -89,7 +89,7 @@ const PromptLibrary = () => {
     }
   };
 
-  const arrowIcon = isRTL ? ArrowLeft : ArrowRight;
+  const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,7 +143,7 @@ const PromptLibrary = () => {
                 {selectedCategory}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                {filtered.length} {filtered.length === 1 ? t("prompts.copy") : t("prompts.copy")}
+                {filtered.length} {filtered.length === 1 ? "prompt" : "prompts"}
               </span>
             </div>
             {filtered.length === 0 ? (
@@ -222,10 +222,10 @@ const PromptLibrary = () => {
                           {cat.name}
                         </h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {cat.count} {cat.count === 1 ? t("prompts.copy") : t("prompts.copy")}
+                          {cat.count} {cat.count === 1 ? "prompt" : "prompts"}
                         </p>
                       </div>
-                      <arrowIcon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                      <ArrowIcon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                     </CardContent>
                   </Card>
                 ))}
