@@ -668,6 +668,9 @@
         "copied": "تم النسخ",
         "copyError": "تعذّر النسخ",
         "loadError": "فشل تحميل البرومبتات",
+        "categories": "الفئات",
+        "backToCategories": "العودة إلى الفئات",
+        "promptsInCategory": "برومبتات {{category}}",
         "emptyAll": "لا توجد برومبتات بعد. يجب على المسؤول رفع ملف PDF.",
         "emptyFiltered": "لا توجد نتائج مطابقة لبحثك.",
         "admin": {
