@@ -709,6 +709,27 @@
             "translateFailed": "Failed to translate prompts",
             "translateNoSource": "No Arabic prompts to translate",
             "translateReplaceConfirm": "Replace existing English prompts with the new translations? Click OK to replace, Cancel to add alongside."
+        },
+        "analytics": {
+            "menuLabel": "Prompt Usage",
+            "title": "Prompt Usage Analytics",
+            "subtitle": "Track how often prompts are copied to measure effectiveness.",
+            "totalCopies": "Total copies",
+            "uniqueUsers": "Unique users",
+            "uniquePrompts": "Prompts used",
+            "breakdown": "Breakdown",
+            "byPrompt": "By prompt",
+            "byUser": "By user",
+            "recent": "Recent activity",
+            "searchPlaceholder": "Search prompts or users...",
+            "empty": "No copy activity yet.",
+            "promptCol": "Prompt",
+            "userCol": "User",
+            "copies": "Copies",
+            "users": "Users",
+            "prompts": "Prompts",
+            "date": "Date",
+            "unknownUser": "Unknown user"
         }
     }
 }
