@@ -75,8 +75,19 @@ export const FeatureManagement = () => {
         return Award;
       case "notifications":
         return Bell;
+      case "bulletins":
+        return Newspaper;
       default:
         return Award;
+    }
+  };
+
+  const getFeatureLabel = (featureName: string) => {
+    switch (featureName) {
+      case "bulletins":
+        return "AI News Bulletins";
+      default:
+        return featureName;
     }
   };
 
@@ -86,6 +97,8 @@ export const FeatureManagement = () => {
         return "Allow users to view and download their certificates";
       case "notifications":
         return "Allow users to receive and view notifications";
+      case "bulletins":
+        return "Show or hide the AI News page in the top navigation";
       default:
         return "Feature setting";
     }
