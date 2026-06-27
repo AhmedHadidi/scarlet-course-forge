@@ -297,6 +297,89 @@ const Landing = () => {
         </div>
       </div>
 
+      {/* Monthly Heroes Section */}
+      {(topInnovator || topLearner) && (
+        <div className="container mx-auto px-4 pt-12 pb-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold mb-2">{t("landing.monthlyHeroesTitle")}</h2>
+            <p className="text-muted-foreground">{t("landing.monthlyHeroesSubtitle")}</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <Card className="border-border/50 overflow-hidden relative transition-smooth hover:shadow-crimson hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent pointer-events-none" />
+              <CardHeader className="relative">
+                <div className="flex items-center gap-4">
+                  <div className="relative shrink-0">
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg ring-4 ring-amber-500/20">
+                      <Sparkles className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-amber-500 border-2 border-background flex items-center justify-center">
+                      <Trophy className="h-3 w-3 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <Badge className="mb-2 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-500/30">
+                      {t("landing.badgeInnovator")}
+                    </Badge>
+                    <CardTitle className="text-lg">{t("landing.topInnovatorTitle")}</CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative">
+                {topInnovator ? (
+                  <>
+                    <p className="text-2xl font-bold mb-1" dir="auto" style={{ unicodeBidi: "plaintext" }}>
+                      {topInnovator.full_name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t("landing.innovationsCount", { count: topInnovator.count })}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground">{t("landing.noHeroYet")}</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/50 overflow-hidden relative transition-smooth hover:shadow-crimson hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 via-transparent to-transparent pointer-events-none" />
+              <CardHeader className="relative">
+                <div className="flex items-center gap-4">
+                  <div className="relative shrink-0">
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-lg ring-4 ring-sky-500/20">
+                      <Award className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-sky-500 border-2 border-background flex items-center justify-center">
+                      <BookOpen className="h-3 w-3 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <Badge className="mb-2 bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 border-sky-500/30">
+                      {t("landing.badgeLearner")}
+                    </Badge>
+                    <CardTitle className="text-lg">{t("landing.topLearnerTitle")}</CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative">
+                {topLearner ? (
+                  <>
+                    <p className="text-2xl font-bold mb-1" dir="auto" style={{ unicodeBidi: "plaintext" }}>
+                      {topLearner.full_name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t("landing.watchMinutes", { count: Math.round((topLearner.watch_seconds || 0) / 60) })}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground">{t("landing.noHeroYet")}</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
       {/* Available Courses Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="mb-8">
