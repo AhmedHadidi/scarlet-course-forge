@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type AppTheme = "default" | "glass";
+export type AppTheme = "default" | "glass" | "ocean";
 
 interface ThemeContextType {
   theme: AppTheme;
