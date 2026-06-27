@@ -94,7 +94,7 @@ All colors MUST be HSL.
     --glass-blur: 20px;
   }
 }
-  /* ===== Ocean Theme (Purple / Coral — eLearner palette) ===== */
+  /* ===== Ocean Theme (Deep Purple — no orange) ===== */
   [data-app-theme="ocean"] {
     --background: 270 40% 98%;
     --foreground: 260 40% 15%;
@@ -108,13 +108,13 @@ All colors MUST be HSL.
     --primary: 260 70% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 16 95% 62%;
+    --secondary: 245 60% 55%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 270 30% 95%;
     --muted-foreground: 260 15% 40%;
 
-    --accent: 16 95% 62%;
+    --accent: 245 60% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
@@ -124,7 +124,7 @@ All colors MUST be HSL.
     --input: 270 30% 95%;
     --ring: 260 70% 45%;
 
-    --gradient-crimson: linear-gradient(135deg, hsl(265 75% 40%), hsl(260 70% 55%) 60%, hsl(16 95% 62%));
+    --gradient-crimson: linear-gradient(135deg, hsl(265 75% 40%), hsl(260 70% 55%) 60%, hsl(245 60% 55%));
     --gradient-dark: linear-gradient(180deg, hsl(270 40% 99%), hsl(270 35% 95%));
     --shadow-crimson: 0 10px 40px -10px hsl(260 70% 45% / 0.35);
 
