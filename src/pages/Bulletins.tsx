@@ -42,10 +42,25 @@ const Bulletins = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    checkFeatureEnabled();
+  }, []);
+
+  useEffect(() => {
     if (user?.id) {
       fetchUserPreferencesAndBulletins();
     }
   }, [user?.id]);
+
+  const checkFeatureEnabled = async () => {
+    const { data } = await supabase
+      .from("feature_settings")
+      .select("is_enabled")
+      .eq("feature_name", "bulletins")
+      .maybeSingle();
+    if (data && data.is_enabled === false) {
+      navigate("/dashboard", { replace: true });
+    }
+  };
 
   const fetchUserPreferencesAndBulletins = async () => {
     if (!user?.id) return;

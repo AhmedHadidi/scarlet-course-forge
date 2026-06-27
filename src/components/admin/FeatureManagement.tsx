@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Award, Bell } from "lucide-react";
+import { Award, Bell, Newspaper } from "lucide-react";
 
 interface FeatureSetting {
   id: string;
@@ -75,8 +75,19 @@ export const FeatureManagement = () => {
         return Award;
       case "notifications":
         return Bell;
+      case "bulletins":
+        return Newspaper;
       default:
         return Award;
+    }
+  };
+
+  const getFeatureLabel = (featureName: string) => {
+    switch (featureName) {
+      case "bulletins":
+        return "AI News Bulletins";
+      default:
+        return featureName;
     }
   };
 
@@ -86,6 +97,8 @@ export const FeatureManagement = () => {
         return "Allow users to view and download their certificates";
       case "notifications":
         return "Allow users to receive and view notifications";
+      case "bulletins":
+        return "Show or hide the AI News page in the top navigation";
       default:
         return "Feature setting";
     }
@@ -117,7 +130,7 @@ export const FeatureManagement = () => {
                     </div>
                     <div>
                       <CardTitle className="text-base capitalize">
-                        {feature.feature_name}
+                        {getFeatureLabel(feature.feature_name)}
                       </CardTitle>
                       <CardDescription>
                         {getFeatureDescription(feature.feature_name)}

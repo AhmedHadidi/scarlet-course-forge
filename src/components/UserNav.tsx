@@ -16,18 +16,18 @@ const UserNav = () => {
   const { t } = useTranslation();
   const [featureSettings, setFeatureSettings] = useState<Record<string, boolean>>({});
 
-  const adminNavItems = [
+  const adminNavItems: Array<{ path: string; icon: any; label: string; feature?: string }> = [
     { path: "/dashboard", icon: Home, label: t("nav.courses") },
-    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
+    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews"), feature: "bulletins" },
     { path: "/prompts", icon: Sparkles, label: t("nav.promptLibrary") },
     { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
     { path: "/admin", icon: BarChart, label: t("nav.adminDashboard") },
     { path: "/profile", icon: User, label: t("nav.myProfile") },
   ];
 
-  const subAdminNavItems = [
+  const subAdminNavItems: Array<{ path: string; icon: any; label: string; feature?: string }> = [
     { path: "/dashboard", icon: Home, label: t("nav.courses") },
-    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
+    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews"), feature: "bulletins" },
     { path: "/prompts", icon: Sparkles, label: t("nav.promptLibrary") },
     { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
     { path: "/subadmin", icon: BarChart, label: t("nav.myDashboard") },
@@ -36,7 +36,7 @@ const UserNav = () => {
 
   const userNavItems: Array<{ path: string; icon: any; label: string; feature?: string }> = [
     { path: "/dashboard", icon: BookOpen, label: t("nav.courses") },
-    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews") },
+    { path: "/bulletins", icon: Newspaper, label: t("nav.aiNews"), feature: "bulletins" },
     { path: "/prompts", icon: Sparkles, label: t("nav.promptLibrary") },
     { path: "/progress", icon: TrendingUp, label: t("nav.myProgress") },
     { path: "/certificates", icon: Award, label: t("nav.certificates"), feature: "certificates" },
@@ -72,14 +72,12 @@ const UserNav = () => {
       ? subAdminNavItems
       : userNavItems;
 
-  const filteredNavItems = userRole === 'admin' || userRole === 'sub_admin'
-    ? navItems
-    : navItems.filter(item => {
-      if ('feature' in item && item.feature) {
-        return featureSettings[item.feature] !== false;
-      }
-      return true;
-    });
+  const filteredNavItems = navItems.filter(item => {
+    if (item.feature) {
+      return featureSettings[item.feature] !== false;
+    }
+    return true;
+  });
 
   return (
     <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
