@@ -50,10 +50,22 @@ const Landing = () => {
 
   useEffect(() => {
     fetchCourses();
+    fetchTopPerformers();
     if (user) {
       fetchUserName();
     }
   }, [user]);
+
+  const fetchTopPerformers = async () => {
+    try {
+      const { data, error } = await (supabase as any).rpc("get_monthly_top_performers");
+      if (error) throw error;
+      setTopInnovator(data?.innovator ?? null);
+      setTopLearner(data?.learner ?? null);
+    } catch (e) {
+      console.error("Error fetching top performers:", e);
+    }
+  };
 
   const fetchUserName = async () => {
     if (!user) return;
