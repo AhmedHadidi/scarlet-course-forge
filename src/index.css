@@ -94,44 +94,45 @@ All colors MUST be HSL.
     --glass-blur: 20px;
   }
 }
-  /* ===== Ocean Theme (Blue / Teal / Mint with Pink accent) ===== */
+  /* ===== Ocean Theme (Purple / Coral — eLearner palette) ===== */
   [data-app-theme="ocean"] {
-    --background: 200 60% 97%;
-    --foreground: 220 50% 15%;
+    --background: 270 40% 98%;
+    --foreground: 260 40% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 50% 15%;
+    --card-foreground: 260 40% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 50% 15%;
+    --popover-foreground: 260 40% 15%;
 
-    --primary: 210 90% 55%;
+    --primary: 260 70% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 170 70% 50%;
+    --secondary: 16 95% 62%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 200 40% 94%;
-    --muted-foreground: 220 20% 40%;
+    --muted: 270 30% 95%;
+    --muted-foreground: 260 15% 40%;
 
-    --accent: 330 85% 65%;
+    --accent: 16 95% 62%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 200 40% 88%;
-    --input: 200 40% 94%;
-    --ring: 210 90% 55%;
+    --border: 270 30% 90%;
+    --input: 270 30% 95%;
+    --ring: 260 70% 45%;
 
-    --gradient-crimson: linear-gradient(135deg, hsl(210 90% 55%), hsl(170 70% 50%) 60%, hsl(140 70% 60%));
-    --gradient-dark: linear-gradient(180deg, hsl(200 60% 98%), hsl(200 50% 94%));
-    --shadow-crimson: 0 10px 40px -10px hsl(210 90% 55% / 0.35);
+    --gradient-crimson: linear-gradient(135deg, hsl(265 75% 40%), hsl(260 70% 55%) 60%, hsl(16 95% 62%));
+    --gradient-dark: linear-gradient(180deg, hsl(270 40% 99%), hsl(270 35% 95%));
+    --shadow-crimson: 0 10px 40px -10px hsl(260 70% 45% / 0.35);
 
     --glass-bg: 0 0% 100% / 0.5;
-    --glass-border: 210 90% 80% / 0.4;
+    --glass-border: 260 50% 80% / 0.4;
     --glass-blur: 18px;
   }
+
 
 
 @layer base {
