@@ -45,6 +45,8 @@ const Landing = () => {
   const [userName, setUserName] = useState<string>("");
   const [totalLearners, setTotalLearners] = useState(0);
   const [completionRate, setCompletionRate] = useState(0);
+  const [topInnovator, setTopInnovator] = useState<{ full_name: string; count: number } | null>(null);
+  const [topLearner, setTopLearner] = useState<{ full_name: string; watch_seconds: number } | null>(null);
 
   useEffect(() => {
     fetchCourses();
