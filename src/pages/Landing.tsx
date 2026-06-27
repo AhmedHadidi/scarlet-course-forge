@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, BookOpen, Trophy, Users, ArrowRight, CheckCircle2 } from "lucide-react";
+import { GraduationCap, BookOpen, Trophy, Users, ArrowRight, CheckCircle2, Sparkles, Award } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
