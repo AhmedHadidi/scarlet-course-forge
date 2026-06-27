@@ -1018,6 +1018,7 @@ export type Database = {
       }
     }
     Functions: {
+      get_monthly_top_performers: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
