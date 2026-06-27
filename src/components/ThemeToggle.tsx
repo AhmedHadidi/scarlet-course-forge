@@ -1,6 +1,6 @@
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
-import { Palette, Sparkles } from "lucide-react";
+import { Palette, Sparkles, Waves } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
