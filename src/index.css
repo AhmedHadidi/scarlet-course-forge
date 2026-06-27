@@ -94,6 +94,45 @@ All colors MUST be HSL.
     --glass-blur: 20px;
   }
 }
+  /* ===== Ocean Theme (Blue / Teal / Mint with Pink accent) ===== */
+  [data-app-theme="ocean"] {
+    --background: 200 60% 97%;
+    --foreground: 220 50% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 50% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 50% 15%;
+
+    --primary: 210 90% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 170 70% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 200 40% 94%;
+    --muted-foreground: 220 20% 40%;
+
+    --accent: 330 85% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 40% 88%;
+    --input: 200 40% 94%;
+    --ring: 210 90% 55%;
+
+    --gradient-crimson: linear-gradient(135deg, hsl(210 90% 55%), hsl(170 70% 50%) 60%, hsl(140 70% 60%));
+    --gradient-dark: linear-gradient(180deg, hsl(200 60% 98%), hsl(200 50% 94%));
+    --shadow-crimson: 0 10px 40px -10px hsl(210 90% 55% / 0.35);
+
+    --glass-bg: 0 0% 100% / 0.5;
+    --glass-border: 210 90% 80% / 0.4;
+    --glass-blur: 18px;
+  }
+
 
 @layer base {
   * {
