@@ -41,7 +41,7 @@
         "bothLangsRequired": "Both Arabic and English fields are required to publish"
     },
     "nav": {
-        "brand": "Thakaa+ Training Platform",
+        "brand": "Thiqa Training Platform",
         "courses": "Courses",
         "aiNews": "AI News",
         "promptLibrary": "Prompts",
@@ -82,7 +82,7 @@
         "enrollNow": "Enroll Now",
         "new": "New",
         "signUpToEnroll": "Sign Up to Enroll",
-        "whyChoose": "Why Choose Thakaa+ Training Platform?",
+        "whyChoose": "Why Choose Thiqa Training Platform?",
         "whySubtitle": "Everything you need to succeed in your learning journey",
         "startLearning": "Start Learning Today",
         "startLearningSubtitle": "Join our community and unlock your potential with structured learning paths",
@@ -96,7 +96,7 @@
         "noHeroYet": "Nobody yet — be the first!",
         "badgeInnovator": "Innovation Badge",
         "badgeLearner": "Learning Excellence Badge",
-        "footer": "© 2025 Thakaa+ Training Platform. All rights reserved.",
+        "footer": "© 2025 Thiqa Training Platform. All rights reserved.",
         "feature1Title": "Comprehensive Courses",
         "feature1Desc": "Access a wide range of courses across multiple categories and difficulty levels.",
         "feature2Title": "Earn Certificates",
@@ -111,7 +111,7 @@
         "benefit6": "Mobile-friendly learning experience"
     },
     "auth": {
-        "welcomeTitle": "Welcome to Thakaa+ Training Platform",
+        "welcomeTitle": "Welcome to Thiqa Training Platform",
         "signInDesc": "Sign in to access your courses and progress",
         "preferencesTitle": "Set Your Preferences",
         "preferencesDesc": "Select AI topics to receive personalized weekly bulletins",

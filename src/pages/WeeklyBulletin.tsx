@@ -86,7 +86,7 @@ const ZakaaLogo = () => (
   <div style={{ width: '140px', height: '140px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
     <img
       src="/logo-zakaa.png"
-      alt="ذكاء"
+      alt="ثقة"
       style={{ width: '180px', height: '160px', objectFit: 'contain' }}
       crossOrigin="anonymous"
     />
