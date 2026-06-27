@@ -130,7 +130,7 @@ export const FeatureManagement = () => {
                     </div>
                     <div>
                       <CardTitle className="text-base capitalize">
-                        {feature.feature_name}
+                        {getFeatureLabel(feature.feature_name)}
                       </CardTitle>
                       <CardDescription>
                         {getFeatureDescription(feature.feature_name)}
