@@ -17,11 +17,13 @@ const ThemeToggle = () => {
         <Button variant="outline" size="sm" className="gap-2">
           {theme === "default" ? (
             <Palette className="h-4 w-4" />
-          ) : (
+          ) : theme === "glass" ? (
             <Sparkles className="h-4 w-4" />
+          ) : (
+            <Waves className="h-4 w-4" />
           )}
           <span className="hidden sm:inline">
-            {theme === "default" ? "Default" : "Glass"}
+            {theme === "default" ? "Default" : theme === "glass" ? "Glass" : "Ocean"}
           </span>
         </Button>
       </DropdownMenuTrigger>
@@ -39,6 +41,13 @@ const ThemeToggle = () => {
         >
           <Sparkles className="mr-2 h-4 w-4" />
           Glass Theme
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setTheme("ocean")}
+          className={theme === "ocean" ? "bg-accent" : ""}
+        >
+          <Waves className="mr-2 h-4 w-4" />
+          Ocean Theme
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
