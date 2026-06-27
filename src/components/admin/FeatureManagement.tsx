@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Award, Bell } from "lucide-react";
+import { Award, Bell, Newspaper } from "lucide-react";
 
 interface FeatureSetting {
   id: string;
