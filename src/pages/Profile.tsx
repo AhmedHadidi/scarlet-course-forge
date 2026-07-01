@@ -397,6 +397,9 @@ const Profile = () => {
               </CardContent>
             </Card>
 
+            {/* Innovations */}
+            <InnovationsList />
+
             {/* News Preferences */}
             <Card className="border-border">
               <CardHeader>
@@ -448,9 +451,6 @@ const Profile = () => {
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Innovations */}
-            <InnovationsList />
 
 
             {/* Change Password */}
