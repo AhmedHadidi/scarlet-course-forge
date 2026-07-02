@@ -142,16 +142,32 @@ export const CourseManagement = () => {
 
         // Add manual videos if any
         if (data && manualVideos.length > 0) {
-          const videosToInsert = manualVideos.map((video, index) => ({
-            course_id: data.id,
-            title: video.title,
-            video_url: video.url,
-            video_source: "uploaded" as const,
-            order_index: index,
-          }));
+          const extractYouTubeId = (url: string): string | null => {
+            const patterns = [
+              /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+            ];
+            for (const p of patterns) {
+              const m = url.match(p);
+              if (m) return m[1];
+            }
+            return null;
+          };
+
+          const videosToInsert = manualVideos.map((video, index) => {
+            const ytId = extractYouTubeId(video.url);
+            const isYouTube = !!ytId;
+            return {
+              course_id: data.id,
+              title: video.title,
+              video_url: isYouTube ? `https://www.youtube.com/watch?v=${ytId}` : video.url,
+              video_source: (isYouTube ? "youtube_single" : "uploaded") as "youtube_single" | "uploaded",
+              order_index: index,
+            };
+          });
 
           await supabase.from("course_videos").insert(videosToInsert);
         }
+
 
         toast.success("Course created successfully");
       }
